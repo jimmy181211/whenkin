@@ -19,7 +19,7 @@ Browser checks cover the desktop scheduling page and a 390-pixel mobile renderin
 
 The mobile rendering check is not a test on a physical phone. Finger dragging should also be tested on iOS Safari and Android Chrome before wider release.
 
-The public GitHub repository has been created. A separate Whenkin organization and project are now set up on Neon’s Free plan. The schema was applied and checked on a development branch before it was applied to the empty production database. PostgreSQL confirmed cross-zone equality and a full 60-minute shared window for Los Angeles and New York inputs. Cloudflare publication and live browser verification are still pending.
+The full application source, branding reference, README, flowcharts, migrations, tests, and GitHub checks workflow are now uploaded to `jimmy181211/whenkin` on its `main` branch. A separate Whenkin organization and project are now set up on Neon’s Free plan. The schema was applied and checked on a development branch before it was applied to the empty production database. PostgreSQL confirmed cross-zone equality and a full 60-minute shared window for Los Angeles and New York inputs. Cloudflare publication and live browser verification are still pending.
 
 ## Languages and the guide
 
@@ -28,3 +28,7 @@ English is the default. The header offers Simplified Chinese and Spanish, and th
 The demo page and its links have been removed. The three steps say what the organizer, participants, and Whenkin each do.
 
 Rendering checks cover all three languages, the guide, removal of the demo route, remembered preferences, and unchanged UTC selections after changing language. These latest changes could not be visually checked in the browser because its sign-in session could not resume. The earlier desktop and mobile browser checks described above were completed before these language changes.
+
+## Resume verification
+
+On October 20, 2026 (Pacific time), the recovered source passed all 29 tests, TypeScript checking, the production build, and the Cloudflare Worker dry run again. GitHub write access was verified through the successful source upload. Wrangler is not authenticated, and the Cloudflare dashboard shows its sign-in form; publication still requires account sign-in.
