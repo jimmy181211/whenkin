@@ -1,0 +1,38 @@
+{
+  "name": "whenkin",
+  "version": "0.1.0",
+  "description": "Find a time that works for your group, on any device and in any time zone.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "dev:api": "wrangler dev --port 8787",
+    "check": "tsc --noEmit",
+    "build": "vite build",
+    "test": "vitest run",
+    "deploy": "npm run check && npm run build && wrangler deploy",
+    "migrate": "node scripts/migrate.mjs"
+  },
+  "type": "module",
+  "dependencies": {
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0",
+    "@js-temporal/polyfill": "^0.5.1",
+    "@neondatabase/serverless": "^1.2.0",
+    "hono": "^4.13.13",
+    "lucide-react": "^1.60.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "@electric-sql/pglite": "^0.5.10",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.2"
+  },
+  "private": true
+}
