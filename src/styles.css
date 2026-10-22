@@ -102,3 +102,4 @@ body:has(.event-page) .header-new-event{display:none}
 .event-actions .button{min-height:44px;font-size:12px;padding:10px 12px}
 .event-summary .event-heading>div.event-actions{flex:0 1 auto}
 }
+.event-summary .event-heading>.event-actions{flex:0 1 auto;margin-left:auto}@media(max-width:699px){.event-summary .event-heading>.event-actions{margin-left:0}}
