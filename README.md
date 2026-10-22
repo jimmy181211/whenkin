@@ -4,13 +4,28 @@
 
 Whenkin helps a group choose a time to meet. Create an event, share its link, and let everyone mark when they are free. Whenkin then suggests times that fit the most people for the whole meeting.
 
+## Big Picture
+
+```mermaid
+flowchart TD
+  H["Main Page"] -->|"Create Event"| O["Organizer View"]
+  O -->|"Share Participant Link"| P["Participant View"]
+  O -->|"Save Event or Change Its Hours"| N["Save Event and Responses to Neon"]
+  P -->|"Submit or Update Availability"| N
+  N --> C["Whenkin Calculates Best Meeting Times"]
+  C -->|"Show Ranked Suggestions"| O
+  O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
+```
+
+Responses and event changes update the same saved event, and suggestions return to the organizer. See [Calculating the Best Meeting Time](docs/flowchart.md#calculating-the-best-meeting-time), [Participant Privacy](docs/flowchart.md#participant-privacy), [Website and Storage](docs/flowchart.md#website-and-storage), and [Editing and Navigation](docs/flowchart.md#editing-and-navigation) for the details.
+
 ![Whenkin logo and visual style](docs/whenkin-reference.png)
 
 The website works on computers and phones. You do not need an account to respond.
 
-## What it does
+## What It Does
 
-New here? The website’s **How it works** guide explains what the organizer and participants do.
+See the [participant privacy flow](docs/flowchart.md#participant-privacy) for organizer and participant access rules.
 
 - Choose English (default), 简体中文, or Español. The website remembers your choice and updates the date and time labels too.
 - Paint 30-minute blocks with a mouse or finger, then fine-tune in 15-minute increments.
@@ -21,33 +36,32 @@ New here? The website’s **How it works** guide explains what the organizer and
 - Communicate the final arrangement outside Whenkin.
 - Use private links to manage an event or edit your own response from another device.
 
-Group sharing is off by default. Public event requests expose no other participant’s name, time zone, availability, or group suggestions. Organizer and response-edit links remain private.
+Group sharing is off by default. While it is off, participants see their own availability and the response count; the API excludes other respondents’ names, time zones, availability, and common-ground suggestions. The organizer always sees all responses. Turning sharing on reveals the group view but never lets participants edit someone else’s response. Organizer and response-edit links remain private.
 
-## How it works
+## How It Works
 
 ```mermaid
 flowchart TD
-    A[Create an Event] --> B[Keep Private Organizer Link]
-    A --> C[Share Participant Link]
-    C --> D[Select 30-Minute Blocks]
-    D --> E[Fine-Tune in 15-Minute Steps]
-    E --> F[ChatGPT Sites Saves to Neon]
-    F --> G[Organizer Compares Responses]
-    G --> H[Organizer Shares Final Arrangement Outside Whenkin]
-    B --> I{Group Sharing On?}
-    I -->|No, Default| J[Participants See Own Response and Count]
-    I -->|Yes| K[Participants See Group Availability]
+  C["Create Event"] --> O["Private Organizer Link<br/>Edit Event Hours and Control Sharing"]
+  C --> P["Participant Invitation Link"]
+  O -.->|"Controls"| S{"Server Checks Group Sharing<br/>Off by Default"}
+  P --> S
+  S -->|"Off: Own Availability + Response Count"| R["Mark 30-Minute Blocks<br/>Fine-Tune in 15-Minute Steps"]
+  S -->|"On: Group Availability + Common Ground"| R
+  R --> N["Enter Name and Save<br/>ChatGPT Sites → Neon"]
+  N --> E["Private Edit Link<br/>Edit Own Response Only"]
+  N --> F["Organizer Compares All Responses<br/>and Shares Final Arrangement Outside Whenkin"]
 ```
 
 More diagrams: [How the website works](docs/flowchart.md).
 
-## Time zones, without extra copies
+## Time Zones, Without Extra Copies
 
 Availability uses PostgreSQL’s `timestamptz` type for its start and end. PostgreSQL handles comparisons between different time zones. We do not store separate local-time copies.
 
 An event and a response each have one time-zone preference. Changing the display zone changes the labels, not the actual availability. Dates and daylight saving changes are taken into account.
 
-## Built with
+## Built With
 
 - React and TypeScript for the website.
 - ChatGPT Sites for managed website and API hosting.
@@ -55,13 +69,17 @@ An event and a response each have one time-zone preference. Changing the display
 
 Public website: https://whenkin.j4ouyang.chatgpt.site
 
-## Hosting and saved data
+## Hosting and Saved Data
 
 ChatGPT Sites manages the website, API, versions, runtime secrets, and publishing. The existing Neon project stores events, responses, availability, and group-sharing settings. Neon does not need to be deployed on another host. The database connection is configured as the server-only `DATABASE_URL` secret in Sites.
 
 The Site is public. Its audience is independent of each event’s server-enforced organizer, participant, and response-edit permissions.
 
-## Run it locally
+## Terms and Privacy
+
+[Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) are available from every page’s footer in English, Simplified Chinese, and Spanish. UCSD CSSA operates Whenkin; privacy and deletion requests go to j4ouyang@ucsd.edu. The policies describe the current sharing controls, local drafts and credentials, hosting providers, and absence of automatic event expiry.
+
+## Run It Locally
 
 Use Node.js 22 or newer. Install dependencies using the included installer, configure a local ignored `.dev.vars` file with `DATABASE_URL`, then run `npm run dev`. Apply migrations in numeric order. `002_participant_privacy.sql` adds a non-null privacy flag with a default of false, preserving existing events and selections. Apply it before deploying the corresponding API.
 
@@ -69,7 +87,7 @@ Use Node.js 22 or newer. Install dependencies using the included installer, conf
 
 Run `npm run check`, `npm test`, and `npm run build`. The tests cover time zones, daylight saving changes, complete meeting windows, event and response permissions, network errors, and all three website languages.
 
-## Source and documentation
+## Source and Documentation
 
 The original source is at https://github.com/jimmy181211/whenkin. This Sites checkout retains the existing design and scheduling logic, with a managed hosting entry point. See `docs/flowchart.md` for the complete flow.
 

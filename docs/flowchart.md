@@ -2,24 +2,74 @@
 
 Whenkin collects availability. The organizer compares responses and communicates the final arrangement outside the website.
 
-## Organizer and Participant Access
+## Big Picture
 
 ```mermaid
 flowchart TD
-  A[Organizer creates event] --> B[Private organizer link]
-  A --> C[Participant invitation link]
-  B --> D[View all responses and common ground]
-  B --> E{Enable group sharing?}
-  E -->|Off by default| F[Participants see only their own availability and response count]
-  E -->|On| G[Participants see group availability and common ground]
-  C --> H[Select 30-minute blocks]
-  H --> I[Fine-tune start and end in 15-minute steps]
-  I --> J{Has a name?}
-  J -->|No| K[Keep draft and show guidance beside name]
-  J -->|Yes| L[Save availability and issue private edit link]
-  L --> D
-  D --> M[Organizer communicates chosen time through social media]
+  H["Main Page"] -->|"Create Event"| O["Organizer View"]
+  O -->|"Share Participant Link"| P["Participant View"]
+  O -->|"Save Event or Change Its Hours"| N["Save Event and Responses to Neon"]
+  P -->|"Submit or Update Availability"| N
+  N --> C["Whenkin Calculates Best Meeting Times"]
+  C -->|"Show Ranked Suggestions"| O
+  O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
 ```
+
+Creating an event saves its details and opens the organizer view. Responses and event changes feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
+
+See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for ranking, [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
+
+## Calculating the Best Meeting Time
+
+```mermaid
+flowchart TB
+  subgraph candidates["Find Possible Times"]
+    direction LR
+    A["Load Event Hours, Length,<br/>and Responses from Neon"] --> B["Try 15-Minute Starts<br/>That Fit the Full Meeting"]
+    B --> C["Count People Free<br/>for the Entire Meeting"]
+  end
+  subgraph results["Rank and Display"]
+    direction LR
+    D["Most Available First<br/>Then Earliest Start"] --> E["Drop Zero Attendance<br/>Skip Nearby Equal Counts"]
+    E --> F["Show Ranked Times in Local Time<br/>or No Suggestions Yet"]
+  end
+  candidates --> results
+```
+
+The single Neon step uses the event's current saved data; see [Website and Storage](#website-and-storage). Overlapping or touching event windows are combined before calculation. Candidate starts are 15 minutes apart, even though the selection grid uses 30-minute blocks. Each candidate must fit the entire meeting length within the event hours.
+
+Only people who have responded enter the count. A person counts as available only when their saved availability covers the whole meeting; separate people's partial availability cannot be combined to cover it. **Best Fit** means the highest attendance count, with the earliest start breaking a tie. It does not require everyone to be available.
+
+To keep the list useful, skip a candidate if a kept suggestion has the same attendee count and starts less than one meeting length away. Keep up to 20 suggestions, show five initially, and reveal five more at a time. Times are displayed in the viewer's chosen time zone. The organizer can always view these results; participant access follows [Participant Privacy](#participant-privacy).
+
+## Participant Privacy
+
+The organizer controls **Let participants see group availability**. It is **off by default**. The server applies this setting before sending response data to the browser.
+
+```mermaid
+flowchart TD
+  L["Open or Refresh Event Link"] --> A{"Server Checks Access"}
+  A -->|"Valid Organizer Link"| O["Always See All Responses<br/>and Common Ground"]
+  A -->|"Participant or Valid Response Link"| S{"Group Sharing On?<br/>Off by Default"}
+  A -->|"Invalid Private Credentials"| X["Reject Request"]
+  O -.->|"Organizer Controls Setting"| S
+  S -->|Off| H["Own Availability + Response Count<br/>Other Respondents and Suggestions Hidden"]
+  S -->|On| G["Group Availability, Respondents,<br/>and Common Ground"]
+  H --> E["Private Token Edits Own Response Only"]
+  G --> E
+```
+
+| Access | Group Sharing Off | Group Sharing On | Editing Rights |
+| --- | --- | --- | --- |
+| Organizer with a valid private organizer link | All responses and common ground | All responses and common ground | Change event hours, meeting length, and group-sharing setting |
+| Participant invitation link without a private response token | Event details, response count, and the participant's local draft | Event details, response count, and group view | Submit a new response; an existing response still requires its own private edit token |
+| Participant with a valid private response edit link | Own saved response and response count | Own response plus group view | Edit only the response belonging to that token |
+
+With sharing off, the API excludes other respondents' names, time zones, and availability, and returns no common-ground suggestions. The participant page hides the Group Availability tab, common-ground panel, and respondent list. The organizer retains access to all responses.
+
+Sharing changes visibility; it does not grant permission to edit another response or delete existing responses. Only the organizer can change the setting. Invalid private credentials are rejected. A name alone does not grant access to a saved response.
+
+The same participant and private edit links continue to work when the organizer changes the setting. The server reevaluates access on each request; open pages refresh every ten seconds and when focused.
 
 ## Website and Storage
 
