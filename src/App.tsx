@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Copy, Info, Link2, LoaderCircle, LockKeyhole, Plus, RefreshCw, Sparkles, Users, X } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import OrganizerScheduleEditor from './components/OrganizerScheduleEditor';
 import Calendar from './components/Calendar';
 import { useUnsavedNavigation } from './components/UnsavedNavigation';
 import TimezonePicker from './components/TimezonePicker';
@@ -21,7 +21,7 @@ export default function App(){
   return <><Header inEvent={!!match}/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><PageLink className="button primary" href="/">{t("Create an event")} <ArrowRight size={17}/></PageLink></main>}<Footer/></>;
 }
 // Editor pages use document navigation so browser Back/reload retain native unsaved-work protection.
-function PageLink(props:{href:string;children:React.ReactNode;className?:string;'aria-label'?:string}){return <Link {...props} prefetch={false} onNavigate={event=>{event.preventDefault();window.location.assign(new URL(props.href,location.href).href);}}/>;}
+function PageLink(props:{href:string;children:React.ReactNode;className?:string;'aria-label'?:string}){return <a {...props}/>;}
 function Header({inEvent}:{inEvent:boolean}){return <header className="site-header"><PageLink className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></PageLink><nav aria-label={t('Main navigation')}><LanguageSelector/>{inEvent&&<PageLink className="button secondary compact" href="/"><Plus size={16}/> {t('New event')}</PageLink>}</nav></header>;}
 function Footer(){return <footer className="site-footer"><span>{t(BRAND.tagline)}</span><span>{t("Made for people, wherever they are.")}<GlobeIcon/></span></footer>;}
 function GlobeIcon(){return <span className="footer-dot" aria-hidden="true"/>;}
@@ -63,12 +63,23 @@ function CreatePage(){
 type Identity={id:string;token:string};
 function EventPage({id}:{id:string}){
   const [event,setEvent]=useState<MeetingEvent|null>(null),[zone,setZone]=useState(deviceTimezone),[identity,setIdentity]=useState<Identity|null>(null),[admin,setAdmin]=useState(''),[name,setName]=useState(''),[selected,setSelected]=useState<Set<number>>(new Set()),[view,setView]=useState<'mine'|'group'>('mine');
+  const [scheduleEditing,setScheduleEditing]=useState(false),[scheduleDirty,setScheduleDirty]=useState(false),[scheduleBusy,setScheduleBusy]=useState(false);
+  const [scheduleNotice,setScheduleNotice]=useState(false);
   const [isSaving,setIsSaving]=useState(false),[nameError,setNameError]=useState(false),[settingsBusy,setSettingsBusy]=useState(false);
   const nameInput=useRef<HTMLInputElement>(null),adminRef=useRef('');
   const [error,setError]=useState(''),[saveState,setSaveState]=useState<'saved'|'dirty'|'saving'|'error'>('saved'),[share,setShare]=useState(false),[copied,setCopied]=useState(''),[active,setActive]=useState<Candidate|null>(null),[limit,setLimit]=useState(5),[showRestore,setShowRestore]=useState(false);
   const eventRef=useRef<MeetingEvent|null>(null),dirty=useRef(false),saving=useRef(false),generation=useRef(0),identityRef=useRef<Identity|null>(null),revisionRef=useRef(0),latest=useRef({name,zone,selected});
   useEffect(()=>{latest.current={name,zone,selected};eventRef.current=event;},[name,zone,selected,event]);
-  const applyEvent=useCallback((result:MeetingEvent)=>{setEvent(result);if(!result.can_view_group){setView('mine');setActive(null);}},[]);
+  const applyEvent=useCallback((result:MeetingEvent)=>{
+    const previous=eventRef.current;
+    if(previous&&previous.schedule_revision!==result.schedule_revision){
+      const value=latest.current,allowed=new Set(allSlots(result.windows)),person=result.responses.find(r=>r.id===identityRef.current?.id);
+      const next=dirty.current?new Set([...value.selected].filter(stamp=>allowed.has(stamp))):new Set(allSlots(person?.ranges||[]));
+      setSelected(next);latest.current={...value,selected:next};revisionRef.current=person?.revision??0;generation.current++;setActive(null);setScheduleNotice(true);
+      if(dirty.current)saveSecret(`meetgrid:draft:${result.id}`,JSON.stringify({name:value.name,zone:value.zone,slots:[...next]}));
+    }
+    eventRef.current=result;setEvent(result);if(!result.can_view_group){setView('mine');setActive(null);}
+  },[]);
   const load=useCallback(async()=>{
     const person=identityRef.current,owner=adminRef.current;
     return api<MeetingEvent>(`/events/${id}${!owner&&person?'?response_id='+person.id:''}`,{headers:owner||person?{Authorization:`Bearer ${owner||person!.token}`}:{}});
@@ -90,8 +101,8 @@ function EventPage({id}:{id:string}){
     }catch(e){if(alive)setError(e instanceof Error?e.message:'Could not load this event.');}})();return()=>{alive=false;};
   },[id,load,applyEvent]);
   const hasEvent=event!==null;
-  useEffect(()=>{if(!hasEvent)return;const timer=setInterval(()=>{if(document.visibilityState==='visible')load().then(applyEvent).catch(()=>{});},30000);return()=>clearInterval(timer);},[hasEvent,load,applyEvent]);
-  const navigation=useUnsavedNavigation(saveState!=='saved'||settingsBusy);
+  useEffect(()=>{if(!hasEvent)return;const timer=setInterval(()=>{if(document.visibilityState==='visible')load().then(applyEvent).catch(()=>{});},10000);const refresh=()=>{if(document.visibilityState==='visible')load().then(applyEvent).catch(()=>{});};window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};},[hasEvent,load,applyEvent]);
+  const navigation=useUnsavedNavigation(saveState!=='saved'||settingsBusy||scheduleDirty||scheduleBusy);
   function mark(next:Set<number>){setSelected(next);changeDraft({selected:next});}
   function changeDraft(change:Partial<typeof latest.current>={}){dirty.current=true;generation.current++;setSaveState('dirty');const value={...latest.current,...change};saveSecret(`meetgrid:draft:${id}`,JSON.stringify({name:value.name,zone:value.zone,slots:[...value.selected]}));}
   function changeZone(next:string){if(next===zone)return;setZone(next);changeDraft({zone:next});}
@@ -100,7 +111,7 @@ function EventPage({id}:{id:string}){
     setNameError(false);
     saving.current=true;setIsSaving(true);const version=generation.current;setSaveState('saving');setError('');
     try{
-      const person=identityRef.current,payload={name:value.name,timezone:value.zone,ranges:slotsToRanges(value.selected),revision:revisionRef.current};
+      const person=identityRef.current,payload={name:value.name,timezone:value.zone,ranges:slotsToRanges(value.selected),revision:revisionRef.current,schedule_revision:eventRef.current.schedule_revision};
         const result=await api<{id:string;editToken?:string;revision:number}>(`/events/${id}/responses${person?'/'+person.id:''}`,{method:person?'PUT':'POST',headers:person?{Authorization:`Bearer ${person.token}`}:{},body:JSON.stringify(payload)});
         if(!person){const next={id:result.id,token:result.editToken!};identityRef.current=next;setIdentity(next);saveSecret(`meetgrid:response:${id}`,JSON.stringify(next));}
         revisionRef.current=result.revision;applyEvent(await load());
@@ -108,7 +119,7 @@ function EventPage({id}:{id:string}){
     }catch(e){setError(e instanceof Error?e.message:'Could not save. Your draft stays on this device.');setSaveState('error');}
     finally{saving.current=false;setIsSaving(false);}
   },[id,load,applyEvent]);
-  useEffect(()=>{if(saveState!=='dirty'||!name.trim()||isSaving)return;const timer=setTimeout(()=>{void save();},1000);return()=>clearTimeout(timer);},[saveState,name,selected,zone,save,isSaving]);
+  useEffect(()=>{if(saveState!=='dirty'||!name.trim()||isSaving||scheduleBusy)return;const timer=setTimeout(()=>{void save();},1000);return()=>clearTimeout(timer);},[saveState,name,selected,zone,save,isSaving,scheduleBusy]);
   const candidates=useMemo(()=>event?bestTimes(event):[],[event]);
   const suggestions=useMemo(()=>{const result:Candidate[]=[];for(const candidate of candidates){if(!candidate.available.length)continue;if(!result.some(r=>r.available.length===candidate.available.length&&Math.abs(Date.parse(r.start)-Date.parse(candidate.start))<event!.duration*60000))result.push(candidate);if(result.length>=20)break;}return result;},[candidates,event]);
   async function changeSharing(enabled:boolean){if(!event||settingsBusy)return;setSettingsBusy(true);setError('');try{await api(`/events/${id}/settings`,{method:'PATCH',headers:{Authorization:`Bearer ${admin}`},body:JSON.stringify({show_group_availability:enabled})});applyEvent(await load());}catch(e){setError(e instanceof Error?e.message:'Could not save. Your draft stays on this device.');}finally{setSettingsBusy(false);}}
@@ -120,11 +131,13 @@ function EventPage({id}:{id:string}){
     <div className={`event-layout ${canViewGroup?'':'private-view'}`}><section className="schedule-card">
       <header className="event-summary"><div className="event-heading"><div><p className="eyebrow">{organizer?t('YOUR EVENT'):t('ORGANIZED BY {name}',{name:event.organizer_name})}</p><h1>{event.title}</h1></div><button className="button primary compact" onClick={()=>setShare(true)}><Link2 size={17}/> {t('Share Event')}</button></div><p className="event-meta"><span><Clock3 size={16}/>{t('{count} minutes',{count:event.duration})}</span><span><Users size={16}/>{t(responseCount===1?'{count} response':'{count} responses',{count:responseCount})}</span></p>{event.description&&<p className="event-description">{event.description}</p>}</header>
       {error&&<div className="error-message" role="alert">{t(error)}</div>}
+      {organizer&&<div className="organizer-hours">{scheduleEditing?<OrganizerScheduleEditor event={event} admin={admin} onSaved={applyEvent} onDirty={setScheduleDirty} onBusy={setScheduleBusy} onClose={()=>setScheduleEditing(false)}/>:<button type="button" className="button secondary compact" disabled={isSaving} onClick={()=>setScheduleEditing(true)}><Clock3 size={16}/>{t('Edit Event Hours')}</button>}</div>}
+      {scheduleNotice&&<div className="draft-banner" role="status"><span>{t('The organizer updated the event hours. Your availability has been kept within the new hours.')}</span><button type="button" className="icon-button" aria-label={t('Dismiss schedule update')} onClick={()=>setScheduleNotice(false)}><X size={15}/></button></div>}
       {organizer&&<div className="sharing-setting"><label><span>{t('Let participants see group availability')}</span><input type="checkbox" role="switch" checked={event.show_group_availability===true} disabled={settingsBusy} onChange={e=>void changeSharing(e.target.checked)}/></label><p>{t(event.show_group_availability?'Participants can see everyone’s availability and common ground.':'Participants can see only their own availability and the response count.')}</p></div>}
       <div className="schedule-toolbar"><div className="schedule-tabs"><div className="segmented"><button aria-pressed={view==='mine'} onClick={()=>setView('mine')}>{t("Your Availability")}</button>{canViewGroup&&<button aria-pressed={view==='group'} onClick={()=>setView('group')}>{t("Group Availability")}</button>}</div><span className={`save-status ${saveState}`} role="status">{saveState==='saving'?<LoaderCircle className="spin" size={14}/>:saveState==='saved'?<Check size={14}/>:<span className="status-dot"/>}{t(saveState==='saved'?(identity?'Saved':'Not submitted yet'):saveState==='saving'?'Saving…':saveState==='dirty'?'Unsaved changes':'Not saved')}</span></div><TimezonePicker value={zone} onChange={changeZone} at={Date.parse(event.windows[0].start)}/></div>
       {showRestore&&<div className="draft-banner"><span>{t("You have an unsaved draft on this device.")}</span><button className="text-button" onClick={restore}>{t("Restore draft")}</button><button className="icon-button" aria-label={t("Dismiss draft")} onClick={()=>setShowRestore(false)}><X size={15}/></button></div>}
       {view==='mine'&&<div className="participant-line"><div className="participant-name"><label htmlFor="participant-name">{t('Your name')}</label><input id="participant-name" ref={nameInput} maxLength={60} placeholder={t('Enter your name')} value={name} aria-invalid={nameError} aria-describedby={nameError?'name-error':!name.trim()?'name-help':undefined} onChange={e=>{setName(e.target.value);setNameError(false);changeDraft({name:e.target.value});}}/>{nameError?<p id="name-error" className="name-error" role="alert">{t('Please enter your name.')}</p>:!name.trim()&&<p id="name-help" className="field-help">{t('Enter your name to save your availability.')}</p>}</div><p><strong>{t('{count} hours selected',{count:hours.toLocaleString(getLocale(),{maximumFractionDigits:2})})}</strong></p></div>}
-      <AvailabilityGrid key={zone} event={event} zone={zone} selected={selected} onChange={mark} view={view} highlight={active}/>
+      <AvailabilityGrid key={zone+':'+event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} view={view} highlight={active}/>
       {view==='mine'&&<div className="save-bar"><span><LockKeyhole size={14}/>{t(identity?'Your edit link keeps your response yours.':'No account needed. Your response is editable on this device.')}</span><button className="button primary compact" disabled={saveState==='saving'} onClick={()=>void save()}>{t(saveState==='saving'?'Saving…':'Save availability')}<Check size={16}/></button></div>}
 
       {identity&&<div className="edit-link-line"><button className="text-button" onClick={()=>void copy(eventLink+`#edit=${identity.id}.${identity.token}`,'edit')}>{copied==='edit'?<Check size={14}/>:<Copy size={14}/>} {t(copied==='edit'?'Copied private edit link':'Copy my private edit link')}</button><span>{t("Save this link to edit from another device.")}</span></div>}
