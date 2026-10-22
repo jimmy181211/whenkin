@@ -4,6 +4,8 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  "Participants see only their own availability.": ["参与者只能看到自己的空闲时间。", "Los participantes solo ven su propia disponibilidad."],
+  "Keep your organizer link private. It lets you view all responses and edit event hours.": ["请妥善保管组织者链接，用于查看全部回复和修改活动时段。", "Mantén privado tu enlace de organizador. Permite ver todas las respuestas y editar los horarios del evento."],
   "Find your shared time.": [
     "找到大家的共同时间。",
     "Encuentra un momento para todos."
@@ -116,6 +118,7 @@ export const messages: Record<string, [string, string]> = {
     "例如：周五聚餐、团队交流……",
     "Por ejemplo: cena del viernes, reunión del equipo…"
   ],
+  "How it works": ["使用方法", "Cómo funciona"],
   "Your name": [
     "你的姓名",
     "Tu nombre"
@@ -504,10 +507,6 @@ export const messages: Record<string, [string, string]> = {
     "你的空闲时间表",
     "Tu cuadrícula de disponibilidad"
   ],
-  "Group availability grid": [
-    "大家的空闲时间表",
-    "Cuadrícula de disponibilidad del grupo"
-  ],
   "Mark": [
     "标记",
     "Marcar"
@@ -519,10 +518,6 @@ export const messages: Record<string, [string, string]> = {
   "Scroll": [
     "滚动",
     "Desplazar"
-  ],
-  "More people available": [
-    "更多人有空",
-    "Más personas disponibles"
   ],
   "Undo selection": [
     "撤销选择",
@@ -824,33 +819,9 @@ export const messages: Record<string, [string, string]> = {
     "请输入你的姓名。",
     "Escribe tu nombre."
   ],
-  "Let participants see group availability": [
-    "允许参与者查看大家的空闲时间",
-    "Permitir que los participantes vean la disponibilidad del grupo"
-  ],
-  "Participants can see everyone’s availability and common ground.": [
-    "参与者可以查看所有人的空闲时间和共同空闲时段。",
-    "Los participantes pueden ver la disponibilidad de todos y los horarios en común."
-  ],
-  "Participants can see only their own availability and the response count.": [
-    "参与者只能查看自己的空闲时间和回复人数。",
-    "Los participantes solo pueden ver su propia disponibilidad y el número de respuestas."
-  ],
-  "Participants see only their own availability unless you enable group sharing.": [
-    "默认仅组织者可查看大家的空闲时间，可手动开启共享。",
-    "Solo tú ves la disponibilidad del grupo, salvo que actives el uso compartido."
-  ],
-  "Keep your organizer link private. It lets you view all responses and manage group sharing.": [
-    "请妥善保管组织者链接，用于查看全部回复并管理共享设置。",
-    "Mantén privado tu enlace de organizador. Permite ver todas las respuestas y gestionar el uso compartido."
-  ],
   "Use your private organizer link to manage this event.": [
     "请使用你的组织者私密链接管理此活动。",
     "Usa tu enlace privado de organizador para gestionar este evento."
-  ],
-  "Choose whether participants can see group availability.": [
-    "请选择是否允许参与者查看大家的空闲时间。",
-    "Elige si los participantes pueden ver la disponibilidad del grupo."
   ],
   "Leave without saving your changes?": [
     "要放弃保存这些更改并离开吗？",
@@ -867,10 +838,6 @@ export const messages: Record<string, [string, string]> = {
   "Partly available": [
     "部分时段有空",
     "Disponibilidad parcial"
-  ],
-  "Each number shows how many respondents are free for the whole 30-minute block.": [
-    "每个数字表示在整个30分钟时段内都有空的回复人数。",
-    "Cada número indica cuántas personas están libres durante todo el bloque de 30 minutos."
   ],
   "Mark 30-minute blocks. Fine-tune your selection in 15-minute steps, or use Scroll to move around.": [
     "选择30分钟时段，再以15分钟为单位微调。使用“滚动”浏览时间表。",
@@ -891,14 +858,6 @@ export const messages: Record<string, [string, string]> = {
   "Create Your Event": [
     "创建你的活动",
     "Crea tu Evento"
-  ],
-  "Your Availability": [
-    "你的空闲时间",
-    "Tu Disponibilidad"
-  ],
-  "Group Availability": [
-    "大家的空闲时间",
-    "Disponibilidad del Grupo"
   ],
   "Your Common Ground": [
     "大家的共同时间",

@@ -44,32 +44,9 @@ To keep the list useful, skip a candidate if a kept suggestion has the same atte
 
 ## Participant Privacy
 
-The organizer controls **Let participants see group availability**. It is **off by default**. The server applies this setting before sending response data to the browser.
+Participants see their own saved response and the response count. Only the organizer sees all responses, participant names, and ranked meeting suggestions. The availability grid always edits the current person's response; there are no personal/group tabs or sharing setting.
 
-```mermaid
-flowchart TD
-  L["Open or Refresh Event Link"] --> A{"Server Checks Access"}
-  A -->|"Valid Organizer Link"| O["Always See All Responses<br/>and Common Ground"]
-  A -->|"Participant or Valid Response Link"| S{"Group Sharing On?<br/>Off by Default"}
-  A -->|"Invalid Private Credentials"| X["Reject Request"]
-  O -.->|"Organizer Controls Setting"| S
-  S -->|Off| H["Own Availability + Response Count<br/>Other Respondents and Suggestions Hidden"]
-  S -->|On| G["Group Availability, Respondents,<br/>and Common Ground"]
-  H --> E["Private Token Edits Own Response Only"]
-  G --> E
-```
-
-| Access | Group Sharing Off | Group Sharing On | Editing Rights |
-| --- | --- | --- | --- |
-| Organizer with a valid private organizer link | All responses and common ground | All responses and common ground | Change event hours, meeting length, and group-sharing setting |
-| Participant invitation link without a private response token | Event details, response count, and the participant's local draft | Event details, response count, and group view | Submit a new response; an existing response still requires its own private edit token |
-| Participant with a valid private response edit link | Own saved response and response count | Own response plus group view | Edit only the response belonging to that token |
-
-With sharing off, the API excludes other respondents' names, time zones, and availability, and returns no common-ground suggestions. The participant page hides the Group Availability tab, common-ground panel, and respondent list. The organizer retains access to all responses.
-
-Sharing changes visibility; it does not grant permission to edit another response or delete existing responses. Only the organizer can change the setting. Invalid private credentials are rejected. A name alone does not grant access to a saved response.
-
-The same participant and private edit links continue to work when the organizer changes the setting. The server reevaluates access on each request; open pages refresh every ten seconds and when focused.
+A valid private response token is required to load or update that person's saved availability. A valid organizer token is required to see all responses or edit event hours. Legacy sharing flags do not grant access.
 
 ## Website and Storage
 
@@ -78,11 +55,11 @@ flowchart LR
   D[Desktop and Mobile Browser] <-->|HTTPS requests| S[ChatGPT Sites Website and Server]
   S <-->|Server-only database connection| N[(Neon PostgreSQL)]
   S --> A[Validate organizer and participant edit tokens]
-  A --> P[Return only data allowed by event privacy setting]
+  A --> P[Return data allowed by organizer or response token]
   P --> D
 ```
 
-The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private tokens stay in link fragments and local browser storage; requests authenticate with an authorization header. Neon stores token hashes, availability ranges as actual UTC instants, and the event privacy setting.
+The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private tokens stay in link fragments and local browser storage; requests authenticate with an authorization header. Neon stores token hashes, availability ranges as actual UTC instants, and event/response revisions.
 
 ## Editing and Navigation
 
@@ -103,3 +80,5 @@ English and Spanish interface titles use Title Case. English, Simplified Chinese
 ## Editing Event Hours
 
 The private organizer page can change From, Until, and Meeting Length after creation. Hours apply to every existing event date in the event time zone. Saving atomically replaces the event windows, clips saved availability to their intersection, increments schedule and response revisions, and retains the same invitation and private edit links. Old schedule submissions are rejected so stale tabs cannot restore removed times. Open pages refresh every ten seconds and when focused; unsaved participant drafts are clipped to the new windows.
+
+On phones, drag the time-label column to scroll the grid in any mode. Mark/Clear gestures inside the blocks edit availability. Mobile 30-minute blocks are 26 pixels high by default; desktop blocks remain 32 pixels high. The wider mobile grid uses smaller outer margins.

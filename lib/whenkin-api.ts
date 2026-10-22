@@ -27,7 +27,7 @@ async function body(request:Request) {
   catch { throw new Problem(400,'The information could not be read. Please try again.'); }
 }
 export function validateEvent(input:CreateInput,allowExistingDates=false) {
-  const title=text(input.title,'an event name',100), organizer=text(input.organizer_name,'your name',60), description=text(input.description??'','a description',1000,true);
+  const title=text(input.title,'an event name',100), organizer=text(input.organizer_name??'','your name',60,true), description=text(input.description??'','a description',1000,true);
   if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
   if(!Number.isInteger(input.duration)||input.duration<15||input.duration>240||input.duration%15) throw new Problem(400,'Choose a meeting length between 15 minutes and 4 hours.');
   if(!Array.isArray(input.dates)||!input.dates.length||input.dates.length>31||new Set(input.dates).size!==input.dates.length) throw new Problem(400,'Choose between 1 and 31 different dates.');
@@ -94,10 +94,10 @@ export function createApp(factory?:(env:Env)=>Database) {
   });
   async function readEvent(database:Database,id:string,viewer?:{secret:string;responseId?:string}) {
     checkId(id);
-    const settings=await database.query<{admin_hash:string;show_group_availability:boolean}>('SELECT admin_hash,show_group_availability FROM events WHERE id=$1',[id]);
+    const settings=await database.query<{admin_hash:string}>('SELECT admin_hash FROM events WHERE id=$1',[id]);
     if(!settings.length) throw new Problem(404,'This event could not be found. Check the link with its organizer.');
     const organizer=!!viewer?.secret&&await hash(viewer.secret)===settings[0].admin_hash;
-    const group=!viewer||organizer||settings[0].show_group_availability===true;
+    const includeResponses=!viewer||organizer;
     let ownId:string|null=null;
     if(viewer?.responseId){
       checkId(viewer.responseId);
@@ -105,16 +105,16 @@ export function createApp(factory?:(env:Env)=>Database) {
       if(!owned.length) throw new Problem(403,'Use your private edit link to change this response.');
       ownId=viewer.responseId;
     } else if(viewer?.secret&&!organizer) throw new Problem(403,'Use your private organizer link to manage this event.');
-    const rows=await database.query<MeetingEvent>(`SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.duration,e.final_start,e.final_end,e.created_at,e.show_group_availability,e.schedule_revision,
+    const rows=await database.query<MeetingEvent>(`SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.duration,e.final_start,e.final_end,e.created_at,e.schedule_revision,
       (SELECT count(*)::int FROM responses r WHERE r.event_id=e.id) AS response_count,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('start',w.starts_at,'end',w.ends_at) ORDER BY w.starts_at) FROM event_windows w WHERE w.event_id=e.id),'[]'::jsonb) AS windows,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'timezone',r.timezone,'revision',r.revision,
         'ranges',COALESCE((SELECT jsonb_agg(jsonb_build_object('start',a.starts_at,'end',a.ends_at) ORDER BY a.starts_at) FROM availability a WHERE a.response_id=r.id),'[]'::jsonb)) ORDER BY r.updated_at) FROM responses r WHERE r.event_id=e.id AND ($2::boolean OR r.id=$3::uuid)),'[]'::jsonb) AS responses
-      FROM events e WHERE e.id=$1`,[id,group,ownId]);
+      FROM events e WHERE e.id=$1`,[id,includeResponses,ownId]);
     if(!rows.length) throw new Problem(404,'This event could not be found. Check the link with its organizer.');
     const event=rows[0];
-    event.is_organizer=organizer;event.can_view_group=group;
-    if(!group){event.candidates=[];return event;}
+    event.is_organizer=organizer;
+    if(!includeResponses){event.candidates=[];return event;}
     event.candidates=await database.query<NonNullable<MeetingEvent['candidates']>[number]>(`WITH merged AS (
       SELECT unnest(range_agg(tstzrange(starts_at,ends_at,'[)'))) AS span FROM event_windows WHERE event_id=$1
     ), slots AS (
@@ -132,16 +132,6 @@ export function createApp(factory?:(env:Env)=>Database) {
     return event;
   }
   app.get('/api/events/:id',async c=>c.json(await readEvent(db(c.env),c.req.param('id'),{secret:c.req.header('Authorization')?.replace(/^Bearer /,'')||'',responseId:c.req.query('response_id')})));
-  app.patch('/api/events/:id/settings',async c=>{
-    const database=db(c.env),id=c.req.param('id');checkId(id);
-    const secret=c.req.header('Authorization')?.replace(/^Bearer /,'')||'';
-    const owned=await database.query('SELECT id FROM events WHERE id=$1 AND admin_hash=$2',[id,await hash(secret)]);
-    if(!owned.length) throw new Problem(403,'Use your private organizer link to manage this event.');
-    const input=await body(c.req.raw);
-    if(typeof input.show_group_availability!=='boolean') throw new Problem(400,'Choose whether participants can see group availability.');
-    await database.query('UPDATE events SET show_group_availability=$1 WHERE id=$2',[input.show_group_availability,id]);
-    return c.json({show_group_availability:input.show_group_availability});
-  });
   app.patch('/api/events/:id/schedule',async c=>{
     const database=db(c.env),id=c.req.param('id'),secret=c.req.header('Authorization')?.replace(/^Bearer /,'')||'';
     const event=await readEvent(database,id,{secret});
