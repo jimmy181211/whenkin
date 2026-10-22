@@ -6,6 +6,8 @@ The existing Neon project is `whenkin` (`gentle-thunder-71894819`), with product
 
 Configure `DATABASE_URL` as a secret through the native Sites runtime environment tool. It is used only by the server API and must never appear in client code, source control, a screenshot, or a public document.
 
-The initial Site audience is owner-private. Verify the event lifecycle before enabling public access for participants. Event links remain unlisted. Organizer and response-edit tokens are independent, private links and only token hashes are stored in the database.
+The Site audience is public. Event privacy is enforced independently by the API. Event links remain unlisted. Organizer and response-edit tokens are independent, private links and only token hashes are stored in the database.
 
 The website retains English, Simplified Chinese, and Spanish. Language and time-zone choices are independent, and display changes do not alter the actual saved UTC moments.
+
+Apply `migrations/002_participant_privacy.sql` before deploying this revision. It adds the group-sharing setting, off by default for new and existing events. No availability records are changed.

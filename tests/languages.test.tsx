@@ -10,12 +10,12 @@ import type { MeetingEvent } from '../src/lib/types';
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path},innerWidth:390});return renderToStaticMarkup(<App/>);};
 describe('language changes across the website',()=>{
-  it('starts in English and keeps the approved three steps',()=>{
+  it('starts in English with the brief home-page steps and no guide route',()=>{
     expect(getLanguage()).toBe('en');
     const html=page();
-    expect(html).toContain('The organizer creates an event');
-    expect(html).toContain('Participants mark when they’re free');
-    expect(html).toContain('Whenkin suggests the best times');
+    expect(html).toContain('The Organizer Creates an Event');
+    expect(html).toContain('Participants Mark When They’re Free');
+    expect(html).toContain('Whenkin Suggests the Best Times');
     expect(html).not.toMatch(/href="\/demo"|Try an example|Try the demo/);
   });
   it('renders Chinese forms, instructions, and the selected language',()=>{
@@ -25,20 +25,20 @@ describe('language changes across the website',()=>{
     expect(html).toContain('参与者标记空闲时间');
     expect(html).toContain('value="zh" selected=""');
     expect(html).not.toContain('What are you planning?');
-    expect(page('/how-it-works')).toContain('保留你的编辑链接');
+    expect(page('/how-it-works')).not.toContain('guide-page');
     expect(getLocale()).toBe('zh-CN');
   });
   it('renders Spanish forms, guide, dates, and explanatory errors',()=>{
     setLanguage('es');const html=page();
-    expect(html).toContain('Crea tu evento');
-    expect(html).toContain('Los participantes marcan cuándo están libres');
+    expect(html).toContain('Crea tu Evento');
+    expect(html).toContain('Los Participantes Marcan Cuándo Están Libres');
     expect(html).toContain('Elige las fechas que podrían servir');
-    expect(page('/how-it-works')).toContain('Guarda tus enlaces de edición');
+    expect(page('/how-it-works')).not.toContain('guide-page');
     expect(t('Use your private edit link to change this response.')).toContain('Usa tu enlace privado');
     expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
   });
   it('does not expose a demo route',()=>{
-    const html=page('/demo');expect(html).toContain('That page is a little off-grid.');
+    const html=page('/demo');expect(html).toContain('That Page Is a Little Off-Grid.');
     expect(html).not.toContain('availability-section');
   });
   it('preserves typed text when translating templates',()=>{
@@ -58,7 +58,7 @@ describe('language is independent of scheduling data',()=>{
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
       const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}} counts={new Map()} view="mine"/>);
-      expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(2);
+      expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(1);
       expect(slotsToRanges(selected)).toEqual(before);
       expect(gridModel(event.windows,'America/New_York').days[0][1].map(c=>c.stamp)).toEqual(allSlots(event.windows));
     }

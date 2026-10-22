@@ -54,3 +54,18 @@ describe('whole meetings and compact storage',()=>{
     expect(()=>validateRanges([span('2027-01-15T18:00','2027-01-15T18:15')],windows)).toThrow();
   });
 });
+
+describe('30-minute display with 15-minute storage',()=>{
+  it('halves display rows without dropping saved quarter-hours',()=>{
+    const windows=[span('2027-01-15T09:15:00Z','2027-01-15T10:45:00Z')];
+    const fine=gridModel(windows,'UTC'),coarse=gridModel(windows,'UTC',30);
+    expect(coarse.rows).toHaveLength(fine.rows.length/2);
+    expect(coarse.days).toEqual(fine.days);expect(coarse.days[0][1].map(c=>c.stamp)).toEqual(allSlots(windows));
+    expect(slotsToRanges(new Set([Date.parse('2027-01-15T09:15Z')]))).toEqual([span('2027-01-15T09:15:00.000Z','2027-01-15T09:30:00.000Z')]);
+  });
+  it('preserves both repeated-hour occurrences in half-hour rows',()=>{
+    const windows=[span(localToUTC('2026-11-01','00:00','America/Los_Angeles'),localToUTC('2026-11-01','04:00','America/Los_Angeles'))];
+    const model=gridModel(windows,'America/Los_Angeles',30);
+    expect(model.rows.filter(r=>r.minute===90)).toHaveLength(2);expect(model.days[0][1]).toHaveLength(20);
+  });
+});
