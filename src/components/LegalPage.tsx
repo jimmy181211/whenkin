@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import PageLink from './PageLink';
 import { ArrowLeft, ArrowRight, Mail } from 'lucide-react';
 import { getLanguage, getLocale, t } from '../lib/i18n';
 import { LEGAL, legalDocuments, type LegalKind } from '../lib/legal';
@@ -12,7 +12,7 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
   const document = legalDocuments[getLanguage()][kind];
   const otherKind = kind === 'terms' ? 'privacy' : 'terms';
   return <main className="legal-page">
-    <Link className="text-button legal-back" href="/"><ArrowLeft size={16}/>{t('Back to Whenkin')}</Link>
+    <PageLink className="text-button legal-back" href="/"><ArrowLeft size={16}/>{t('Back to Whenkin')}</PageLink>
     <article className="legal-card" aria-labelledby="legal-title">
       <header className="legal-heading"><p className="eyebrow">WHENKIN</p><h1 id="legal-title">{document.title}</h1><p className="legal-summary">{document.summary}</p><div className="legal-meta"><span>{LEGAL.operator}</span><span>{t('Effective Date')}: <time dateTime={LEGAL.updated}>{new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${LEGAL.updated}T00:00:00Z`))}</time></span></div></header>
       <details className="legal-contents"><summary>{t('On This Page')}</summary><ol>{document.sections.map((section, index) => <li key={section.title}><a href={`#${kind}-${index + 1}`}>{section.title}</a></li>)}</ol></details>

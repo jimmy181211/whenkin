@@ -14,6 +14,7 @@ import LanguageSelector, { useLanguage } from './components/LanguageSelector';
 import { BRAND } from './brand';
 import type { Candidate, MeetingEvent } from './lib/types';
 import LegalPage from './components/LegalPage';
+import PageLink from './components/PageLink';
 import { LEGAL, legalDocuments } from './lib/legal';
 
 export default function App(){
@@ -23,8 +24,6 @@ export default function App(){
   useEffect(()=>{document.documentElement.lang=language==='zh'?'zh-CN':language;document.title=legalKind?`${legalDocuments[language][legalKind].title} — Whenkin`:`Whenkin — ${t("Find Your Shared Time.")}`;},[language,legalKind]);
   return <><Header inEvent={!!match}/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:legalKind?<LegalPage kind={legalKind}/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><PageLink className="button primary" href="/">{t("Create an event")} <ArrowRight size={17}/></PageLink></main>}<Footer/></>;
 }
-// Editor pages use document navigation so browser Back/reload retain native unsaved-work protection.
-function PageLink(props:{href:string;children:React.ReactNode;className?:string;'aria-label'?:string}){return <a {...props}/>;}
 function Header({inEvent}:{inEvent:boolean}){return <header className="site-header"><PageLink className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></PageLink><nav aria-label={t('Main navigation')}><LanguageSelector/>{inEvent&&<PageLink className="button secondary compact" href="/"><Plus size={16}/> {t('New event')}</PageLink>}</nav></header>;}
 function Footer(){return <footer className="site-footer"><span>{t(BRAND.tagline)}</span><nav aria-label={t('Legal Information')}><PageLink href="/terms">{t('Terms of Use')}</PageLink><PageLink href="/privacy">{t('Privacy Policy')}</PageLink></nav><span>© {new Date().getFullYear()} {LEGAL.operator}<GlobeIcon/></span></footer>;}
 function GlobeIcon(){return <span className="footer-dot" aria-hidden="true"/>;}
