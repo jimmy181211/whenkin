@@ -10,7 +10,7 @@ The Vinext production build is checked independently. The original React design 
 
 The existing Neon production database is retained with its existing schema. `DATABASE_URL` is configured as a server-only Sites runtime secret. No database credentials are present in this repository or the browser bundle.
 
-The Site starts private for owner testing. Initial browser QA uses the internal preview, which has no production database secret. Production database connectivity and the complete event workflow must also be verified at the deployed Site.
+The Site starts private for owner testing. Initial browser QA uses the internal preview, which has no production database secret. Production database connectivity and the event workflow were also verified at the deployed private Site.
 
 ## Integration testing with the owner
 
@@ -24,3 +24,19 @@ The Site starts private for owner testing. Initial browser QA uses the internal 
 8. On iOS Safari and Android Chrome, verify finger selection, zoom, scrolling, undo, and precise From/To editing.
 
 The Sites fallback limits writes per running server instance, with bounded memory. Broader abuse/load testing remains part of public-release preparation.
+
+## Live deployment verification
+
+The private ChatGPT Site returned HTTP 200 with `ready: true` from `/api/health`. The following live checks passed against the existing Neon production database:
+
+- Live event creation saved to Neon.
+- Saved event reloads.
+- Two participant responses saved.
+- Different time-zone inputs produce the same whole-meeting match.
+- Private response link can edit.
+- Stale-tab overwrite rejected.
+- Organizer permission enforced.
+- Organizer confirms final meeting.
+- Confirmed meeting exports as a calendar invitation.
+
+A clearly labeled private test event was retained for owner review at `/e/30185723-1add-4a63-a204-3e1cd2e34824`. The multi-device and physical-phone checks above remain for the owner integration session. Public anonymous access has not been enabled.
