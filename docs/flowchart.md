@@ -2,24 +2,41 @@
 
 Whenkin collects availability. The organizer compares responses and communicates the final arrangement outside the website.
 
-## Organizer and Participant Access
+## Participant Privacy
+
+The organizer controls **Let participants see group availability**. It is **off by default**. The server applies this setting before sending response data to the browser.
 
 ```mermaid
 flowchart TD
-  A[Organizer creates event] --> B[Private organizer link]
-  A --> C[Participant invitation link]
-  B --> D[View all responses and common ground]
-  B --> E{Enable group sharing?}
-  E -->|Off by default| F[Participants see only their own availability and response count]
-  E -->|On| G[Participants see group availability and common ground]
-  C --> H[Select 30-minute blocks]
-  H --> I[Fine-tune start and end in 15-minute steps]
-  I --> J{Has a name?}
-  J -->|No| K[Keep draft and show guidance beside name]
-  J -->|Yes| L[Save availability and issue private edit link]
-  L --> D
-  D --> M[Organizer communicates chosen time through social media]
+  O["Private Organizer Link"] --> OA["Authenticate Organizer"]
+  OA --> OV["View All Responses and Common Ground"]
+  OA --> T["Set Group Sharing: Off by Default"]
+  I["Participant Invitation Link"] --> P["Server Checks Current Group-Sharing Setting"]
+  E["Private Response Edit Link"] --> V{"Valid Response Token?"}
+  V -->|No| X["Reject Request"]
+  V -->|Yes| P
+  T --> R["Next Participant Request or Refresh"]
+  R --> P
+  P --> S{"Group Sharing On?"}
+  S -->|"No: Default"| H["Return Only Own Saved Response if Authenticated, Plus Response Count"]
+  H --> HU["Hide Other Respondents and Common Ground"]
+  S -->|Yes| G["Return Group Responses and Suggested Times"]
+  G --> GU["Show Group Availability, Common Ground, and Respondents"]
+  HU --> W["Edit Only Own Response with Its Private Token"]
+  GU --> W
 ```
+
+| Access | Group Sharing Off | Group Sharing On | Editing Rights |
+| --- | --- | --- | --- |
+| Organizer with a valid private organizer link | All responses and common ground | All responses and common ground | Change event hours, meeting length, and group-sharing setting |
+| Participant invitation link without a private response token | Event details, response count, and the participant's local draft | Event details, response count, and group view | Submit a new response; an existing response still requires its own private edit token |
+| Participant with a valid private response edit link | Own saved response and response count | Own response plus group view | Edit only the response belonging to that token |
+
+With sharing off, the API excludes other respondents' names, time zones, and availability, and returns no common-ground suggestions. The participant page hides the Group Availability tab, common-ground panel, and respondent list. The organizer retains access to all responses.
+
+Sharing changes visibility; it does not grant permission to edit another response or delete existing responses. Only the organizer can change the setting. Invalid private credentials are rejected. A name alone does not grant access to a saved response.
+
+The same participant and private edit links continue to work when the organizer changes the setting. The server reevaluates access on each request; open pages refresh every ten seconds and when focused.
 
 ## Website and Storage
 
