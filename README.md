@@ -13,30 +13,30 @@ The website works on computers and phones. You do not need an account to respond
 New here? The website’s **How it works** guide explains what the organizer and participants do.
 
 - Choose English (default), 简体中文, or Español. The website remembers your choice and updates the date and time labels too.
-- Paint your free time onto a grid with a mouse or finger.
+- Paint 30-minute blocks with a mouse or finger, then fine-tune in 15-minute increments.
 - Zoom in, see exact times while selecting, adjust the start and end, and undo mistakes.
 - Automatically show your device’s time zone. Search for another city or time zone whenever you need to.
-- See the group’s availability and suggested meeting times.
+- Organizers see all responses and suggested meeting times. Participants see only their own response and the count unless the organizer enables group sharing.
 - Save changes automatically after entering your name.
-- Confirm a final time and download a calendar invitation.
+- Communicate the final arrangement outside Whenkin.
 - Use private links to manage an event or edit your own response from another device.
 
-Anyone with an event link can see the group’s names and availability. Keep organizer and response-edit links private.
+Group sharing is off by default. Public event requests expose no other participant’s name, time zone, availability, or group suggestions. Organizer and response-edit links remain private.
 
 ## How it works
 
 ```mermaid
 flowchart TD
-    A[Create an event] --> B[Choose dates and meeting length]
-    B --> C[Share the event link]
-    C --> D[Everyone sees their local time zone]
-    D --> E[Paint available times on the grid]
-    E --> F[PostgreSQL stores and compares the actual times]
-    F --> G[Find times that fit the whole meeting]
-    G --> H[Show results in each viewer's time zone]
-    H --> I{Does a time work?}
-    I -->|Yes| J[Organizer confirms and downloads a calendar invite]
-    I -->|No| E
+    A[Create an Event] --> B[Keep Private Organizer Link]
+    A --> C[Share Participant Link]
+    C --> D[Select 30-Minute Blocks]
+    D --> E[Fine-Tune in 15-Minute Steps]
+    E --> F[ChatGPT Sites Saves to Neon]
+    F --> G[Organizer Compares Responses]
+    G --> H[Organizer Shares Final Arrangement Outside Whenkin]
+    B --> I{Group Sharing On?}
+    I -->|No, Default| J[Participants See Own Response and Count]
+    I -->|Yes| K[Participants See Group Availability]
 ```
 
 More diagrams: [How the website works](docs/flowchart.md).
@@ -53,17 +53,17 @@ An event and a response each have one time-zone preference. Changing the display
 - ChatGPT Sites for managed website and API hosting.
 - Neon PostgreSQL for saved events and responses.
 
-Private test site: https://whenkin.j4ouyang.chatgpt.site
+Public website: https://whenkin.j4ouyang.chatgpt.site
 
 ## Hosting and saved data
 
-ChatGPT Sites manages the website, API, versions, runtime secrets, and publishing. The existing Neon project stores events, responses, availability, and confirmed meeting times. Neon does not need to be deployed on another host. The database connection is configured as the server-only `DATABASE_URL` secret in Sites.
+ChatGPT Sites manages the website, API, versions, runtime secrets, and publishing. The existing Neon project stores events, responses, availability, and group-sharing settings. Neon does not need to be deployed on another host. The database connection is configured as the server-only `DATABASE_URL` secret in Sites.
 
-The Site starts private for owner testing. Its audience must be made public before an anonymous participant can use a shared event link.
+The Site is public. Its audience is independent of each event’s server-enforced organizer, participant, and response-edit permissions.
 
 ## Run it locally
 
-Use Node.js 22 or newer. Install dependencies using the included installer, configure a local ignored `.dev.vars` file with `DATABASE_URL`, then run `npm run dev`. The application uses the existing database schema in `migrations/`.
+Use Node.js 22 or newer. Install dependencies using the included installer, configure a local ignored `.dev.vars` file with `DATABASE_URL`, then run `npm run dev`. Apply migrations in numeric order. `002_participant_privacy.sql` adds a non-null privacy flag with a default of false, preserving existing events and selections. Apply it before deploying the corresponding API.
 
 ## Verify
 

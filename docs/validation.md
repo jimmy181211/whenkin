@@ -1,46 +1,30 @@
-# Validation and release checks
+# Validation and Release Checks
 
-## Automated verification
+## Current Change
 
-The migrated ChatGPT Sites app passes TypeScript checking and 32 automated tests. They cover time-zone conversions, daylight saving transitions, complete meeting-length matching, event and response lifecycles against a local PostgreSQL engine, secret edit and organizer permissions, stale updates, calendar downloads, invalid requests, client network errors, all three languages, and bounded write-rate protection.
+Implements server-enforced participant privacy with an organizer group-sharing switch; 30-minute display blocks with 15-minute fine-tuning; inline name validation; unsaved-change dialogs and browser unload protection; all requested content removals; English and Spanish Title Case; responsive containment rules; and current architecture and user-flow diagrams. The standalone guide route and component are removed. The home page retains its three brief steps.
 
-The Vinext production build is checked independently. The original React design and scheduling logic are retained; the Sites entry point routes API requests to the existing server and serves the interface through the managed framework.
+## Automated Verification
 
-## Hosting and database
+TypeScript checking, the Vinext production build, and all 36 automated tests passed during this change. Tests cover PostgreSQL event and response lifecycles, default privacy, participant-token isolation, organizer-only settings, sharing on and off, response counts, stale revisions, time zones, repeated and missing daylight-saving hours, 30-minute display with preserved 15-minute instants, all three languages, network failures, and bounded write protection. Existing legacy calendar API tests remain for backward compatibility; the website no longer displays a confirmed meeting or offers confirmation controls.
 
-The existing Neon production database is retained with its existing schema. `DATABASE_URL` is configured as a server-only Sites runtime secret. No database credentials are present in this repository or the browser bundle.
+## Deployment Status
 
-The Site starts private for owner testing. Initial browser QA uses the internal preview, which has no production database secret. Production database connectivity and the event workflow were also verified at the deployed private Site.
+The website's current audience is public at https://whenkin.j4ouyang.chatgpt.site. This change has not been deployed. The Sites source helper remains blocked by the current session policy (`sandbox_approval = false`); the Windows Git subprocess also reports a transport failure. The code was recovered from the connected GitHub repository and preserved for review. No production schema changes have been applied. The migration was also applied successfully to a fresh Neon branch of production: the new flag is non-null with default false, both existing events were preserved, and neither event had sharing enabled.
 
-## Integration testing with the owner
+Before deploying, apply migration 002 to Neon, synchronize this exact source with the existing Sites project, package the build and save/deploy through Sites. Keep the audience public. The database connection must remain a server-only runtime secret.
 
-1. Check `/api/health` returns `ready: true` on the deployed Site.
-2. Create an event with several dates and keep the organizer link.
-3. Open a participant link in another browser or private window after public access is enabled for release testing.
-4. Add two responses from different time zones and verify they refer to the same actual UTC moments.
-5. Change the displayed time zone and each of the three website languages; confirm selected availability stays unchanged.
-6. Reload the page, edit an existing response with its private link, and check that an older tab cannot overwrite a newer save.
-7. Confirm a meeting as organizer, download the calendar invitation, and verify its local time in a calendar application.
-8. On iOS Safari and Android Chrome, verify finger selection, zoom, scrolling, undo, and precise From/To editing.
+## Remaining Browser and Device Verification
 
-The Sites fallback limits writes per running server instance, with bounded memory. Broader abuse/load testing remains part of public-release preparation.
+The browser origin-approval gate declined opening the local preview. Visual layout, browser interactions, and physical-device touch behavior could not be independently verified in this session. Earlier browser results belong to the previous release and do not validate these changes.
 
-## Live deployment verification
-
-The private ChatGPT Site returned HTTP 200 with `ready: true` from `/api/health`. The following live checks passed against the existing Neon production database:
-
-- Live event creation saved to Neon.
-- Saved event reloads.
-- Two participant responses saved.
-- Different time-zone inputs produce the same whole-meeting match.
-- Private response link can edit.
-- Stale-tab overwrite rejected.
-- Organizer permission enforced.
-- Organizer confirms final meeting.
-- Confirmed meeting exports as a calendar invitation.
-
-A clearly labeled private test event was retained for owner review at `/e/30185723-1add-4a63-a204-3e1cd2e34824`. The multi-device and physical-phone checks above remain for the owner integration session. Public anonymous access has not been enabled.
-
-## Desktop and mobile browser QA
-
-The guide page and desktop layout were visually inspected. At a 390-pixel outer mobile frame (375-pixel content viewport), the landing page and event form fit without horizontal overflow. The time-zone search menu fit inside the viewport and found New York successfully. English, Simplified Chinese, and Spanish all fit the mobile viewport without horizontal overflow. These checks are browser layout checks, not physical-device touch tests.
+1. Create an event and preserve its private organizer link. Open its participant link in an independent browser.
+2. With sharing off, verify the participant sees only their own response and the count. Inspect network responses for the absence of other participant data and suggestions.
+3. Turn sharing on and verify the existing group interface; turn it off and refresh to verify private data is no longer returned.
+4. Select a 30-minute range, adjust it to quarter-hour boundaries, save, reload, and verify the half-block display and exact UTC instants in another time zone.
+5. Without a name, press Save: focus and inline error must appear beside the name field, with no bottom notice. Other editing controls remain usable.
+6. Change form fields or availability, then leave via a site link: verify Keep Editing and Leave Without Saving. Refresh, close, and browser navigation use the standard browser warning while changes are unsaved.
+7. Confirm saved changes allow normal navigation and unsaved drafts can be restored.
+8. At desktop and 320-, 375-, 390-, and 768-pixel widths, check English, Simplified Chinese, and Spanish: no overflowing text, clipped controls, or layout distortion. English and Spanish titles use Title Case; user-entered event titles remain unchanged.
+9. On iOS Safari and Android Chrome, verify painting, scroll mode, zoom, undo, partial selections, and precise From/To controls.
+10. Verify the retired guide URL returns 404 and no guide links, circled copy, misleading header date, or confirmed-time display remain.
