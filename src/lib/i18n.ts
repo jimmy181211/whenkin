@@ -142,13 +142,9 @@ export const messages: Record<string, [string, string]> = {
     "添加备注",
     "Añadir una nota"
   ],
-  "Which dates could work?": [
-    "哪些日期可能合适？",
-    "¿Qué fechas podrían servir?"
-  ],
-  "Pick one or more": [
-    "可多选",
-    "Elige una o varias"
+  "Event dates": [
+    "活动日期",
+    "Fechas del evento"
   ],
   "From": [
     "开始",
@@ -178,9 +174,9 @@ export const messages: Record<string, [string, string]> = {
     "{count} 小时",
     "{count} horas"
   ],
-  "Dates and hours above use this time zone. Your guests will see their own local times.": [
-    "以上日期和时段使用此时区。参与者会看到各自的当地时间。",
-    "Estas fechas y horas usan esta zona horaria. Los participantes verán su hora local."
+  "Your guests will see their own local time": [
+    "参与者会看到各自的当地时间",
+    "Los participantes verán su hora local"
   ],
   "Event creation is still being set up.": [
     "活动创建功能正在配置中。",

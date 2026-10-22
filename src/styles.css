@@ -111,3 +111,14 @@ body:has(.event-page) .header-new-event{display:none}
 .event-page{padding-inline:8px}.schedule-card{padding-inline:10px}
 .time-grid-wrap{margin-inline:-4px}.time-grid{grid-template-columns:46px repeat(var(--days),minmax(0,1fr))}
 }
+
+/* Keep response status near the context it describes at each screen size. */
+.event-meta>.mobile-save-status{display:none}
+.schedule-toolbar{justify-content:flex-end}
+.participant-name{grid-template-columns:auto minmax(0,220px) auto}
+.participant-save-status{align-self:center}.participant-save-status .save-status{margin-left:0}
+@media(max-width:699px){
+.event-summary .event-meta{align-items:center}
+.event-meta>.mobile-save-status{display:inline-flex}.mobile-save-status .save-status{font-size:11px;margin-left:0}
+.participant-save-status{display:none}.participant-name{grid-template-columns:1fr}
+}
