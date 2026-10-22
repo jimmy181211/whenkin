@@ -13,10 +13,20 @@ const owners=new Map<string,string>();
 async function create(){const r=await request('/events','POST',input);expect(r.status).toBe(201);const result=await r.json() as {id:string;adminToken:string};owners.set(result.id,result.adminToken);return result;}
 async function get(id:string){return await (await request(`/events/${id}`,'GET',undefined,owners.get(id))).json() as MeetingEvent;}
 async function respond(id:string,ranges:TimeRange[],name='Sam'){const r=await request(`/events/${id}/responses`,'POST',{name,timezone:'America/New_York',ranges});expect(r.status).toBe(201);return await r.json() as {id:string;editToken:string;revision:number};}
-beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/003_schedule_revision.sql',import.meta.url),'utf8'));},30000);
+beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/003_schedule_revision.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/004_optional_organizer_name.sql',import.meta.url),'utf8'));},30000);
 beforeEach(async()=>{await pg.exec('TRUNCATE events CASCADE');});
 afterAll(async()=>{await pg.close();});
 describe('PostgreSQL-backed event lifecycle',()=>{
+  it('creates events without an organizer name and still requires a title',async()=>{
+    for(const organizer_name of [undefined,'','   ']){
+      const response=await request('/events','POST',{...input,organizer_name});expect(response.status).toBe(201);
+      const created=await response.json() as {id:string;adminToken:string};owners.set(created.id,created.adminToken);
+      expect((await get(created.id)).organizer_name).toBe('');
+      expect((await request('/events/'+created.id+'/schedule','PATCH',{startTime:'10:00',endTime:'11:00',duration:30,schedule_revision:1},created.adminToken)).status).toBe(200);
+    }
+    for(const title of [undefined,'','   '])expect((await request('/events','POST',{...input,title,organizer_name:''})).status).toBe(400);
+    for(const organizer_name of [123,'x'.repeat(61)])expect((await request('/events','POST',{...input,organizer_name})).status).toBe(400);
+  });
   it('PostgreSQL compares timestamps entered in different named time zones',async()=>{
     const r=await pg.query<{same:boolean}>(`SELECT TIMESTAMPTZ '2027-01-15 10:00 America/Los_Angeles'=TIMESTAMPTZ '2027-01-15 13:00 America/New_York' AS same`);
     expect(r.rows[0].same).toBe(true);
@@ -76,27 +86,25 @@ describe('participant privacy',()=>{
     const created=await create(),event=await get(created.id),start=Date.parse(event.windows[0].start),ranges=[{start:new Date(start).toISOString(),end:new Date(start+3600000).toISOString()}];
     const alice=await respond(created.id,ranges,'Alice'),bob=await respond(created.id,[],'Bob');
     const publicEvent=await (await request(`/events/${created.id}`)).json() as MeetingEvent;
-    expect(publicEvent.response_count).toBe(2);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent.show_group_availability).toBe(false);expect(publicEvent.is_organizer).toBe(false);
+    expect(publicEvent.response_count).toBe(2);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent).not.toHaveProperty('show_group_availability');expect(publicEvent).not.toHaveProperty('can_view_group');expect(publicEvent.is_organizer).toBe(false);
     expect(JSON.stringify(publicEvent)).not.toContain('Alice');expect(JSON.stringify(publicEvent)).not.toContain(alice.id);
     const mine=await (await request(`/events/${created.id}?response_id=${alice.id}`,'GET',undefined,alice.editToken)).json() as MeetingEvent;
-    expect(mine.responses.map((r:ResponseData)=>r.name)).toEqual(['Alice']);expect(mine.response_count).toBe(2);expect(mine.candidates).toEqual([]);expect(mine.can_view_group).toBe(false);
+    expect(mine.responses.map((r:ResponseData)=>r.name)).toEqual(['Alice']);expect(mine.response_count).toBe(2);expect(mine.candidates).toEqual([]);
     expect((await request(`/events/${created.id}?response_id=${bob.id}`,'GET',undefined,alice.editToken)).status).toBe(403);
     expect((await get(created.id)).is_organizer).toBe(true);expect((await get(created.id)).responses).toHaveLength(2);
   });
-  it('allows only organizers to enable sharing and removes group data when disabled again',async()=>{
-    const created=await create(),event=await get(created.id);const person=await respond(created.id,[event.windows[0]],'Private Participant');
-    const settings=`/events/${created.id}/settings`;
-    expect((await request(settings,'PATCH',{show_group_availability:true})).status).toBe(403);
-    expect((await request(settings,'PATCH',{show_group_availability:true},person.editToken)).status).toBe(403);
-    expect((await request(settings,'PATCH',{show_group_availability:'true'},created.adminToken)).status).toBe(400);
-    expect((await request(settings,'PATCH',{show_group_availability:true},created.adminToken)).status).toBe(200);
-    const shared=await (await request(`/events/${created.id}`)).json() as MeetingEvent;
-    expect(shared.responses).toHaveLength(1);expect(shared.candidates!.length).toBeGreaterThan(0);expect(shared.can_view_group).toBe(true);expect(shared.is_organizer).toBe(false);
-    expect((await request(settings,'PATCH',{show_group_availability:false},created.adminToken)).status).toBe(200);
-    const hidden=await (await request(`/events/${created.id}`)).json() as MeetingEvent;expect(hidden.responses).toEqual([]);expect(hidden.candidates).toEqual([]);expect(hidden.response_count).toBe(1);
-    expect((await get(created.id)).responses).toHaveLength(1);
-  });
-});
+  it('removes sharing settings and ignores legacy sharing flags for existing events',async()=>{
+    const created=await create(),event=await get(created.id);
+    const alice=await respond(created.id,[event.windows[0]],'Alice'),bob=await respond(created.id,[],'Bob');
+    await pg.query('UPDATE events SET show_group_availability=true WHERE id=$1',[created.id]);
+    expect((await request('/events/'+created.id+'/settings','PATCH',{show_group_availability:true},created.adminToken)).status).toBe(404);
+    const publicEvent=await (await request('/events/'+created.id)).json() as MeetingEvent;
+    expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent.response_count).toBe(2);
+    const mine=await (await request('/events/'+created.id+'?response_id='+alice.id,'GET',undefined,alice.editToken)).json() as MeetingEvent;
+    expect(mine.responses.map(r=>r.id)).toEqual([alice.id]);expect(JSON.stringify(mine)).not.toContain(bob.id);expect(mine.candidates).toEqual([]);
+    const owner=await get(created.id);expect(owner.responses).toHaveLength(2);expect(owner.candidates!.length).toBeGreaterThan(0);
+    expect(owner).not.toHaveProperty('show_group_availability');expect(owner).not.toHaveProperty('can_view_group');
+  });});
 
 describe('organizer schedule edits',()=>{
   it('updates every event window and clips availability while retaining private links and responses',async()=>{
