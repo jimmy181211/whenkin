@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Copy, Info, Link2, LoaderCircle, LockKeyhole, Plus, RefreshCw, Sparkles, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Calendar from './components/Calendar';
 import { useUnsavedNavigation } from './components/UnsavedNavigation';
 import TimezonePicker from './components/TimezonePicker';
@@ -18,9 +18,11 @@ export default function App(){
   const language=useLanguage();
   useEffect(()=>{document.documentElement.lang=language==='zh'?'zh-CN':language;document.title=`Whenkin — ${t("Find Your Shared Time.")}`;},[language]);
   const path=usePathname()||'/',match=path.match(/^\/e\/([0-9a-f-]{36})\/?$/i);
-  return <><Header inEvent={!!match}/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><Link prefetch={false} className="button primary" href="/">{t("Create an event")} <ArrowRight size={17}/></Link></main>}<Footer/></>;
+  return <><Header inEvent={!!match}/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><PageLink className="button primary" href="/">{t("Create an event")} <ArrowRight size={17}/></PageLink></main>}<Footer/></>;
 }
-function Header({inEvent}:{inEvent:boolean}){return <header className="site-header"><Link prefetch={false} className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></Link><nav aria-label={t('Main navigation')}><LanguageSelector/>{inEvent&&<Link prefetch={false} className="button secondary compact" href="/"><Plus size={16}/> {t('New event')}</Link>}</nav></header>;}
+// Editor pages use document navigation so browser Back/reload retain native unsaved-work protection.
+function PageLink(props:{href:string;children:React.ReactNode;className?:string;'aria-label'?:string}){return <Link {...props} prefetch={false} onNavigate={event=>{event.preventDefault();window.location.assign(new URL(props.href,location.href).href);}}/>;}
+function Header({inEvent}:{inEvent:boolean}){return <header className="site-header"><PageLink className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></PageLink><nav aria-label={t('Main navigation')}><LanguageSelector/>{inEvent&&<PageLink className="button secondary compact" href="/"><Plus size={16}/> {t('New event')}</PageLink>}</nav></header>;}
 function Footer(){return <footer className="site-footer"><span>{t(BRAND.tagline)}</span><span>{t("Made for people, wherever they are.")}<GlobeIcon/></span></footer>;}
 function GlobeIcon(){return <span className="footer-dot" aria-hidden="true"/>;}
 const steps=[
@@ -33,7 +35,6 @@ function labelTime(value:string){if(value==='24:00')return t('Midnight (next day
 
 async function connectionStatus():Promise<'ready'|'setup'|'unreachable'>{try{const result=await api<{ready:boolean}>('/health');return result.ready===true?'ready':'setup';}catch{return 'unreachable';}}
 function CreatePage(){
-  const router=useRouter();
   const [zone,setZone]=useState(deviceTimezone),[dates,setDates]=useState<string[]>([]),[title,setTitle]=useState(''),[organizer,setOrganizer]=useState(''),[description,setDescription]=useState(''),[notes,setNotes]=useState(false),[start,setStart]=useState('09:00'),[end,setEnd]=useState('18:00'),[duration,setDuration]=useState(60),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const createSnapshot=JSON.stringify({zone,dates,title,organizer,description,start,end,duration}),[initialSnapshot]=useState(createSnapshot);
   const navigation=useUnsavedNavigation(createSnapshot!==initialSnapshot,"Your Event Has Not Been Saved.");
@@ -41,7 +42,7 @@ function CreatePage(){
   const checkConnection=async()=>{setConnection('checking');setConnection(await connectionStatus());};
   useEffect(()=>{let alive=true;void connectionStatus().then(status=>{if(alive)setConnection(status);});return()=>{alive=false;};},[]);
   async function create(e:React.FormEvent){e.preventDefault();setError('');if(connection!=='ready')return;if(!dates.length){setError('Choose at least one date on the calendar.');return;}if(start>=end){setError('Choose an end time after the start time.');return;}setBusy(true);
-    try {const result=await api<{id:string;adminToken:string}>('/events',{method:'POST',body:JSON.stringify({title,organizer_name:organizer,description,timezone:zone,dates,startTime:start,endTime:end,duration})});saveSecret(`meetgrid:owner:${result.id}`,result.adminToken);navigation.allowNavigation();router.push(`/e/${result.id}#organizer=${result.adminToken}`);}
+    try {const result=await api<{id:string;adminToken:string}>('/events',{method:'POST',body:JSON.stringify({title,organizer_name:organizer,description,timezone:zone,dates,startTime:start,endTime:end,duration})});saveSecret(`meetgrid:owner:${result.id}`,result.adminToken);navigation.allowNavigation();window.location.assign(new URL(`/e/${result.id}#organizer=${result.adminToken}`,location.href).href);}
     catch(e){setError(e instanceof Error?e.message:'Could not create your event. Please try again.');setBusy(false);}
   }
   return <main className="create-page">{navigation.dialog}<section className="intro"><div className="eyebrow"><span/> {t("LESS BACK-AND-FORTH. MORE TOGETHER.")}</div><h1>{t("Find a Time.")}<br/><span>{t("Make It Happen.")}</span></h1><div className="intro-promises"><span><Check size={16}/> {t("No sign-up needed")}</span><span><Check size={16}/> {t("Every time zone welcome")}</span></div>
@@ -113,7 +114,7 @@ function EventPage({id}:{id:string}){
   async function changeSharing(enabled:boolean){if(!event||settingsBusy)return;setSettingsBusy(true);setError('');try{await api(`/events/${id}/settings`,{method:'PATCH',headers:{Authorization:`Bearer ${admin}`},body:JSON.stringify({show_group_availability:enabled})});applyEvent(await load());}catch(e){setError(e instanceof Error?e.message:'Could not save. Your draft stays on this device.');}finally{setSettingsBusy(false);}}
   async function copy(value:string,label:string){try{await navigator.clipboard.writeText(value);setCopied(label);setTimeout(()=>setCopied(''),2200);}catch{setError('Copy did not work. Select the link in the sharing panel and copy it manually.');}}
   function restore(){try{const draft=JSON.parse(loadSecret(`meetgrid:draft:${id}`)||'null');if(draft&&event){const allowed=new Set(allSlots(event.windows)),restored={name:draft.name||'',zone:draft.zone||zone,selected:new Set<number>((draft.slots||[]).filter((s:number)=>allowed.has(s)))};setName(restored.name);setZone(restored.zone);setSelected(restored.selected);changeDraft(restored);}}catch{}setShowRestore(false);}
-  if(!event)return <main className="loading-page">{error?<><h1>{t("We Couldn’t Open That Event.")}</h1><p role="alert">{t(error)}</p><Link prefetch={false} href="/" className="button secondary">{t("Back to home")}</Link></>:<><LoaderCircle className="spin"/><p>{t("Finding your shared time…")}</p></>}</main>;
+  if(!event)return <main className="loading-page">{error?<><h1>{t("We Couldn’t Open That Event.")}</h1><p role="alert">{t(error)}</p><PageLink href="/" className="button secondary">{t("Back to home")}</PageLink></>:<><LoaderCircle className="spin"/><p>{t("Finding your shared time…")}</p></>}</main>;
   const organizer=event.is_organizer===true,canViewGroup=event.can_view_group===true,responseCount=event.response_count??event.responses.length,eventLink=location.origin+`/e/${id}`,hours=selected.size/4;
   return <main className="event-page">{navigation.dialog}
     <div className={`event-layout ${canViewGroup?'':'private-view'}`}><section className="schedule-card">
