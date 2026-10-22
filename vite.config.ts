@@ -44,6 +44,7 @@ export default defineConfig(async ({ command }) => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    define: { __WHENKIN_BUILD_ID__: JSON.stringify(new Date().toISOString()) },
     server: {
       ...(managedLinux
         ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] }
