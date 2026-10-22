@@ -8,22 +8,15 @@ The organizer controls **Let participants see group availability**. It is **off 
 
 ```mermaid
 flowchart TD
-  O["Private Organizer Link"] --> OA["Authenticate Organizer"]
-  OA --> OV["View All Responses and Common Ground"]
-  OA --> T["Set Group Sharing: Off by Default"]
-  I["Participant Invitation Link"] --> P["Server Checks Current Group-Sharing Setting"]
-  E["Private Response Edit Link"] --> V{"Valid Response Token?"}
-  V -->|No| X["Reject Request"]
-  V -->|Yes| P
-  T --> R["Next Participant Request or Refresh"]
-  R --> P
-  P --> S{"Group Sharing On?"}
-  S -->|"No: Default"| H["Return Only Own Saved Response if Authenticated, Plus Response Count"]
-  H --> HU["Hide Other Respondents and Common Ground"]
-  S -->|Yes| G["Return Group Responses and Suggested Times"]
-  G --> GU["Show Group Availability, Common Ground, and Respondents"]
-  HU --> W["Edit Only Own Response with Its Private Token"]
-  GU --> W
+  L["Open or Refresh Event Link"] --> A{"Server Checks Access"}
+  A -->|"Valid Organizer Link"| O["Always See All Responses<br/>and Common Ground"]
+  A -->|"Participant or Valid Response Link"| S{"Group Sharing On?<br/>Off by Default"}
+  A -->|"Invalid Private Credentials"| X["Reject Request"]
+  O -.->|"Organizer Controls Setting"| S
+  S -->|Off| H["Own Availability + Response Count<br/>Other Respondents and Suggestions Hidden"]
+  S -->|On| G["Group Availability, Respondents,<br/>and Common Ground"]
+  H --> E["Private Token Edits Own Response Only"]
+  G --> E
 ```
 
 | Access | Group Sharing Off | Group Sharing On | Editing Rights |

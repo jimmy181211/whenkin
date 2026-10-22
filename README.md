@@ -27,21 +27,15 @@ Group sharing is off by default. While it is off, participants see their own ava
 
 ```mermaid
 flowchart TD
-  A["Create an Event"] --> O["Keep Private Organizer Link"]
-  A --> I["Share Participant Invitation Link"]
-  O --> M["View All Responses and Manage Event Hours"]
-  O --> T["Control Group Sharing: Off by Default"]
-  I --> P{"Server Allows Group View?"}
-  T --> P
-  P -->|"No: Default"| H["Own Availability and Response Count Only"]
-  P -->|Yes| G["Group Availability and Common Ground"]
-  H --> E["Select 30-Minute Blocks and Fine-Tune in 15-Minute Steps"]
-  G --> E
-  E --> N["Enter Name and Save Own Response"]
-  N --> S["ChatGPT Sites Stores Availability in Neon"]
-  S --> L["Private Edit Link Changes Only Its Own Response"]
-  S --> M
-  M --> F["Organizer Shares Final Arrangement Outside Whenkin"]
+  C["Create Event"] --> O["Private Organizer Link<br/>Edit Event Hours and Control Sharing"]
+  C --> P["Participant Invitation Link"]
+  O -.->|"Controls"| S{"Server Checks Group Sharing<br/>Off by Default"}
+  P --> S
+  S -->|"Off: Own Availability + Response Count"| R["Mark 30-Minute Blocks<br/>Fine-Tune in 15-Minute Steps"]
+  S -->|"On: Group Availability + Common Ground"| R
+  R --> N["Enter Name and Save<br/>ChatGPT Sites → Neon"]
+  N --> E["Private Edit Link<br/>Edit Own Response Only"]
+  N --> F["Organizer Compares All Responses<br/>and Shares Final Arrangement Outside Whenkin"]
 ```
 
 More diagrams: [How the website works](docs/flowchart.md).
