@@ -5,7 +5,6 @@ export const languageOptions: { value: Language; label: string }[] = [
 ];
 export const messages: Record<string, [string, string]> = {
   "Participants see only their own availability.": ["参与者只能看到自己的空闲时间。", "Los participantes solo ven su propia disponibilidad."],
-  "Keep your organizer link private. It lets you view all responses and edit event hours.": ["请妥善保管组织者链接，用于查看全部回复和修改活动时段。", "Mantén privado tu enlace de organizador. Permite ver todas las respuestas y editar los horarios del evento."],
   "Find your shared time.": [
     "找到大家的共同时间。",
     "Encuentra un momento para todos."
@@ -422,10 +421,6 @@ export const messages: Record<string, [string, string]> = {
   "Good plans are shared.": [
     "好计划，一起分享。",
     "Los buenos planes se comparten."
-  ],
-  "Send this link to your group. Everyone can add their availability without an account.": [
-    "把此链接发给大家。每个人都能填写空闲时间，无需注册。",
-    "Envía este enlace al grupo. Todos pueden indicar cuándo están libres sin crear una cuenta."
   ],
   "Participant link": [
     "参与者链接",
@@ -870,10 +865,6 @@ export const messages: Record<string, [string, string]> = {
   "Who Can Make It?": [
     "谁能参加？",
     "¿Quién Puede Asistir?"
-  ],
-  "Good Plans Are Shared.": [
-    "好计划，一起分享。",
-    "Los Buenos Planes Se Comparten."
   ],
   "Fine-Tune Your Last Selection": [
     "微调刚才选择的时段",
