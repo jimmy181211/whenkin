@@ -40,3 +40,7 @@ The private ChatGPT Site returned HTTP 200 with `ready: true` from `/api/health`
 - Confirmed meeting exports as a calendar invitation.
 
 A clearly labeled private test event was retained for owner review at `/e/30185723-1add-4a63-a204-3e1cd2e34824`. The multi-device and physical-phone checks above remain for the owner integration session. Public anonymous access has not been enabled.
+
+## Desktop and mobile browser QA
+
+The guide page and desktop layout were visually inspected. At a 390-pixel outer mobile frame (375-pixel content viewport), the landing page and event form fit without horizontal overflow. The time-zone search menu fit inside the viewport and found New York successfully. English, Simplified Chinese, and Spanish all fit the mobile viewport without horizontal overflow. These checks are browser layout checks, not physical-device touch tests.
