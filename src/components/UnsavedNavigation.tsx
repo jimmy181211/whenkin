@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n';
 
+type PageNavigationEvent=Event & {destination:{url:string}};
+type NavigationWindow=Window & {navigation?:EventTarget};
+
 export function useUnsavedNavigation(unsaved:boolean,message="Your Availability Hasn't Been Saved.") {
   const bypass=useRef(false),[destination,setDestination]=useState('');
   const dialog=useRef<HTMLDialogElement>(null);
@@ -14,8 +17,16 @@ export function useUnsavedNavigation(unsaved:boolean,message="Your Availability 
       if(next.origin===location.origin&&next.pathname===location.pathname&&next.search===location.search)return;
       event.preventDefault();setDestination(next.href);
     };
+    const pageNavigation=(window as NavigationWindow).navigation;
+    const traverse=(event:Event)=>{
+      if(!unsaved||bypass.current||!event.cancelable)return;
+      const next=new URL((event as PageNavigationEvent).destination.url,location.href);
+      if(next.origin===location.origin&&next.pathname===location.pathname&&next.search===location.search)return;
+      event.preventDefault();setDestination(next.href);
+    };
+    pageNavigation?.addEventListener('navigate',traverse);
     window.addEventListener('beforeunload',unload);document.addEventListener('click',navigate,true);
-    return()=>{window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);};
+    return()=>{pageNavigation?.removeEventListener('navigate',traverse);window.removeEventListener('beforeunload',unload);document.removeEventListener('click',navigate,true);};
   },[unsaved]);
   useEffect(()=>{if(destination&&unsaved){if(!dialog.current?.open)dialog.current?.showModal();}else dialog.current?.close();},[destination,unsaved]);
   const close=()=>{dialog.current?.close();setDestination('');};
