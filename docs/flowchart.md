@@ -2,6 +2,18 @@
 
 Whenkin collects availability. The organizer compares responses and communicates the final arrangement outside the website.
 
+## Page Flow
+
+```mermaid
+flowchart LR
+  H["Main Page"] -->|"Create Event"| O["Organizer View"]
+  O -->|"Share Participant Link"| P["Participant View"]
+  O -->|"Logo or New Event"| H
+  P -->|"Logo or New Event"| H
+```
+
+See [Participant Privacy](#participant-privacy) for access rules and [Editing and Navigation](#editing-and-navigation) for saving and exit behavior.
+
 ## Participant Privacy
 
 The organizer controls **Let participants see group availability**. It is **off by default**. The server applies this setting before sending response data to the browser.

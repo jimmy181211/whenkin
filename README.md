@@ -4,6 +4,18 @@
 
 Whenkin helps a group choose a time to meet. Create an event, share its link, and let everyone mark when they are free. Whenkin then suggests times that fit the most people for the whole meeting.
 
+## Page Flow
+
+```mermaid
+flowchart LR
+  H["Main Page"] -->|"Create Event"| O["Organizer View"]
+  O -->|"Share Participant Link"| P["Participant View"]
+  O -->|"Logo or New Event"| H
+  P -->|"Logo or New Event"| H
+```
+
+See [Participant Privacy](docs/flowchart.md#participant-privacy) for access rules and [Editing and Navigation](docs/flowchart.md#editing-and-navigation) for saving and exit behavior.
+
 ![Whenkin logo and visual style](docs/whenkin-reference.png)
 
 The website works on computers and phones. You do not need an account to respond.
