@@ -2,17 +2,22 @@
 
 Whenkin collects availability. The organizer compares responses and communicates the final arrangement outside the website.
 
-## Page Flow
+## Big Picture
 
 ```mermaid
-flowchart LR
+flowchart TD
   H["Main Page"] -->|"Create Event"| O["Organizer View"]
   O -->|"Share Participant Link"| P["Participant View"]
-  O -->|"Logo or New Event"| H
-  P -->|"Logo or New Event"| H
+  O -->|"Save Event or Change Its Hours"| N["Save Event and Responses to Neon"]
+  P -->|"Submit or Update Availability"| N
+  N --> C["Whenkin Calculates Best Meeting Times"]
+  C -->|"Show Ranked Suggestions"| O
+  O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
 ```
 
-See [Participant Privacy](#participant-privacy) for access rules and [Editing and Navigation](#editing-and-navigation) for saving and exit behavior.
+Creating an event saves its details and opens the organizer view. Responses and event changes feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
+
+See [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
 
 ## Participant Privacy
 
