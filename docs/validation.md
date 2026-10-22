@@ -10,9 +10,13 @@ TypeScript checking, the Vinext production build, and all 36 automated tests pas
 
 ## Deployment Status
 
-The website's current audience is public at https://whenkin.j4ouyang.chatgpt.site. This change has not been deployed. The Sites source helper remains blocked by the current session policy (`sandbox_approval = false`); the Windows Git subprocess also reports a transport failure. The code was recovered from the connected GitHub repository and preserved for review. No production schema changes have been applied. The migration was also applied successfully to a fresh Neon branch of production: the new flag is non-null with default false, both existing events were preserved, and neither event had sharing enabled.
+Public Sites version 3 deployed successfully on October 22, 2026 at https://whenkin.j4ouyang.chatgpt.site. Its source commit in the managed Sites repository is d6b2895415ba075125e8e50a5b2416eedcd554c4. The earlier command restriction was resolved through reviewed command escalation. The audience remains public.
 
-Before deploying, apply migration 002 to Neon, synchronize this exact source with the existing Sites project, package the build and save/deploy through Sites. Keep the audience public. The database connection must remain a server-only runtime secret.
+Migration 002 was verified on a fresh Neon branch and then applied to production. Both pre-existing events were preserved with group sharing off. No availability records were changed by the migration.
+
+Ten live checks passed: public homepage and updated title; removed guide returns 404; Neon health; private defaults; no anonymous participant-data leakage; authenticated private edit reads and quarter-hour precision; full organizer results; organizer-only sharing on/off; edit authorization and stale-save rejection; and missing-name rejection. One clearly labeled release-test event was retained at /e/0df390d6-0881-49b2-a316-3121b140e34b.
+
+The temporary migration branch expires automatically on October 23, 2026 at 07:30 UTC. No production credentials or private edit tokens are included in source or these notes.
 
 ## Remaining Browser and Device Verification
 
