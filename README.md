@@ -17,7 +17,7 @@ flowchart TD
   O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
 ```
 
-Responses and event changes update the same saved event, and suggestions return to the organizer. See [Participant Privacy](docs/flowchart.md#participant-privacy), [Website and Storage](docs/flowchart.md#website-and-storage), and [Editing and Navigation](docs/flowchart.md#editing-and-navigation) for the details.
+Responses and event changes update the same saved event, and suggestions return to the organizer. See [Calculating the Best Meeting Time](docs/flowchart.md#calculating-the-best-meeting-time), [Participant Privacy](docs/flowchart.md#participant-privacy), [Website and Storage](docs/flowchart.md#website-and-storage), and [Editing and Navigation](docs/flowchart.md#editing-and-navigation) for the details.
 
 ![Whenkin logo and visual style](docs/whenkin-reference.png)
 

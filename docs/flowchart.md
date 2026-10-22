@@ -17,7 +17,26 @@ flowchart TD
 
 Creating an event saves its details and opens the organizer view. Responses and event changes feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
 
-See [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
+See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for ranking, [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
+
+## Calculating the Best Meeting Time
+
+```mermaid
+flowchart TD
+  A["Load Event Hours, Meeting Length,<br/>and Saved Responses from Neon"] --> B["Find Full-Length Meeting Windows<br/>at 15-Minute Start Intervals"]
+  B --> C["Count Respondents Available<br/>for the Entire Meeting"]
+  C --> D["Rank by Most Available Respondents<br/>Break Ties by Earliest Start"]
+  D --> E["Drop Zero-Attendee Options<br/>Skip Nearby Options with the Same Count"]
+  E --> F{"Any Suggestions Left?"}
+  F -->|Yes| G["Show Ranked Suggestions<br/>in the Viewer's Time Zone"]
+  F -->|No| H["Show No Suggestions Yet"]
+```
+
+The single Neon step uses the event's current saved data; see [Website and Storage](#website-and-storage). Overlapping or touching event windows are combined before calculation. Candidate starts are 15 minutes apart, even though the selection grid uses 30-minute blocks. Each candidate must fit the entire meeting length within the event hours.
+
+Only people who have responded enter the count. A person counts as available only when their saved availability covers the whole meeting; separate people's partial availability cannot be combined to cover it. **Best Fit** means the highest attendance count, with the earliest start breaking a tie. It does not require everyone to be available.
+
+To keep the list useful, skip a candidate if a kept suggestion has the same attendee count and starts less than one meeting length away. Keep up to 20 suggestions, show five initially, and reveal five more at a time. Times are displayed in the viewer's chosen time zone. The organizer can always view these results; participant access follows [Participant Privacy](#participant-privacy).
 
 ## Participant Privacy
 
