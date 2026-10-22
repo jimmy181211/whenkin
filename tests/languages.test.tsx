@@ -38,7 +38,7 @@ describe('language changes across the website',()=>{
     setLanguage('es');const html=page();
     expect(html).toContain('Crea tu Evento');
     expect(html).toContain('Los Participantes Marcan Cuándo Están Libres');
-    expect(html).toContain('¿Qué fechas podrían servir?');
+    expect(html).toContain('Fechas del evento');
     expect(page('/how-it-works')).toContain('guide-page');
     expect(t('Use your private edit link to change this response.')).toContain('Usa tu enlace privado');
     expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
