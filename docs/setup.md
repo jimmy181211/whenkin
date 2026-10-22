@@ -10,4 +10,4 @@ The Site audience is public. Event privacy is enforced independently by the API.
 
 The website retains English, Simplified Chinese, and Spanish. Language and time-zone choices are independent, and display changes do not alter the actual saved UTC moments.
 
-Apply `migrations/002_participant_privacy.sql` before deploying this revision. It adds the group-sharing setting, off by default for new and existing events. No availability records are changed.
+Apply migrations in order for a new database. Migration 002 is retained for schema history; its sharing flag is no longer used by the application. Existing flags never enable participant access to other responses. Apply `004_optional_organizer_name.sql` before publishing optional organizer names; saved names and availability are preserved.
