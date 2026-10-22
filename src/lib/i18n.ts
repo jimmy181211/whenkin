@@ -952,6 +952,7 @@ export const messages: Record<string, [string, string]> = {
     "Whenkin 推荐合适的时间",
     "Whenkin Sugiere los Mejores Horarios"
   ]
+,"Share Event":["分享活动","Compartir Evento"]
 };
 const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES' } as const;
 export const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'zh' || value === 'es';
