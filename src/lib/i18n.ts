@@ -116,6 +116,7 @@ export const messages: Record<string, [string, string]> = {
     "例如：周五聚餐、团队交流……",
     "Por ejemplo: cena del viernes, reunión del equipo…"
   ],
+  "How it works": ["使用方法", "Cómo funciona"],
   "Your name": [
     "你的姓名",
     "Tu nombre"

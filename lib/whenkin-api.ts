@@ -27,7 +27,7 @@ async function body(request:Request) {
   catch { throw new Problem(400,'The information could not be read. Please try again.'); }
 }
 export function validateEvent(input:CreateInput,allowExistingDates=false) {
-  const title=text(input.title,'an event name',100), organizer=text(input.organizer_name,'your name',60), description=text(input.description??'','a description',1000,true);
+  const title=text(input.title,'an event name',100), organizer=text(input.organizer_name??'','your name',60,true), description=text(input.description??'','a description',1000,true);
   if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
   if(!Number.isInteger(input.duration)||input.duration<15||input.duration>240||input.duration%15) throw new Problem(400,'Choose a meeting length between 15 minutes and 4 hours.');
   if(!Array.isArray(input.dates)||!input.dates.length||input.dates.length>31||new Set(input.dates).size!==input.dates.length) throw new Problem(400,'Choose between 1 and 31 different dates.');

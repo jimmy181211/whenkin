@@ -13,10 +13,20 @@ const owners=new Map<string,string>();
 async function create(){const r=await request('/events','POST',input);expect(r.status).toBe(201);const result=await r.json() as {id:string;adminToken:string};owners.set(result.id,result.adminToken);return result;}
 async function get(id:string){return await (await request(`/events/${id}`,'GET',undefined,owners.get(id))).json() as MeetingEvent;}
 async function respond(id:string,ranges:TimeRange[],name='Sam'){const r=await request(`/events/${id}/responses`,'POST',{name,timezone:'America/New_York',ranges});expect(r.status).toBe(201);return await r.json() as {id:string;editToken:string;revision:number};}
-beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/003_schedule_revision.sql',import.meta.url),'utf8'));},30000);
+beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/003_schedule_revision.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/004_optional_organizer_name.sql',import.meta.url),'utf8'));},30000);
 beforeEach(async()=>{await pg.exec('TRUNCATE events CASCADE');});
 afterAll(async()=>{await pg.close();});
 describe('PostgreSQL-backed event lifecycle',()=>{
+  it('creates events without an organizer name and still requires a title',async()=>{
+    for(const organizer_name of [undefined,'','   ']){
+      const response=await request('/events','POST',{...input,organizer_name});expect(response.status).toBe(201);
+      const created=await response.json() as {id:string;adminToken:string};owners.set(created.id,created.adminToken);
+      expect((await get(created.id)).organizer_name).toBe('');
+      expect((await request('/events/'+created.id+'/schedule','PATCH',{startTime:'10:00',endTime:'11:00',duration:30,schedule_revision:1},created.adminToken)).status).toBe(200);
+    }
+    for(const title of [undefined,'','   '])expect((await request('/events','POST',{...input,title,organizer_name:''})).status).toBe(400);
+    for(const organizer_name of [123,'x'.repeat(61)])expect((await request('/events','POST',{...input,organizer_name})).status).toBe(400);
+  });
   it('PostgreSQL compares timestamps entered in different named time zones',async()=>{
     const r=await pg.query<{same:boolean}>(`SELECT TIMESTAMPTZ '2027-01-15 10:00 America/Los_Angeles'=TIMESTAMPTZ '2027-01-15 13:00 America/New_York' AS same`);
     expect(r.rows[0].same).toBe(true);

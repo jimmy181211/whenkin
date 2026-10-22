@@ -21,7 +21,7 @@ Responses and event changes update the same saved event, and suggestions return 
 
 ![Whenkin logo and visual style](docs/whenkin-reference.png)
 
-The website works on computers and phones. You do not need an account to respond.
+The website works on computers and phones. You do not need an account to respond. Event titles are required; organizer names are optional. On phones, the brief instructions live on a separate “How it works” page linked from the homepage, keeping the event form concise. Desktop keeps the three steps alongside the form.
 
 ## What It Does
 
@@ -92,3 +92,5 @@ Run `npm run check`, `npm test`, and `npm run build`. The tests cover time zones
 The original source is at https://github.com/jimmy181211/whenkin. This Sites checkout retains the existing design and scheduling logic, with a managed hosting entry point. See `docs/flowchart.md` for the complete flow.
 
 Organizer schedule edits require `003_schedule_revision.sql` before the new API is deployed. It adds a positive schedule revision counter without changing existing event windows or availability. The organizer can edit From, Until, and Meeting Length; unchanged participant links reflect new windows and retain availability only where it still fits. Run `npm run lint -- --max-warnings 0` alongside the other verification commands.
+
+Apply `004_optional_organizer_name.sql` before publishing the optional-organizer-name change. It relaxes the existing name-length constraint to allow an empty organizer name and preserves existing names. Participant response names remain required.

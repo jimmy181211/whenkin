@@ -12,13 +12,17 @@ vi.mock('next/navigation',()=>({usePathname:()=>window.location.pathname,useRout
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path,href:'http://localhost'+path,origin:'http://localhost'},innerWidth:390});return renderToStaticMarkup(<App/>);};
 describe('language changes across the website',()=>{
-  it('starts in English with the brief home-page steps and no guide route',()=>{
+  it('starts in English with desktop steps and a link to the mobile guide',()=>{
     expect(getLanguage()).toBe('en');
     const html=page();
     expect(html).toContain('The Organizer Creates an Event');
     expect(html).toContain('Participants Mark When They’re Free');
     expect(html).toContain('Whenkin Suggests the Best Times');
     expect(html).not.toMatch(/href="\/demo"|Try an example|Try the demo/);
+    expect(html).toContain('href="/how-it-works"');
+    expect(page('/how-it-works')).toContain('The Organizer Creates an Event');
+    expect(html).toMatch(/autoComplete="off" required=""/);
+    expect(html).toMatch(/autoComplete="given-name" maxLength="60"/);
   });
   it('renders Chinese forms, instructions, and the selected language',()=>{
     setLanguage('zh');const html=page();
@@ -27,15 +31,15 @@ describe('language changes across the website',()=>{
     expect(html).toContain('参与者标记空闲时间');
     expect(html).toContain('value="zh" selected=""');
     expect(html).not.toContain('What are you planning?');
-    expect(page('/how-it-works')).not.toContain('guide-page');
+    expect(page('/how-it-works')).toContain('guide-page');
     expect(getLocale()).toBe('zh-CN');
   });
   it('renders Spanish forms, guide, dates, and explanatory errors',()=>{
     setLanguage('es');const html=page();
     expect(html).toContain('Crea tu Evento');
     expect(html).toContain('Los Participantes Marcan Cuándo Están Libres');
-    expect(html).toContain('Elige las fechas que podrían servir');
-    expect(page('/how-it-works')).not.toContain('guide-page');
+    expect(html).toContain('¿Qué fechas podrían servir?');
+    expect(page('/how-it-works')).toContain('guide-page');
     expect(t('Use your private edit link to change this response.')).toContain('Usa tu enlace privado');
     expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
   });

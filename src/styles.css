@@ -78,3 +78,27 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
   .legal-body p{font-size:16px;line-height:1.8}
   .legal-contact{padding:16px}
 }
+
+/* Keep the mobile creation flow focused on the form. */
+.calendar-foot.empty{display:none}
+.mobile-guide-link{display:none}
+.guide-page{max-width:720px;margin:0 auto;padding:36px 24px 64px}
+.guide-page>.text-button{display:inline-flex;min-height:44px;align-items:center;margin-bottom:16px}
+.guide-card{background:white;border:1px solid var(--line);border-radius:20px;padding:32px}
+.guide-card h1{font-size:30px}.guide-card .how-it-works{max-width:none;border:0;margin:0 0 24px;padding:0}
+.guide-card .how-it-works li p{max-width:none}
+@media(max-width:699px){
+.create-page .mobile-hide,.create-page .desktop-steps{display:none}
+.mobile-guide-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:13px;color:var(--primary);text-underline-offset:3px}
+.create-page .intro{padding-bottom:0}.create-page .intro h1{margin-top:0}
+.guide-page{padding:20px 16px 40px}.guide-card{padding:24px 20px}.guide-card h1{font-size:26px}
+.guide-card .how-it-works strong{font-size:14px}.guide-card .how-it-works p:not(.eyebrow){font-size:13px}
+}
+
+.event-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.event-new-event{display:none}.save-bar{justify-content:flex-end}
+@media(max-width:699px){
+body:has(.event-page) .header-new-event{display:none}
+.event-new-event{display:inline-flex}.event-actions{flex-wrap:wrap;justify-content:flex-start;max-width:100%;gap:8px}
+.event-actions .button{min-height:44px;font-size:12px;padding:10px 12px}
+.event-summary .event-heading>div.event-actions{flex:0 1 auto}
+}
