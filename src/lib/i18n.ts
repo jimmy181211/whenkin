@@ -964,6 +964,14 @@ export const messages: Record<string, [string, string]> = {
 ,"Dismiss schedule update":["关闭时段更新提示","Cerrar aviso de horario"]
 ,"The event schedule changed. Reload before saving your changes.":["活动安排已更改。请重新加载后再保存。","El horario del evento cambió. Vuelve a cargar la página antes de guardar."]
 ,"Cancel":["取消","Cancelar"]
+,"Terms of Use":["使用条款","Condiciones de Uso"]
+,"Privacy Policy":["隐私政策","Política de Privacidad"]
+,"Legal Information":["法律信息","Información Legal"]
+,"Back to Whenkin":["返回 Whenkin","Volver a Whenkin"]
+,"Effective Date":["生效日期","Fecha de Entrada en Vigor"]
+,"On This Page":["本页内容","En Esta Página"]
+,"Provider Information":["服务提供商信息","Información de Proveedores"]
+,"Contact Us":["联系我们","Contáctanos"]
 };
 const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES' } as const;
 export const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'zh' || value === 'es';

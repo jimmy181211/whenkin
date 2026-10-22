@@ -50,6 +50,26 @@ describe('language changes across the website',()=>{
     const storage={setItem:vi.fn()};vi.stubGlobal('localStorage',storage);
     setLanguage('es');expect(storage.setItem).toHaveBeenCalledWith('whenkin:language','es');
   });
+  it('offers policy links from home and event pages and localizes both documents',()=>{
+    const titles={en:['Terms of Use','Privacy Policy'],zh:['使用条款','隐私政策'],es:['Condiciones de Uso','Política de Privacidad']};
+    for(const language of ['en','zh','es'] as const){
+      setLanguage(language);
+      for(const path of ['/','/e/855e5518-3b5a-49cb-b906-69bbd7bac603']){
+        const html=page(path);
+        expect(html).toContain('href="/terms"');
+        expect(html).toContain('href="/privacy"');
+      }
+      for(const [index,path] of ['/terms','/privacy'].entries()){
+        const html=page(path);
+        expect(html).toContain(`<h1 id="legal-title">${titles[language][index]}</h1>`);
+        expect(html).toContain('UCSD CSSA');
+        expect(html).toContain('href="mailto:j4ouyang@ucsd.edu"');
+        expect(html).toMatch(/<time datetime="2026-10-22"/i);
+        expect(html).not.toContain('create-submit');
+        expect(html).not.toContain('That Page Is a Little Off-Grid.');
+      }
+    }
+  });
 });
 describe('language is independent of scheduling data',()=>{
   it('keeps selected instants and UTC ranges unchanged in every language',()=>{

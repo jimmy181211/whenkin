@@ -22,14 +22,18 @@ See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for 
 ## Calculating the Best Meeting Time
 
 ```mermaid
-flowchart TD
-  A["Load Event Hours, Meeting Length,<br/>and Saved Responses from Neon"] --> B["Find Full-Length Meeting Windows<br/>at 15-Minute Start Intervals"]
-  B --> C["Count Respondents Available<br/>for the Entire Meeting"]
-  C --> D["Rank by Most Available Respondents<br/>Break Ties by Earliest Start"]
-  D --> E["Drop Zero-Attendee Options<br/>Skip Nearby Options with the Same Count"]
-  E --> F{"Any Suggestions Left?"}
-  F -->|Yes| G["Show Ranked Suggestions<br/>in the Viewer's Time Zone"]
-  F -->|No| H["Show No Suggestions Yet"]
+flowchart TB
+  subgraph candidates["Find Possible Times"]
+    direction LR
+    A["Load Event Hours, Length,<br/>and Responses from Neon"] --> B["Try 15-Minute Starts<br/>That Fit the Full Meeting"]
+    B --> C["Count People Free<br/>for the Entire Meeting"]
+  end
+  subgraph results["Rank and Display"]
+    direction LR
+    D["Most Available First<br/>Then Earliest Start"] --> E["Drop Zero Attendance<br/>Skip Nearby Equal Counts"]
+    E --> F["Show Ranked Times in Local Time<br/>or No Suggestions Yet"]
+  end
+  candidates --> results
 ```
 
 The single Neon step uses the event's current saved data; see [Website and Storage](#website-and-storage). Overlapping or touching event windows are combined before calculation. Candidate starts are 15 minutes apart, even though the selection grid uses 30-minute blocks. Each candidate must fit the entire meeting length within the event hours.

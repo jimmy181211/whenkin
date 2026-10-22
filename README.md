@@ -75,6 +75,10 @@ ChatGPT Sites manages the website, API, versions, runtime secrets, and publishin
 
 The Site is public. Its audience is independent of each event’s server-enforced organizer, participant, and response-edit permissions.
 
+## Terms and Privacy
+
+[Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) are available from every page’s footer in English, Simplified Chinese, and Spanish. UCSD CSSA operates Whenkin; privacy and deletion requests go to j4ouyang@ucsd.edu. The policies describe the current sharing controls, local drafts and credentials, hosting providers, and absence of automatic event expiry.
+
 ## Run It Locally
 
 Use Node.js 22 or newer. Install dependencies using the included installer, configure a local ignored `.dev.vars` file with `DATABASE_URL`, then run `npm run dev`. Apply migrations in numeric order. `002_participant_privacy.sql` adds a non-null privacy flag with a default of false, preserving existing events and selections. Apply it before deploying the corresponding API.
