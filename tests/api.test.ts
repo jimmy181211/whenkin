@@ -86,27 +86,25 @@ describe('participant privacy',()=>{
     const created=await create(),event=await get(created.id),start=Date.parse(event.windows[0].start),ranges=[{start:new Date(start).toISOString(),end:new Date(start+3600000).toISOString()}];
     const alice=await respond(created.id,ranges,'Alice'),bob=await respond(created.id,[],'Bob');
     const publicEvent=await (await request(`/events/${created.id}`)).json() as MeetingEvent;
-    expect(publicEvent.response_count).toBe(2);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent.show_group_availability).toBe(false);expect(publicEvent.is_organizer).toBe(false);
+    expect(publicEvent.response_count).toBe(2);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent).not.toHaveProperty('show_group_availability');expect(publicEvent).not.toHaveProperty('can_view_group');expect(publicEvent.is_organizer).toBe(false);
     expect(JSON.stringify(publicEvent)).not.toContain('Alice');expect(JSON.stringify(publicEvent)).not.toContain(alice.id);
     const mine=await (await request(`/events/${created.id}?response_id=${alice.id}`,'GET',undefined,alice.editToken)).json() as MeetingEvent;
-    expect(mine.responses.map((r:ResponseData)=>r.name)).toEqual(['Alice']);expect(mine.response_count).toBe(2);expect(mine.candidates).toEqual([]);expect(mine.can_view_group).toBe(false);
+    expect(mine.responses.map((r:ResponseData)=>r.name)).toEqual(['Alice']);expect(mine.response_count).toBe(2);expect(mine.candidates).toEqual([]);
     expect((await request(`/events/${created.id}?response_id=${bob.id}`,'GET',undefined,alice.editToken)).status).toBe(403);
     expect((await get(created.id)).is_organizer).toBe(true);expect((await get(created.id)).responses).toHaveLength(2);
   });
-  it('allows only organizers to enable sharing and removes group data when disabled again',async()=>{
-    const created=await create(),event=await get(created.id);const person=await respond(created.id,[event.windows[0]],'Private Participant');
-    const settings=`/events/${created.id}/settings`;
-    expect((await request(settings,'PATCH',{show_group_availability:true})).status).toBe(403);
-    expect((await request(settings,'PATCH',{show_group_availability:true},person.editToken)).status).toBe(403);
-    expect((await request(settings,'PATCH',{show_group_availability:'true'},created.adminToken)).status).toBe(400);
-    expect((await request(settings,'PATCH',{show_group_availability:true},created.adminToken)).status).toBe(200);
-    const shared=await (await request(`/events/${created.id}`)).json() as MeetingEvent;
-    expect(shared.responses).toHaveLength(1);expect(shared.candidates!.length).toBeGreaterThan(0);expect(shared.can_view_group).toBe(true);expect(shared.is_organizer).toBe(false);
-    expect((await request(settings,'PATCH',{show_group_availability:false},created.adminToken)).status).toBe(200);
-    const hidden=await (await request(`/events/${created.id}`)).json() as MeetingEvent;expect(hidden.responses).toEqual([]);expect(hidden.candidates).toEqual([]);expect(hidden.response_count).toBe(1);
-    expect((await get(created.id)).responses).toHaveLength(1);
-  });
-});
+  it('removes sharing settings and ignores legacy sharing flags for existing events',async()=>{
+    const created=await create(),event=await get(created.id);
+    const alice=await respond(created.id,[event.windows[0]],'Alice'),bob=await respond(created.id,[],'Bob');
+    await pg.query('UPDATE events SET show_group_availability=true WHERE id=$1',[created.id]);
+    expect((await request('/events/'+created.id+'/settings','PATCH',{show_group_availability:true},created.adminToken)).status).toBe(404);
+    const publicEvent=await (await request('/events/'+created.id)).json() as MeetingEvent;
+    expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent.response_count).toBe(2);
+    const mine=await (await request('/events/'+created.id+'?response_id='+alice.id,'GET',undefined,alice.editToken)).json() as MeetingEvent;
+    expect(mine.responses.map(r=>r.id)).toEqual([alice.id]);expect(JSON.stringify(mine)).not.toContain(bob.id);expect(mine.candidates).toEqual([]);
+    const owner=await get(created.id);expect(owner.responses).toHaveLength(2);expect(owner.candidates!.length).toBeGreaterThan(0);
+    expect(owner).not.toHaveProperty('show_group_availability');expect(owner).not.toHaveProperty('can_view_group');
+  });});
 
 describe('organizer schedule edits',()=>{
   it('updates every event window and clips availability while retaining private links and responses',async()=>{

@@ -83,7 +83,7 @@ describe('language is independent of scheduling data',()=>{
     const selected=new Set(allSlots(event.windows).slice(0,2)),before=slotsToRanges(selected);
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
-      const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}} view="mine"/>);
+      const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}}/>);
       expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(1);
       expect(slotsToRanges(selected)).toEqual(before);
       expect(gridModel(event.windows,'America/New_York').days[0][1].map(c=>c.stamp)).toEqual(allSlots(event.windows));
