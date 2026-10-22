@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { Temporal } from '@js-temporal/polyfill';
-import { createApp } from '../worker/index';
+import { createApp } from '../lib/whenkin-api';
 const pg=new PGlite();
 const app=createApp(()=>({query:async(q,p=[])=>{const result=await pg.query(q,p);return result.rows as Record<string,any>[];}}));
 const date=Temporal.Now.plainDateISO('America/Los_Angeles').add({days:3}).toString();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { allSlots, bestTimes, contains, gridModel, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
-import { validateRanges } from '../worker/index';
+import { validateRanges } from '../lib/whenkin-api';
 import type { MeetingEvent } from '../src/lib/types';
 const span=(start:string,end:string)=>({start,end});
 describe('time zones and real moments',()=>{

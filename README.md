@@ -50,40 +50,25 @@ An event and a response each have one time-zone preference. Changing the display
 ## Built with
 
 - React and TypeScript for the website.
-- Cloudflare Workers for the website and API.
+- ChatGPT Sites for managed website and API hosting.
 - Neon PostgreSQL for saved events and responses.
+
+Private test site: https://whenkin.j4ouyang.chatgpt.site
+
+## Hosting and saved data
+
+ChatGPT Sites manages the website, API, versions, runtime secrets, and publishing. The existing Neon project stores events, responses, availability, and confirmed meeting times. Neon does not need to be deployed on another host. The database connection is configured as the server-only `DATABASE_URL` secret in Sites.
+
+The Site starts private for owner testing. Its audience must be made public before an anonymous participant can use a shared event link.
 
 ## Run it locally
 
-You need Node.js 22 or newer, npm, and a Neon database.
+Use Node.js 22 or newer. Install dependencies using the included installer, configure a local ignored `.dev.vars` file with `DATABASE_URL`, then run `npm run dev`. The application uses the existing database schema in `migrations/`.
 
-```sh
-npm ci
-cp .dev.vars.example .dev.vars
-```
+## Verify
 
-Put your Neon connection string in `.dev.vars`. This file is ignored by Git. Load the same connection string into your shell as `DATABASE_URL`, then run:
+Run `npm run check`, `npm test`, and `npm run build`. The tests cover time zones, daylight saving changes, complete meeting windows, event and response permissions, network errors, and all three website languages.
 
-```sh
-npm run migrate
-npm run build
-npm run dev:api
-```
+## Source and documentation
 
-In another terminal, run `npm run dev` and open the address Vite prints. Until the API and database are connected, event creation shows a setup notice and stays disabled.
-
-## Check the project
-
-```sh
-npm run check
-npm test
-npm run build
-```
-
-Tests cover time-zone conversions, daylight saving changes, whole-meeting matching, private edit links, concurrent edits, and the API against a local PostgreSQL engine.
-
-## Publish on Cloudflare
-
-See [Setup and deployment](docs/setup.md). Cloudflare provides a free public `workers.dev` address, so a purchased domain is not required. Free services have usage limits.
-
-Never commit database passwords or Cloudflare tokens. Store the database connection string as a Worker secret.
+The original source is at https://github.com/jimmy181211/whenkin. This Sites checkout retains the existing design and scheduling logic, with a managed hosting entry point. See `docs/flowchart.md` for the complete flow.

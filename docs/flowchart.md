@@ -26,7 +26,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    D[Desktop website] <-->|Load events and save availability| W[Cloudflare Worker]
+    D[Desktop website] <-->|Load events and save availability| W[ChatGPT Sites server]
     M[Mobile website] <-->|Load events and save availability| W
     W <-->|Check private edit and organizer links| P[(Neon PostgreSQL)]
     W <-->|Save and compare timestamptz values| P
