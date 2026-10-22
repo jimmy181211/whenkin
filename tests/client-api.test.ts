@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError } from '../src/lib/api';
+import { api } from '../src/lib/api';
 
 afterEach(()=>vi.unstubAllGlobals());
 describe('connection failures explain the next step',()=>{

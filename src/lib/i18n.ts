@@ -953,6 +953,17 @@ export const messages: Record<string, [string, string]> = {
     "Whenkin Sugiere los Mejores Horarios"
   ]
 ,"Share Event":["分享活动","Compartir Evento"]
+,"Edit Event Hours":["编辑活动时段","Editar Horarios del Evento"]
+,"Event start time":["活动开始时间","Hora de Inicio del Evento"]
+,"Event end time":["活动结束时间","Hora de Fin del Evento"]
+,"Event meeting length":["活动会议时长","Duración de la Reunión"]
+,"Save Event Hours":["保存活动时段","Guardar Horarios del Evento"]
+,"These hours apply to every event date. Times use {zone}.":["这些时段适用于活动的所有日期，时间以{zone}时区为准。","Estos horarios se aplican a todas las fechas del evento. Se usa la zona horaria de {zone}."]
+,"Availability outside the revised hours will be removed. Availability inside the hours keeps its actual time. All participant links will use the updated schedule.":["新时段以外的空闲时间将被移除，时段内的时间将保持原来的实际时间。所有参与者链接都会显示更新后的安排。","Se eliminará la disponibilidad fuera del nuevo horario. La disponibilidad dentro del horario conservará su hora real. Todos los enlaces de participantes mostrarán el horario actualizado."]
+,"The organizer updated the event hours. Your availability has been kept within the new hours.":["组织者更新了活动时段。你的空闲时间已保留在新时段内。","El organizador actualizó los horarios. Se conservó tu disponibilidad dentro del nuevo horario."]
+,"Dismiss schedule update":["关闭时段更新提示","Cerrar aviso de horario"]
+,"The event schedule changed. Reload before saving your changes.":["活动安排已更改。请重新加载后再保存。","El horario del evento cambió. Vuelve a cargar la página antes de guardar."]
+,"Cancel":["取消","Cancelar"]
 };
 const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES' } as const;
 export const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'zh' || value === 'es';

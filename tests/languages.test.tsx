@@ -7,8 +7,10 @@ import { getLanguage, getLocale, setLanguage, t } from '../src/lib/i18n';
 import { allSlots, gridModel, localToUTC, slotsToRanges } from '../src/lib/time';
 import type { MeetingEvent } from '../src/lib/types';
 
+vi.mock('next/navigation',()=>({usePathname:()=>window.location.pathname,useRouter:()=>({push:vi.fn()})}));
+
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
-const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path},innerWidth:390});return renderToStaticMarkup(<App/>);};
+const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path,href:'http://localhost'+path,origin:'http://localhost'},innerWidth:390});return renderToStaticMarkup(<App/>);};
 describe('language changes across the website',()=>{
   it('starts in English with the brief home-page steps and no guide route',()=>{
     expect(getLanguage()).toBe('en');
@@ -57,7 +59,7 @@ describe('language is independent of scheduling data',()=>{
     const selected=new Set(allSlots(event.windows).slice(0,2)),before=slotsToRanges(selected);
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
-      const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}} counts={new Map()} view="mine"/>);
+      const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}} view="mine"/>);
       expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(1);
       expect(slotsToRanges(selected)).toEqual(before);
       expect(gridModel(event.windows,'America/New_York').days[0][1].map(c=>c.stamp)).toEqual(allSlots(event.windows));

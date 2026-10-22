@@ -4,22 +4,21 @@ import { ArrowDownUp, Check, ChevronLeft, ChevronRight, Eraser, Hand, Minus, Plu
 import { displayRange, formatDay, formatTime, gridModel, SLOT } from '../lib/time';
 import type { MeetingEvent, TimeRange } from '../lib/types';
 
-type Props={event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;counts:Map<number,number>;view:'mine'|'group';highlight?:TimeRange|null};
+type Props={event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;view:'mine'|'group';highlight?:TimeRange|null};
 type Gesture={base:Set<number>;row:number;col:number;endRow:number;endCol:number;remove:boolean};
-export default function AvailabilityGrid({event,zone,selected,onChange,counts,view,highlight}:Props) {
+export default function AvailabilityGrid({event,zone,selected,onChange,view,highlight}:Props) {
   const [mode,setMode]=useState<'paint'|'erase'|'scroll'>('paint'),[zoom,setZoom]=useState(1),[page,setPage]=useState(0),[small,setSmall]=useState(()=>window.innerWidth<700);
   const [guide,setGuide]=useState<{text:string;x:number;y:number}|null>(null),[lastRange,setLastRange]=useState<{date:string;start:number;end:number}|null>(null);
   const grid=useMemo(()=>gridModel(event.windows,zone,30),[event.windows,zone]);
   const history=useRef<Set<number>[]>([]),gesture=useRef<Gesture|null>(null),[undos,setUndos]=useState(0);
   const cellMaps=useMemo(()=>grid.days.map(([,cells])=>new Map(grid.rows.map(row=>[row.key,cells.filter(c=>c.occurrence===row.occurrence&&c.minute>=row.minute&&c.minute<row.minute+30)]))),[grid]);
   useEffect(()=>{const resize=()=>setSmall(window.innerWidth<700);window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[]);
-  useEffect(()=>{setPage(0);setLastRange(null);},[zone]);
   const perPage=small?3:7,startCol=Math.min(page*perPage,Math.max(0,grid.days.length-perPage)),shown=grid.days.slice(startCol,startCol+perPage);
   function paint(row:number,col:number,x:number,y:number) {
     const g=gesture.current;if(!g)return;g.endRow=row;g.endCol=col;
     const next=new Set(g.base),stamps:number[]=[];
     for(let c=Math.min(g.col,col);c<=Math.max(g.col,col);c++) for(let r=Math.min(g.row,row);r<=Math.max(g.row,row);r++) {
-      const cells=cellMaps[c]?.get(grid.rows[r]?.key)||[];for(const cell of cells){g.remove?next.delete(cell.stamp):next.add(cell.stamp);stamps.push(cell.stamp);}
+      const cells=cellMaps[c]?.get(grid.rows[r]?.key)||[];for(const cell of cells){if(g.remove)next.delete(cell.stamp);else next.add(cell.stamp);stamps.push(cell.stamp);}
     }
     onChange(next);
     const first=Math.min(...stamps),last=Math.max(...stamps);
@@ -63,7 +62,7 @@ export default function AvailabilityGrid({event,zone,selected,onChange,counts,vi
           {shown.map(([date],j)=>{const col=startCol+j,cells=cellMaps[col].get(row.key)||[],cell=cells[0];if(!cell)return <div key={date} className={`time-cell unavailable ${row.minute%60===0?'hour-start':''}`} aria-hidden="true"/>;
             const blockEnd=cells.at(-1)!.stamp+SLOT,selectedCells=cells.filter(c=>selected.has(c.stamp)),active=selectedCells.length===cells.length,partial=selectedCells.length>0&&!active;
             const count=event.responses.filter(person=>cells.every(c=>person.ranges.some(range=>Date.parse(range.start)<=c.stamp&&Date.parse(range.end)>=c.stamp+SLOT))).length,highlighted=highlight&&cells.some(c=>c.stamp>=Date.parse(highlight.start)&&c.stamp<Date.parse(highlight.end));
-            return <button type="button" key={date} data-stamp={cell.stamp} data-row={r} data-col={col} aria-label={`${formatDay(cell.stamp,zone)}, ${formatTime(cell.stamp,zone)}–${formatTime(blockEnd,zone)}, UTC${cell.offset}${view==='mine'?`, ${t(partial?'Partly available':active?'Available':'not selected')}`:`, ${t('{count} of {total} available',{count,total:event.responses.length})}`}`} aria-pressed={view==='mine'?(partial?'mixed':active):undefined} className={`time-cell ${row.minute%60===0?'hour-start':''} ${view==='mine'&&active?'painted':''} ${view==='mine'&&partial?'partial':''} ${view==='group'?'heat':''} ${highlighted?'highlighted':''}`} style={view==='group'?{'--heat':event.responses.length?count/event.responses.length:0} as React.CSSProperties:partial?{'--selection-half':selected.has(cell.stamp)?'bottom':'top'} as React.CSSProperties:undefined} onKeyDown={e=>{if(view==='mine'&&(e.key===' '||e.key==='Enter')){e.preventDefault();const next=new Set(selected);for(const c of cells)active?next.delete(c.stamp):next.add(c.stamp);setLastRange({date,start:cell.stamp,end:blockEnd});history.current.push(new Set(selected));setUndos(history.current.length);onChange(next);}}}>{view==='group'&&count>0?<span>{count}</span>:partial?<span className="sr-only">{t('Partly available')}</span>:null}</button>;
+            return <button type="button" key={date} data-stamp={cell.stamp} data-row={r} data-col={col} aria-label={`${formatDay(cell.stamp,zone)}, ${formatTime(cell.stamp,zone)}–${formatTime(blockEnd,zone)}, UTC${cell.offset}${view==='mine'?`, ${t(partial?'Partly available':active?'Available':'not selected')}`:`, ${t('{count} of {total} available',{count,total:event.responses.length})}`}`} aria-pressed={view==='mine'?(partial?'mixed':active):undefined} className={`time-cell ${row.minute%60===0?'hour-start':''} ${view==='mine'&&active?'painted':''} ${view==='mine'&&partial?'partial':''} ${view==='group'?'heat':''} ${highlighted?'highlighted':''}`} style={view==='group'?{'--heat':event.responses.length?count/event.responses.length:0} as React.CSSProperties:partial?{'--selection-half':selected.has(cell.stamp)?'bottom':'top'} as React.CSSProperties:undefined} onKeyDown={e=>{if(view==='mine'&&(e.key===' '||e.key==='Enter')){e.preventDefault();const next=new Set(selected);for(const c of cells){if(active)next.delete(c.stamp);else next.add(c.stamp);}setLastRange({date,start:cell.stamp,end:blockEnd});history.current.push(new Set(selected));setUndos(history.current.length);onChange(next);}}}>{view==='group'&&count>0?<span>{count}</span>:partial?<span className="sr-only">{t('Partly available')}</span>:null}</button>;
           })}
         </GridRow>)}
       </div>

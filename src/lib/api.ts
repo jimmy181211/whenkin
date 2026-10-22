@@ -10,11 +10,11 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   } catch {
     throw new ApiError('We couldn’t reach Whenkin. Please check your connection and try again.', 0);
   }
-  const body: any = await response.json().catch(()=>null);
+  const body: unknown = await response.json().catch(()=>null);
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new ApiError('Event saving is not available at this address yet. Please try again once setup is complete.', response.status);
   }
-  if (!response.ok) throw new ApiError(typeof body.error === 'string' ? body.error : 'Something went wrong. Please try again.', response.status);
+  if (!response.ok) throw new ApiError('error' in body && typeof body.error === 'string' ? body.error : 'Something went wrong. Please try again.', response.status);
   return body as T;
 }
 export function loadSecret(key: string) { try { return localStorage.getItem(key); } catch { return null; } }
