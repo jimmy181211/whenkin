@@ -20,10 +20,6 @@ export const messages: Record<string, [string, string]> = {
     "Whenkin 首页",
     "Inicio de Whenkin"
   ],
-  "How it works": [
-    "使用方法",
-    "Cómo funciona"
-  ],
   "New event": [
     "新建活动",
     "Nuevo evento"
@@ -64,58 +60,6 @@ export const messages: Record<string, [string, string]> = {
     "我们对比所有人的空闲时间，由组织者确认最终时间。",
     "Comparamos la disponibilidad de todos. Quien organiza confirma una hora."
   ],
-  "Give your event a name, pick the dates and hours that could work, and set the meeting length. Send the event link to your group.": [
-    "为活动取个名字，选择可能合适的日期和时段，并设置活动时长。然后把活动链接发给大家。",
-    "Ponle un nombre al evento, elige posibles fechas y horas y define la duración. Envía el enlace al grupo."
-  ],
-  "Each person opens the link, enters their name, and paints their free time onto the grid. Their availability saves automatically.": [
-    "每个人打开链接、输入姓名，然后在时间表上涂选空闲时间。所选时间会自动保存。",
-    "Cada persona abre el enlace, escribe su nombre y marca sus horas libres en la cuadrícula. Los cambios se guardan automáticamente."
-  ],
-  "Whenkin finds times when the most people can attend the whole meeting. The organizer chooses a final time, and everyone can add it to their calendar.": [
-    "Whenkin 找出最多人能全程参加的时段。组织者确定最终时间后，大家就能将活动加入日历。",
-    "Whenkin busca las horas en que más personas pueden asistir a toda la reunión. Quien organiza elige una hora final y todos pueden añadirla a su calendario."
-  ],
-  "A QUICK GUIDE TO WHENKIN": [
-    "WHENKIN 使用指南",
-    "GUÍA RÁPIDA DE WHENKIN"
-  ],
-  "From “when are you free?”": [
-    "从“你什么时候有空？”",
-    "De «¿cuándo estás libre?»"
-  ],
-  "to a time that works.": [
-    "到找到合适的时间。",
-    "a una hora que les venga bien."
-  ],
-  "One person starts the plan. Everyone adds their availability. Whenkin does the comparison.": [
-    "一个人发起安排，大家填写空闲时间，Whenkin 帮你对比。",
-    "Una persona inicia el plan. Todos indican cuándo están libres. Whenkin compara los horarios."
-  ],
-  "Your times stay local": [
-    "始终显示当地时间",
-    "Tus horas se muestran en tu zona"
-  ],
-  "We read your device’s time zone automatically. Use the searchable selector to choose another city or zone. The clock labels change; your saved availability stays at the same actual moments.": [
-    "我们会自动读取设备设置的时区。你也可以搜索并选择其他城市或时区。切换时区只改变显示的时间，已保存的实际时刻不会改变。",
-    "Detectamos la zona horaria de tu dispositivo. Puedes buscar otra ciudad o zona en el selector. Cambian las horas que ves; los momentos guardados siguen siendo los mismos."
-  ],
-  "A grid that works on your phone": [
-    "手机上也能准确选择",
-    "Una cuadrícula cómoda en el móvil"
-  ],
-  "Choose Mark and drag over free times. Use + for larger slots, or Scroll to move around. The time guide and From/To controls help you select exact 15-minute intervals.": [
-    "选择“标记”并拖动涂选空闲时间。点击 + 放大时间格，或选择“滚动”移动时间表。时间提示和起止时间选项可以帮你准确选择每个 15 分钟时段。",
-    "Elige Marcar y arrastra sobre tus horas libres. Usa + para ampliar las casillas o Desplazar para moverte. La guía y los controles Desde/Hasta te ayudan a elegir intervalos exactos de 15 minutos."
-  ],
-  "Keep your editing links": [
-    "保留你的编辑链接",
-    "Guarda tus enlaces de edición"
-  ],
-  "Your group uses the event link. Keep your private edit link to update your response from another device. The organizer has a separate private link to confirm the final time.": [
-    "大家使用同一个活动链接。请保留你的私人编辑链接，以便在其他设备上修改回复。组织者另有一个私人链接，用来确认最终时间。",
-    "El grupo usa el enlace del evento. Guarda tu enlace privado para editar tu respuesta desde otro dispositivo. Quien organiza tiene otro enlace privado para confirmar la hora final."
-  ],
   "Midnight (next day)": [
     "午夜（次日）",
     "Medianoche (día siguiente)"
@@ -131,10 +75,6 @@ export const messages: Record<string, [string, string]> = {
   "Make it happen.": [
     "让相聚成行。",
     "Haz que suceda."
-  ],
-  "A shared plan starts with a little overlap. Pick some dates, send a link, and find a time that works for everyone.": [
-    "找到共同的空闲时间，是相聚的第一步。选几个日期，分享一个链接，一起找到合适的时间。",
-    "Todo plan empieza con un momento en común. Elige unas fechas, envía un enlace y encuentra una hora que les venga bien a todos."
   ],
   "No sign-up needed": [
     "无需注册",
@@ -159,10 +99,6 @@ export const messages: Record<string, [string, string]> = {
   "THREE SMALL STEPS": [
     "三个简单步骤",
     "TRES PASOS SENCILLOS"
-  ],
-  "See the quick guide": [
-    "查看使用指南",
-    "Ver la guía rápida"
   ],
   "LET’S GET SOMETHING ON THE CALENDAR": [
     "把相聚提上日程",
@@ -316,14 +252,6 @@ export const messages: Record<string, [string, string]> = {
     "重新选择时间",
     "Volver a elegir hora"
   ],
-  "A little overlap goes a long way.": [
-    "一点共同时间，让相聚更近。",
-    "Un momento en común lo cambia todo."
-  ],
-  "Mark when you’re free. We’ll find the common ground.": [
-    "标记你的空闲时间，我们来找大家的交集。",
-    "Marca cuándo estás libre. Encontraremos las horas en común."
-  ],
   "Your availability": [
     "你的空闲时间",
     "Tu disponibilidad"
@@ -371,10 +299,6 @@ export const messages: Record<string, [string, string]> = {
   "{count} hours selected": [
     "已选择 {count} 小时",
     "{count} horas seleccionadas"
-  ],
-  "Changes save automatically after you enter your name.": [
-    "输入姓名后，更改会自动保存。",
-    "Los cambios se guardan automáticamente al escribir tu nombre."
   ],
   "Your edit link keeps your response yours.": [
     "只有持有你的编辑链接才能修改你的回复。",
@@ -891,7 +815,144 @@ export const messages: Record<string, [string, string]> = {
   "Your change could not be saved. Please try again in a moment.": [
     "无法保存更改。请稍后重试。",
     "No se pudo guardar el cambio. Inténtalo de nuevo en un momento."
+  ],
+  "Enter your name to save your availability.": [
+    "请输入姓名以保存你的空闲时间。",
+    "Escribe tu nombre para guardar tu disponibilidad."
+  ],
+  "Please enter your name.": [
+    "请输入你的姓名。",
+    "Escribe tu nombre."
+  ],
+  "Let participants see group availability": [
+    "允许参与者查看大家的空闲时间",
+    "Permitir que los participantes vean la disponibilidad del grupo"
+  ],
+  "Participants can see everyone’s availability and common ground.": [
+    "参与者可以查看所有人的空闲时间和共同空闲时段。",
+    "Los participantes pueden ver la disponibilidad de todos y los horarios en común."
+  ],
+  "Participants can see only their own availability and the response count.": [
+    "参与者只能查看自己的空闲时间和回复人数。",
+    "Los participantes solo pueden ver su propia disponibilidad y el número de respuestas."
+  ],
+  "Participants see only their own availability unless you enable group sharing.": [
+    "默认仅组织者可查看大家的空闲时间，可手动开启共享。",
+    "Solo tú ves la disponibilidad del grupo, salvo que actives el uso compartido."
+  ],
+  "Keep your organizer link private. It lets you view all responses and manage group sharing.": [
+    "请妥善保管组织者链接，用于查看全部回复并管理共享设置。",
+    "Mantén privado tu enlace de organizador. Permite ver todas las respuestas y gestionar el uso compartido."
+  ],
+  "Use your private organizer link to manage this event.": [
+    "请使用你的组织者私密链接管理此活动。",
+    "Usa tu enlace privado de organizador para gestionar este evento."
+  ],
+  "Choose whether participants can see group availability.": [
+    "请选择是否允许参与者查看大家的空闲时间。",
+    "Elige si los participantes pueden ver la disponibilidad del grupo."
+  ],
+  "Leave without saving your changes?": [
+    "要放弃保存这些更改并离开吗？",
+    "¿Quieres salir sin guardar tus cambios?"
+  ],
+  "Keep editing": [
+    "继续编辑",
+    "Seguir editando"
+  ],
+  "Leave without saving": [
+    "不保存并离开",
+    "Salir sin guardar"
+  ],
+  "Partly available": [
+    "部分时段有空",
+    "Disponibilidad parcial"
+  ],
+  "Each number shows how many respondents are free for the whole 30-minute block.": [
+    "每个数字表示在整个30分钟时段内都有空的回复人数。",
+    "Cada número indica cuántas personas están libres durante todo el bloque de 30 minutos."
+  ],
+  "Mark 30-minute blocks. Fine-tune your selection in 15-minute steps, or use Scroll to move around.": [
+    "选择30分钟时段，再以15分钟为单位微调。使用“滚动”浏览时间表。",
+    "Marca bloques de 30 minutos. Ajusta la selección en pasos de 15 minutos o usa Desplazar para moverte."
+  ],
+  "We compare availability. The organizer shares the chosen time.": [
+    "我们对比空闲时间，由组织者在群聊等渠道通知最终时间。",
+    "Comparamos la disponibilidad. El organizador comunica el horario elegido."
+  ],
+  "Find a Time.": [
+    "找到时间。",
+    "Encuentra un Momento."
+  ],
+  "Make It Happen.": [
+    "让相聚成行。",
+    "Hazlo Realidad."
+  ],
+  "Create Your Event": [
+    "创建你的活动",
+    "Crea tu Evento"
+  ],
+  "Your Availability": [
+    "你的空闲时间",
+    "Tu Disponibilidad"
+  ],
+  "Group Availability": [
+    "大家的空闲时间",
+    "Disponibilidad del Grupo"
+  ],
+  "Your Common Ground": [
+    "大家的共同时间",
+    "Tus Horarios en Común"
+  ],
+  "The Group": [
+    "参与者",
+    "El Grupo"
+  ],
+  "Who Can Make It?": [
+    "谁能参加？",
+    "¿Quién Puede Asistir?"
+  ],
+  "Good Plans Are Shared.": [
+    "好计划，一起分享。",
+    "Los Buenos Planes Se Comparten."
+  ],
+  "Fine-Tune Your Last Selection": [
+    "微调刚才选择的时段",
+    "Ajusta tu Última Selección"
+  ],
+  "That Page Is a Little Off-Grid.": [
+    "找不到这个页面。",
+    "Esta Página No Está Disponible."
+  ],
+  "We Couldn’t Open That Event.": [
+    "无法打开此活动。",
+    "No Pudimos Abrir Ese Evento."
+  ],
+  "Your Availability Hasn't Been Saved.": [
+    "你的空闲时间尚未保存。",
+    "Tu Disponibilidad No Se Ha Guardado."
+  ],
+  "Your Event Has Not Been Saved.": [
+    "你的活动尚未保存。",
+    "Tu Evento No Se Ha Guardado."
+  ],
+  "Find Your Shared Time.": [
+    "找到大家的共同时间。",
+    "Encuentra un Momento para Todos."
+  ],
+  "The Organizer Creates an Event": [
+    "组织者创建活动",
+    "El Organizador Crea un Evento"
+  ],
+  "Participants Mark When They’re Free": [
+    "参与者标记空闲时间",
+    "Los Participantes Marcan Cuándo Están Libres"
+  ],
+  "Whenkin Suggests the Best Times": [
+    "Whenkin 推荐合适的时间",
+    "Whenkin Sugiere los Mejores Horarios"
   ]
+,"Share Event":["分享活动","Compartir Evento"]
 };
 const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES' } as const;
 export const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'zh' || value === 'es';

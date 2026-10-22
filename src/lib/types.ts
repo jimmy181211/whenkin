@@ -3,6 +3,7 @@ export type ResponseData = { id: string; name: string; timezone: string; revisio
 export type MeetingEvent = {
   id: string; title: string; description: string; organizer_name: string; timezone: string;
   duration: number; windows: TimeRange[]; responses: ResponseData[];
+  response_count?: number; show_group_availability?: boolean; can_view_group?: boolean; is_organizer?: boolean;
   final_start: string | null; final_end: string | null; created_at?: string; candidates?: Candidate[];
 };
 export type CreateInput = { title: string; description: string; organizer_name: string; timezone: string; dates: string[]; startTime: string; endTime: string; duration: number };

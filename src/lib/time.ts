@@ -63,7 +63,7 @@ export function displayRange(range: TimeRange, zone: string) {
   return `${formatDay(range.start, zone)} · ${formatTime(range.start, zone)}–${same ? '' : formatDay(range.end, zone) + ' '}${formatTime(range.end, zone)}`;
 }
 export type GridCell = { stamp: number; key: string; date: string; minute: number; occurrence: number; offset: string };
-export function gridModel(windows: TimeRange[], zone: string) {
+export function gridModel(windows: TimeRange[], zone: string, interval:15|30=15) {
   const days = new Map<string, GridCell[]>(); const repeated = new Set<number>();
   for (const stamp of allSlots(windows)) {
     const t = Temporal.Instant.fromEpochMilliseconds(stamp).toZonedDateTimeISO(zone);
@@ -74,6 +74,6 @@ export function gridModel(windows: TimeRange[], zone: string) {
   }
   const rows: { key: string; minute: number; occurrence: number }[] = [], cells = [...days.values()].flat();
   const min = Math.floor(Math.min(...cells.map(c=>c.minute)) / 60), max = Math.floor(Math.max(...cells.map(c=>c.minute)) / 60);
-  for (let h=min; h<=max; h++) for(let n=0; n<(repeated.has(h)?2:1);n++) for(let m=0;m<60;m+=15) rows.push({key:`${h*60+m}:${n}`,minute:h*60+m,occurrence:n});
+  for (let h=min; h<=max; h++) for(let n=0; n<(repeated.has(h)?2:1);n++) for(let m=0;m<60;m+=interval) rows.push({key:`${h*60+m}:${n}`,minute:h*60+m,occurrence:n});
   return { days: [...days.entries()].sort(([a],[b])=>a.localeCompare(b)), rows };
 }

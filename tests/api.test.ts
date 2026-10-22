@@ -8,10 +8,11 @@ const app=createApp(()=>({query:async(q,p=[])=>{const result=await pg.query(q,p)
 const date=Temporal.Now.plainDateISO('America/Los_Angeles').add({days:3}).toString();
 const input={title:'Team, together; at last',organizer_name:'Alex',description:'A simple meeting.\nBring a thought.',timezone:'America/Los_Angeles',duration:60,dates:[date],startTime:'09:00',endTime:'12:00'};
 async function request(path:string,method='GET',data?:unknown,token?:string){return app.request('http://localhost/api'+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:data===undefined?undefined:JSON.stringify(data)},{});}
-async function create(){const r=await request('/events','POST',input);expect(r.status).toBe(201);return await r.json() as {id:string;adminToken:string};}
-async function get(id:string){return await (await request(`/events/${id}`)).json() as any;}
+const owners=new Map<string,string>();
+async function create(){const r=await request('/events','POST',input);expect(r.status).toBe(201);const result=await r.json() as {id:string;adminToken:string};owners.set(result.id,result.adminToken);return result;}
+async function get(id:string){return await (await request(`/events/${id}`,'GET',undefined,owners.get(id))).json() as any;}
 async function respond(id:string,ranges:any[],name='Sam'){const r=await request(`/events/${id}/responses`,'POST',{name,timezone:'America/New_York',ranges});expect(r.status).toBe(201);return await r.json() as {id:string;editToken:string;revision:number};}
-beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));},30000);
+beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));},30000);
 beforeEach(async()=>{await pg.exec('TRUNCATE events CASCADE');});
 afterAll(async()=>{await pg.close();});
 describe('PostgreSQL-backed event lifecycle',()=>{
@@ -66,5 +67,32 @@ describe('PostgreSQL-backed event lifecycle',()=>{
     expect((await request('/events','POST',{...input,endTime:'08:00'})).status).toBe(400);
     const bad=await app.request('http://localhost/api/events',{method:'POST',body:'{'},{});expect(bad.status).toBe(400);
     expect((await request('/events/not-an-id')).status).toBe(404);
+  });
+});
+
+describe('participant privacy',()=>{
+  it('returns only response counts publicly and authenticates each private response',async()=>{
+    const created=await create(),event=await get(created.id),start=Date.parse(event.windows[0].start),ranges=[{start:new Date(start).toISOString(),end:new Date(start+3600000).toISOString()}];
+    const alice=await respond(created.id,ranges,'Alice'),bob=await respond(created.id,[],'Bob');
+    const publicEvent=await (await request(`/events/${created.id}`)).json() as any;
+    expect(publicEvent.response_count).toBe(2);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);expect(publicEvent.show_group_availability).toBe(false);expect(publicEvent.is_organizer).toBe(false);
+    expect(JSON.stringify(publicEvent)).not.toContain('Alice');expect(JSON.stringify(publicEvent)).not.toContain(alice.id);
+    const mine=await (await request(`/events/${created.id}?response_id=${alice.id}`,'GET',undefined,alice.editToken)).json() as any;
+    expect(mine.responses.map((r:any)=>r.name)).toEqual(['Alice']);expect(mine.response_count).toBe(2);expect(mine.candidates).toEqual([]);expect(mine.can_view_group).toBe(false);
+    expect((await request(`/events/${created.id}?response_id=${bob.id}`,'GET',undefined,alice.editToken)).status).toBe(403);
+    expect((await get(created.id)).is_organizer).toBe(true);expect((await get(created.id)).responses).toHaveLength(2);
+  });
+  it('allows only organizers to enable sharing and removes group data when disabled again',async()=>{
+    const created=await create(),event=await get(created.id);const person=await respond(created.id,[event.windows[0]],'Private Participant');
+    const settings=`/events/${created.id}/settings`;
+    expect((await request(settings,'PATCH',{show_group_availability:true})).status).toBe(403);
+    expect((await request(settings,'PATCH',{show_group_availability:true},person.editToken)).status).toBe(403);
+    expect((await request(settings,'PATCH',{show_group_availability:'true'},created.adminToken)).status).toBe(400);
+    expect((await request(settings,'PATCH',{show_group_availability:true},created.adminToken)).status).toBe(200);
+    const shared=await (await request(`/events/${created.id}`)).json() as any;
+    expect(shared.responses).toHaveLength(1);expect(shared.candidates.length).toBeGreaterThan(0);expect(shared.can_view_group).toBe(true);expect(shared.is_organizer).toBe(false);
+    expect((await request(settings,'PATCH',{show_group_availability:false},created.adminToken)).status).toBe(200);
+    const hidden=await (await request(`/events/${created.id}`)).json() as any;expect(hidden.responses).toEqual([]);expect(hidden.candidates).toEqual([]);expect(hidden.response_count).toBe(1);
+    expect((await get(created.id)).responses).toHaveLength(1);
   });
 });
