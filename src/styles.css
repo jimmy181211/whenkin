@@ -171,3 +171,5 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 .fields-row.two-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .selection-group{display:flex;flex-direction:column;gap:9px;min-width:0}
 .selection-heading{font-size:12px;font-weight:600;margin:6px 0 2px}
+
+.person>span:nth-child(2){min-width:0;flex:1}.person-availability{margin-top:7px;font-size:11px;color:var(--muted)}.person-availability summary{cursor:pointer;color:var(--primary);padding-block:5px}.person-availability summary:focus-visible{outline:2px solid var(--teal);outline-offset:3px}.person-availability ul{padding-left:16px;margin:6px 0;line-height:1.6;overflow-wrap:anywhere}.person-availability li+li{margin-top:5px}.person-availability p{font-size:11px;margin:6px 0}

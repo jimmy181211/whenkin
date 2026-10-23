@@ -38,9 +38,9 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
     if (previous && previous.end === start && previous.missing === absent) previous.end = end;
     else matches.push({ start, end, missing: absent });
   }
-  // Keep the existing five-result limit, with all-person matches first.
+  // Return every overlap; a result cap can hide an entire match category.
   return matches.sort((a, b) => Number(a.missing !== null) - Number(b.missing !== null) || a.start - b.start)
-    .slice(0, 5).map(match => ({
+    .map(match => ({
       start: new Date(match.start).toISOString(), end: new Date(match.end).toISOString(),
       available: ids.filter(id => id !== match.missing), missing: match.missing ? [match.missing] : [],
     }));

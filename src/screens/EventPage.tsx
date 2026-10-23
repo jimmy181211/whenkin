@@ -9,6 +9,7 @@ import PageLink from '../components/PageLink';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { projectWeekly } from '../lib/weekly';
 import { readEventAccess, type ResponseIdentity } from '../lib/event-access';
+import { loadEvent, restoreEvent } from '../lib/load-event';
 import { api, loadSecret, saveSecret } from '../lib/api';
 import { allSlots, deviceTimezone, slotsToRanges } from '../lib/time';
 import { t } from '../lib/i18n';
@@ -68,33 +69,25 @@ export default function EventPage({ id }: {
         setEvent(result);
         setActive(current => current ? result.candidates?.find(candidate => candidate.start === current.start && candidate.end === current.end) ?? null : null);
     }, []);
-    const load = useCallback(async () => {
-        const person = identityRef.current;
-        return api<MeetingEvent>(`/events/${id}${person ? '?response_id=' + person.id : ''}`, { headers: person ? { Authorization: `Bearer ${person.token}` } : {} });
-    }, [id]);
+    const load = useCallback(() => loadEvent(id, identityRef.current), [id]);
     useEffect(() => {
         let alive = true;
         (async () => {
             try {
                 const { response: restored } = readEventAccess(location.hash, loadSecret(`meetgrid:response:${id}`));
-                let person = restored;
-                if (person) {
-                    saveSecret(`meetgrid:response:${id}`, JSON.stringify(person));
+                const explicitEdit = new URLSearchParams(location.hash.replace(/^#/, '')).has('edit');
+                const { event: result, response: person } = await restoreEvent(id, restored, explicitEdit);
+                if (!alive) return;
+                if (person) saveSecret(`meetgrid:response:${id}`, JSON.stringify(person));
+                else if (restored) {
+                    try { localStorage.removeItem(`meetgrid:response:${id}`); } catch { /* Storage is optional. */ }
                 }
-                // Preserve the private response fragment for editing after a reload.
                 identityRef.current = person;
-                const result = await load();
-                if (!alive) {
-                    return;
-                }
                 const mine = result.responses.find(r => r.id === person?.id);
                 if (mine) {
                     setName(mine.name);
                     setSelected(new Set(allSlots(mine.ranges)));
                     revisionRef.current = mine.revision;
-                }
-                else if (person) {
-                    person = null;
                 }
                 setIdentity(person);
                 identityRef.current = person;
@@ -133,7 +126,7 @@ export default function EventPage({ id }: {
         const checkExpiry = () => {
             const remaining = Date.parse(event.expires_at!) - Date.now();
             if (remaining <= 0) expire();
-            // A calendar month can exceed the browser's maximum timer length.
+            // A calendar year can exceed the browser's maximum timer length.
             else timer = setTimeout(checkExpiry, Math.min(remaining, 2147483647));
         };
         checkExpiry();

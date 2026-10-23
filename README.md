@@ -14,7 +14,7 @@ Whenkin helps a group find a time to meet. Create an event, share one link, and 
 - Drag across empty blocks to mark availability, or marked blocks to clear it. Choose Done to lock the grid and scroll.
 - **Primary Selection:** everyone who has responded is free for the whole period.
 - **Secondary Selection:** all but the same one person are free for the whole period.
-- Shows up to five results in total, with primary matches first.
+- Shows all matching periods, with primary matches first.
 - Has no participant limit. Empty saved responses count as unavailable.
 - Uses one event link for everyone. A separate private edit link protects each person’s own response.
 - Links expire one calendar year after the event is created.

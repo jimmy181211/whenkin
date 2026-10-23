@@ -16,7 +16,7 @@
 
 ## Matching
 
-Common Ground uses a sweep over range boundaries, rather than testing every possible meeting duration or scanning the grid separately for each person. It handles touching and overlapping ranges, event-window gaps, and a fixed missing person for each secondary interval. Only the five displayed results expand the attendee ID lists. Matching runs once on the server; the browser does not have a second implementation.
+Common Ground uses a sweep over range boundaries, rather than testing every possible meeting duration or scanning the grid separately for each person. It handles touching and overlapping ranges, event-window gaps, and a fixed missing person for each secondary interval. All matching periods include their attendee ID lists. Matching runs once on the server; the browser does not have a second implementation.
 
 ## Access and Retention
 
