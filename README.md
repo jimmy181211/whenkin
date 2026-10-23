@@ -118,3 +118,7 @@ The normal event link always opens the participant view, even in the organizerâ€
 Unused starter UI components, D1 examples, and their packages have been removed. Neon PostgreSQL remains the only application database. The database calculates meeting matches; there is no second matching engine in the browser. TypeScript checks unused imports, local variables, and parameters during `pnpm run check`. Existing SQL migrations and supported API endpoints are retained for compatibility.
 
 The date calendar browses 2026â€“2050. Choose future dates through December 31, 2050; past dates stay disabled. The month and year dropdowns support native keyboard type-ahead, like the time selectors.
+
+## Code Structure
+
+Pages, shared controls, scheduling rules, and server validation and queries have separate modules. See [Project Structure](docs/architecture.md) to find where a change belongs and how to verify it.

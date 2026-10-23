@@ -63,3 +63,9 @@ The date-calendar heading has native Month and Year dropdowns styled like the ev
 The month and year controls retain native keyboard type-ahead, like the time selectors: in English, A jumps to April, and typing 2028 in the year dropdown jumps to 2028. Month names follow the selected site language. No extra visible labels or search boxes are added.
 
 A browser check confirmed that typing A in the month selector selects April and typing 2028 in the year selector selects 2028. PostgreSQL API tests also create 2028 and 2050 events and reject dates in 2051.
+
+## Structural Refactor
+
+The application router, shared site layout, create-event page, event page, guide, organizer results, and sharing dialog now have separate modules. Server validation, event-reading queries, and token helpers are separate from HTTP routes. Existing Worker and test imports are preserved through the API entry point. No dependency, API route, storage key, migration, SQL statement, translation, stylesheet, or user-facing content change is part of this refactor.
+
+Temporary before/after characterization checks compared 78 rendered cases across English, Chinese, and Spanish, including page routes, width inputs, date/weekday organizer results, and sharing states. Outputs matched after normalizing generated React IDs. A stylesheet hash comparison also matched. The temporary checks were removed after verification; the maintained suite remains 67 tests.
