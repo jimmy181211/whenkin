@@ -7,11 +7,12 @@ import ParticipantName from './components/ParticipantName';
 import PrivateEditLink from './components/PrivateEditLink';
 import AvailabilityStatus from './components/AvailabilityStatus';
 import { projectWeekly } from './lib/weekly';
+import { readEventAccess, type ResponseIdentity } from './lib/event-access';
 import { useUnsavedNavigation } from './components/UnsavedNavigation';
 import TimezonePicker from './components/TimezonePicker';
 import AvailabilityGrid from './components/AvailabilityGrid';
 import { api, loadSecret, saveSecret } from './lib/api';
-import { allSlots, bestTimes, deviceTimezone, formatDay, formatTime, localDate, slotsToRanges, zoneLabel } from './lib/time';
+import { allSlots, deviceTimezone, formatDay, formatTime, localDate, slotsToRanges, zoneLabel } from './lib/time';
 import { t, getLocale } from './lib/i18n';
 import LanguageSelector, { useLanguage } from './components/LanguageSelector';
 import { BRAND } from './brand';
@@ -69,7 +70,7 @@ function CreatePage(){
 function Steps(){return (<div className="how-it-works"><p className="eyebrow">{t("THREE SMALL STEPS")}</p><ol>{steps.map((step,i)=><li key={step.title}><span>0{i+1}</span><div><strong>{t(step.title)}</strong><p>{t(step.short)}</p></div></li>)}</ol></div>);}
 function HowItWorksPage(){return <main className="guide-page"><PageLink className="text-button" href="/">← {t("Back to Home")}</PageLink><section className="guide-card"><h1>{t("How It Works")}</h1><Steps/><PageLink className="button primary" href="/">{t("Create an Event")} <ArrowRight size={17}/></PageLink></section></main>;}
 
-type Identity={id:string;token:string};
+type Identity=ResponseIdentity;
 function EventPage({id}:{id:string}){
   const [event,setEvent]=useState<MeetingEvent|null>(null),[zone,setZone]=useState(deviceTimezone),[identity,setIdentity]=useState<Identity|null>(null),[admin,setAdmin]=useState(''),[name,setName]=useState(''),[selected,setSelected]=useState<Set<number>>(new Set());
   const [isSaving,setIsSaving]=useState(false),[editNotice,setEditNotice]=useState(false);
@@ -93,11 +94,9 @@ function EventPage({id}:{id:string}){
   },[id]);
   useEffect(()=>{let alive=true;
     (async()=>{try{
-      const hash=new URLSearchParams(location.hash.slice(1)),owner=hash.get('organizer')||loadSecret(`meetgrid:owner:${id}`)||'';let person:Identity|null=null;
-      const edit=hash.get('edit');if(edit){const [personId,token]=edit.split('.');if(personId&&token)person={id:personId,token};}
-      else {try{person=JSON.parse(loadSecret(`meetgrid:response:${id}`)||'null');}catch{}}
+      const {organizerToken:owner,response:restored}=readEventAccess(location.hash,loadSecret(`meetgrid:response:${id}`));let person=restored;
       if(owner)saveSecret(`meetgrid:owner:${id}`,owner);if(person)saveSecret(`meetgrid:response:${id}`,JSON.stringify(person));
-      if(hash.has('organizer')||hash.has('edit'))history.replaceState(null,'',location.pathname);
+      // Keep private fragments so reloading preserves the link's explicit role.
       adminRef.current=owner;identityRef.current=person;
       const result=await load();if(!alive)return;
       const mine=result.responses.find(r=>r.id===person?.id);
@@ -107,6 +106,7 @@ function EventPage({id}:{id:string}){
       const draft=loadSecret(`meetgrid:draft:${id}`);if(draft)setShowRestore(true);
     }catch(e){if(alive)setError(e instanceof Error?e.message:'Could not load this event.');}})();return()=>{alive=false;};
   },[id,load,applyEvent]);
+  useEffect(()=>{const reloadAccess=()=>window.location.reload();window.addEventListener('hashchange',reloadAccess);return()=>window.removeEventListener('hashchange',reloadAccess);},[]);
   const hasEvent=event!==null;
   useEffect(()=>{if(!hasEvent)return;const timer=setInterval(()=>{if(document.visibilityState==='visible')load().then(applyEvent).catch(()=>{});},10000);const refresh=()=>{if(document.visibilityState==='visible')load().then(applyEvent).catch(()=>{});};window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};},[hasEvent,load,applyEvent]);
   const navigation=useUnsavedNavigation(saveState!=='saved');
@@ -127,14 +127,15 @@ function EventPage({id}:{id:string}){
     finally{saving.current=false;setIsSaving(false);}
   },[id,load,applyEvent]);
   useEffect(()=>{if(saveState!=='dirty'||!name.trim()||isSaving)return;const timer=setTimeout(()=>{void save();},1000);return()=>clearTimeout(timer);},[saveState,name,selected,zone,save,isSaving]);
-  const candidates=useMemo(()=>event?bestTimes(event):[],[event]);
-  const suggestions=useMemo(()=>{const result:Candidate[]=[];for(const candidate of candidates){if(!candidate.available.length)continue;if(!result.some(r=>r.available.length===candidate.available.length&&Math.abs(Date.parse(r.start)-Date.parse(candidate.start))<event!.duration*60000))result.push(candidate);if(result.length>=5)break;}return result;},[candidates,event]);
+  const suggestions=useMemo(()=>{const result:Candidate[]=[];for(const candidate of event?.candidates??[]){if(!candidate.available.length)continue;if(!result.some(r=>r.available.length===candidate.available.length&&Math.abs(Date.parse(r.start)-Date.parse(candidate.start))<event!.duration*60000))result.push(candidate);if(result.length>=5)break;}return result;},[event]);
   async function copy(value:string,label:string){try{await navigator.clipboard.writeText(value);setCopied(label);setTimeout(()=>setCopied(''),2200);}catch{setError('Copy did not work. Select the link in the sharing panel and copy it manually.');}}
   function restore(){try{const draft=JSON.parse(loadSecret(`meetgrid:draft:${id}`)||'null');if(draft&&event){const allowed=new Set(allSlots(event.windows)),restored={name:draft.name||'',zone:draft.zone||zone,selected:new Set<number>((draft.slots||[]).filter((s:number)=>allowed.has(s)))};setName(restored.name);setZone(restored.zone);setSelected(restored.selected);changeDraft(restored);}}catch{}setShowRestore(false);}
   const weeklyView=useMemo(()=>event?.schedule_mode==='weekdays'?projectWeekly(event,zone):null,[event,zone]);
   if(!event)return <main className="loading-page">{error?<><h1>{t("We Couldn’t Open That Event.")}</h1><p role="alert">{t(error)}</p><PageLink href="/" className="button secondary">{t("Back to Home")}</PageLink></>:<><LoaderCircle className="spin"/><p>{t("Finding your shared time…")}</p></>}</main>;
   const organizer=event.is_organizer===true,responseCount=event.response_count??event.responses.length,eventLink=location.origin+`/e/${id}`;
   const weekly=event.schedule_mode==='weekdays',viewZone=weekly?'UTC':zone;
+  // Saved organizer credentials are a recovery link only, never an API identity.
+  const shareOwner=share?(admin||loadSecret(`meetgrid:owner:${id}`)||''):'';
   const saveStatus=<AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
   return <main className="event-page">{navigation.dialog}
     <div className={`event-layout ${organizer?'':'private-view'}`}><section className="schedule-card">
@@ -153,6 +154,6 @@ function EventPage({id}:{id:string}){
       {!suggestions.length?<div className="empty-results"><Users size={28}/><strong>{t(event.responses.length?'No Shared Times Yet':'The Possibilities Start With You.')}</strong><p>{t(event.responses.length?'Add more availability to find a time that works.':'Mark your availability, then share the event with your group.')}</p></div>:<div className="suggestions">{suggestions.map((candidate,i)=>{const shown=weeklyView?weeklyView.range(candidate):candidate;return <button className={`suggestion ${active?.start===candidate.start?'active':''}`} key={candidate.start} onClick={()=>{setActive(active?.start===candidate.start?null:candidate);}}><div className="suggestion-top"><strong>{formatDay(shown.start,viewZone,false,weekly)}</strong>{i===0&&<span className="best-badge">{t("Best Fit")}</span>}</div><span className="suggestion-time">{formatTime(shown.start,viewZone)} – {localDate(shown.start,viewZone)!==localDate(shown.end,viewZone)?formatDay(shown.end,viewZone,false,weekly)+' ':''}{formatTime(shown.end,viewZone)}</span><span className="attendance"><span className="attendance-dots">{Array.from({length:Math.min(event.responses.length,8)},(_,j)=><i key={j} className={j<candidate.available.length?'filled':''}/>)}</span>{candidate.available.length===event.responses.length?t('Everyone available'):t('{count} of {total} available',{count:candidate.available.length,total:event.responses.length})}</span></button>;})}</div>}
       {active&&<div className="candidate-detail"><strong>{t("Who Can Make It?")}</strong>{event.responses.map(r=><p key={r.id}><span className={`presence ${active.available.includes(r.id)?'yes':''}`}>{active.available.includes(r.id)?<Check size={12}/>:<X size={12}/>}</span>{r.name}<small>{t(active.available.includes(r.id)?'Available':'Unavailable')}</small></p>)}</div>}
     </section><section className="people-card"><div className="sidebar-title"><Users size={17}/><h3>{t("The Group")} <span>{event.responses.length}</span></h3><button className="icon-button" aria-label={t("Refresh responses")} onClick={()=>{load().then(applyEvent).catch(e=>setError(e.message));}}><RefreshCw size={14}/></button></div>{event.responses.length?event.responses.map((r,i)=><div className="person" key={r.id}><span className={`avatar avatar-${i%3}`}>{r.name.slice(0,1).toUpperCase()}</span><span><strong>{r.name}{r.id===identity?.id&&<small> {t("(you)")}</small>}</strong><small>{zoneLabel(r.timezone)}</small></span><Check size={14}/></div>):<p className="field-help">{t("Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.")}</p>}</section></aside>}</div>
-    {share&&<div className="modal-backdrop" onClick={()=>setShare(false)}><section className="share-modal" role="dialog" aria-modal="true" aria-label={t("Share Event")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape')setShare(false);}}><button className="icon-button modal-close" aria-label={t("Close sharing")} onClick={()=>setShare(false)}><X size={20}/></button><div className="heading-icon"><Link2 size={23}/></div><label className="field">{t("Participant Link")}<input readOnly value={eventLink} onFocus={e=>e.target.select()}/></label><button className="button primary" onClick={()=>void copy(eventLink,'event')}>{copied==='event'?<><Check size={17}/> {t("Link Copied")}</>:<><Copy size={17}/> {t("Copy Event Link")}</>}</button>{admin&&<div className="organizer-link"><strong><LockKeyhole size={15}/> {t("Just for You")}</strong><input aria-label={t("Private organizer link")} readOnly value={eventLink+`#organizer=${admin}`} onFocus={e=>e.target.select()}/><button className="text-button" onClick={()=>void copy(eventLink+`#organizer=${admin}`,'organizer')}>{t(copied==='organizer'?'Copied':'Copy Organizer Link')}</button></div>}</section></div>}
+    {share&&<div className="modal-backdrop" onClick={()=>setShare(false)}><section className="share-modal" role="dialog" aria-modal="true" aria-label={t("Share Event")} onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape')setShare(false);}}><button className="icon-button modal-close" aria-label={t("Close sharing")} onClick={()=>setShare(false)}><X size={20}/></button><div className="heading-icon"><Link2 size={23}/></div><label className="field">{t("Participant Link")}<input readOnly value={eventLink} onFocus={e=>e.target.select()}/></label><button className="button primary" onClick={()=>void copy(eventLink,'event')}>{copied==='event'?<><Check size={17}/> {t("Link Copied")}</>:<><Copy size={17}/> {t("Copy Event Link")}</>}</button>{shareOwner&&<div className="organizer-link"><strong><LockKeyhole size={15}/> {t("Just for You")}</strong><input aria-label={t("Private organizer link")} readOnly value={eventLink+`#organizer=${shareOwner}`} onFocus={e=>e.target.select()}/><button className="text-button" onClick={()=>void copy(eventLink+`#organizer=${shareOwner}`,'organizer')}>{t(copied==='organizer'?'Copied':'Copy Organizer Link')}</button></div>}</section></div>}
   </main>;
 }

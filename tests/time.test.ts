@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { allSlots, bestTimes, contains, gridModel, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
+import { allSlots, contains, gridModel, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
 import { validateRanges } from '../lib/whenkin-api';
-import type { MeetingEvent } from '../src/lib/types';
 const span=(start:string,end:string)=>({start,end});
 describe('time zones and real moments',()=>{
   it('matches Los Angeles and New York without separate local-time copies',()=>{
@@ -40,13 +39,6 @@ describe('whole meetings and compact storage',()=>{
   const start=Date.parse('2027-01-15T18:00Z');
   it('merges consecutive slots into one range',()=>expect(slotsToRanges([start,start+SLOT,start+2*SLOT,start])).toEqual([span('2027-01-15T18:00:00.000Z','2027-01-15T18:45:00.000Z')]));
   it('does not bridge a gap',()=>expect(contains([span('2027-01-15T18:00Z','2027-01-15T18:30Z'),span('2027-01-15T18:45Z','2027-01-15T19:00Z')],start,start+4*SLOT)).toBe(false));
-  it('requires the same person to be free for the whole meeting',()=>{
-    const event:MeetingEvent={id:'test',title:'Test',description:'',organizer_name:'Host',timezone:'UTC',duration:60,windows:[span('2027-01-15T18:00Z','2027-01-15T19:00Z')],final_start:null,final_end:null,responses:[
-      {id:'a',name:'A',timezone:'UTC',revision:1,ranges:[span('2027-01-15T18:00Z','2027-01-15T18:30Z')]},
-      {id:'b',name:'B',timezone:'UTC',revision:1,ranges:[span('2027-01-15T18:30Z','2027-01-15T19:00Z')]}
-    ]};
-    expect(bestTimes(event)[0].available).toEqual([]);
-  });
   it('rejects forged availability outside the event and off-grid times',()=>{
     const windows=[span('2027-01-15T18:00Z','2027-01-15T19:00Z')];
     expect(()=>validateRanges([span('2027-01-15T17:00Z','2027-01-15T18:00Z')],windows)).toThrow();

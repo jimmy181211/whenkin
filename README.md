@@ -108,3 +108,11 @@ Availability status has three states: “Not Started,” “Unsaved Changes,” 
 The private edit-link section is visible on every event page. Save your availability first to enable copying your own link, then keep it to edit from another device. Built-in English headings, field labels, and action buttons use Title Case; descriptions and visitor-entered text keep their natural wording.
 
 Event pages keep New Event and Share Event together on every screen size. The name field only shows a notice after an attempt to edit without a name; it has no routine save reminder. The private edit-link section stays visible without a placeholder explanation.
+
+## Participant and Organizer Links
+
+The normal event link always opens the participant view, even in the organizer’s browser. It never restores organizer access automatically from browser storage. Use and bookmark the private organizer link to see Common Ground and all responses. Its `#organizer=...` fragment stays in the address when you reload; keep the whole link private. A participant’s private edit link continues to open only their own response. If this browser holds your organizer credential from an earlier visit, Share Event lets you copy the private organizer link for recovery. That does not switch the current participant page into organizer mode.
+
+## Keeping the Code Small
+
+Unused starter UI components, D1 examples, and their packages have been removed. Neon PostgreSQL remains the only application database. The database calculates meeting matches; there is no second matching engine in the browser. TypeScript checks unused imports, local variables, and parameters during `pnpm run check`. Existing SQL migrations and supported API endpoints are retained for compatibility.
