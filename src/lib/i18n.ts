@@ -8,7 +8,6 @@ export const messages: Record<string, [string, string]> = {
   'Unsaved Changes': ['更改未保存', 'Cambios sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
-  'Guests can change time zones. Weekly conversions use offsets when the poll is created.': ['参与者可以切换时区。每周时间按调查创建时的时差换算。', 'Los invitados pueden cambiar de zona horaria. La conversión semanal usa las diferencias horarias al crear la encuesta.'],
   'Edit': ['编辑', 'Editar'],
   'Done': ['完成', 'Listo'],
   'Availability editing': ['编辑空闲时间', 'Edición de disponibilidad'],
@@ -84,30 +83,18 @@ export const messages: Record<string, [string, string]> = {
     "你想安排什么活动？",
     "¿Qué estás organizando?"
   ],
-  "e.g. Friday dinner, team catch-up…": [
-    "例如：周五聚餐、团队交流……",
-    "Por ejemplo: cena del viernes, reunión del equipo…"
-  ],
   "How It Works": ["使用方法", "Cómo funciona"],
   "Your Name": [
     "你的姓名",
     "Tu nombre"
   ],
-  "So everyone knows who’s organizing": [
-    "让大家知道是谁发起的",
-    "Para que sepan quién lo organiza"
-  ],
-  "A Little More Detail": [
-    "补充一些细节",
-    "Un poco más de detalle"
+  "Note": [
+    "备注",
+    "Nota"
   ],
   "optional": [
     "选填",
     "opcional"
-  ],
-  "Where, what, or anything people should know": [
-    "地点、内容，或其他需要说明的信息",
-    "Lugar, detalles o algo que deban saber"
   ],
   "Add a Note": [
     "添加备注",
