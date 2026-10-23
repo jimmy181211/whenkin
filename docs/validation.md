@@ -43,3 +43,5 @@ The response status now sits beside the Edit / Done control on both desktop and 
 ## Event Page Spacing and Actions
 
 Your Common Ground has 16px of space before its time-zone line. New Event and Share Event are grouped beside each other at every width; the event title can move above the pair when space is limited. The redundant header action is removed. The routine name-to-save hint and private-link placeholder sentence are removed in all languages. The up-front name requirement for editing and server validation remain in place.
+
+The time-zone menu omits the separate search heading and device-report sentence. The input keeps its accessible name, search placeholder, and focus behavior, and the Use Device Time Zone control remains. The Group omits its responded-count explanation. These shared components apply to desktop and mobile in all languages.
