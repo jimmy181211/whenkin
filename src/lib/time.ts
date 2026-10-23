@@ -1,6 +1,6 @@
 import { getLocale, t } from './i18n';
 import { Temporal } from '@js-temporal/polyfill';
-import type { Candidate, MeetingEvent, TimeRange } from './types';
+import type { TimeRange } from './types';
 export const SLOT = 15 * 60 * 1000;
 export function deviceTimezone() { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }
 export function isTimezone(zone: string) {
@@ -49,15 +49,6 @@ export function contains(ranges: TimeRange[], start: number, end = start + SLOT)
     if (cursor >= end) return true;
   }
   return false;
-}
-export function bestTimes(event: MeetingEvent): Candidate[] {
-  if(event.candidates) return event.candidates;
-  const duration = event.duration * 60000;
-  return allSlots(event.windows).filter(t => contains(event.windows, t, t + duration)).map(t => {
-    const available: string[] = [], missing: string[] = [];
-    event.responses.forEach(r => (contains(r.ranges, t, t + duration) ? available : missing).push(r.id));
-    return { start: new Date(t).toISOString(), end: new Date(t + duration).toISOString(), available, missing };
-  }).sort((a,b) => b.available.length - a.available.length || Date.parse(a.start) - Date.parse(b.start));
 }
 export function displayRange(range: TimeRange, zone: string, weekly = false) {
   const same = localDate(range.start, zone) === localDate(range.end, zone);

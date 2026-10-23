@@ -1,3 +1,4 @@
+import { readEventAccess } from '../src/lib/event-access';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
@@ -81,6 +82,18 @@ describe('PostgreSQL-backed event lifecycle',()=>{
 });
 
 describe('participant privacy',()=>{
+  it('keeps a shared invitation private when its sender also holds organizer credentials',async()=>{
+    const created=await create(),event=await get(created.id);
+    const alice=await respond(created.id,[event.windows[0]],'Alice');
+    const storedResponse=JSON.stringify({id:alice.id,token:alice.editToken});
+    const participant=readEventAccess('',storedResponse);
+    const view=await (await request(`/events/${created.id}?response_id=${participant.response!.id}`,'GET',undefined,participant.response!.token)).json() as MeetingEvent;
+    expect(participant.organizerToken).toBe('');expect(view.is_organizer).toBe(false);
+    expect(view.responses.map(r=>r.id)).toEqual([alice.id]);expect(view.candidates).toEqual([]);
+    const organizer=readEventAccess('#organizer='+created.adminToken,storedResponse);
+    const full=await (await request(`/events/${created.id}`,'GET',undefined,organizer.organizerToken)).json() as MeetingEvent;
+    expect(full.is_organizer).toBe(true);expect(full.candidates!.length).toBeGreaterThan(0);
+  });
   it('returns only response counts publicly and authenticates each private response',async()=>{
     const created=await create(),event=await get(created.id),start=Date.parse(event.windows[0].start),ranges=[{start:new Date(start).toISOString(),end:new Date(start+3600000).toISOString()}];
     const alice=await respond(created.id,ranges,'Alice'),bob=await respond(created.id,[],'Bob');

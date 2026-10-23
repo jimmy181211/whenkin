@@ -59,7 +59,7 @@ flowchart LR
   P --> D
 ```
 
-The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private tokens stay in link fragments and local browser storage; requests authenticate with an authorization header. Neon stores token hashes, availability ranges, and event/response revisions. Date-based ranges are actual UTC instants. Weekday ranges encode a typical shared-clock week; see the mode explanation below.
+The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private link tokens may be backed up in local browser storage. Organizer tokens authenticate only when explicitly opened in a private link fragment; requests authenticate with an authorization header. Neon stores token hashes, availability ranges, and event/response revisions. Date-based ranges are actual UTC instants. Weekday ranges encode a typical shared-clock week; see the mode explanation below.
 
 ## Editing and Navigation
 
@@ -102,3 +102,19 @@ Date-based events retain UTC comparisons and local-time display. Weekday polls d
 The name hint sits directly below the participant input on both desktop and mobile. An empty or whitespace-only name locks grid editing, including mouse, touch, keyboard, and Undo. Attempting Edit or a cell focuses the name input and shows an accessible notice. The former late save-time name error is removed; the API still requires a valid participant name. Changing time zones remains available before entering a name.
 
 Availability has three visible states: **Not Started** before a new response is changed, **Unsaved Changes** while changes are pending or a save fails, and **Saved Changes** after the server confirms them. Every event page shows the private edit-link section; copying becomes available after the participant saves a response.
+
+## Explicit Link Access
+
+```mermaid
+flowchart TD
+  A[Open event link] --> B{Private organizer token in link?}
+  B -->|Yes| C[Server checks organizer token]
+  C -->|Valid| D[All responses and Common Ground]
+  C -->|Invalid| E[No organizer access]
+  B -->|No| F[Participant view]
+  F --> G{Valid private response token?}
+  G -->|Yes| H[Own response and response count]
+  G -->|No| I[Event details and response count]
+```
+
+A normal invitation never inherits a saved organizer credential. Private organizer links keep their fragment on reload. Changing the link fragment reloads the page and reevaluates access. Matching is calculated in PostgreSQL; the browser only chooses the five displayed suggestions from the returned ranking.

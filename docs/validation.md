@@ -12,7 +12,7 @@ The grid instruction line is removed. The name field has no routine hint. Empty 
 
 ## Automated Verification
 
-TypeScript passes, all 59 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
+TypeScript passes, all 63 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
 
 Tests use PGlite for the PostgreSQL-backed API lifecycle. Migration 005 was also applied and smoke-tested on the existing Neon development branch: the new mode persists, a Monday range retains its shared clock, and the optional organizer name remains supported. Temporary verification rows were removed from that development branch.
 
@@ -45,3 +45,9 @@ The response status now sits beside the Edit / Done control on both desktop and 
 Your Common Ground has 16px of space before its time-zone line. New Event and Share Event are grouped beside each other at every width; the event title can move above the pair when space is limited. The redundant header action is removed. The routine name-to-save hint and private-link placeholder sentence are removed in all languages. The up-front name requirement for editing and server validation remain in place.
 
 The time-zone menu omits the separate search heading and device-report sentence. The input keeps its accessible name, search placeholder, and focus behavior, and the Use Device Time Zone control remains. The Group omits its responded-count explanation. These shared components apply to desktop and mobile in all languages.
+
+## Shared-Link Privacy Fix and Code Cleanup
+
+The old page restored an organizer token from local storage for every event link. That made a normal participant link display organizer results in the organizer’s browser. API organizer credentials now come only from the explicit private organizer link. Saved organizer credentials are used only to recover a private link in Share Event, never to authenticate a normal invitation automatically. That fragment stays in the URL so refreshing preserves the intended role. Ordinary invitations can restore only the current participant’s response credential. Fragment changes reload access. Regression checks cover normal invitations, private organizer links, private response links, corrupt browser storage, and the resulting API visibility.
+
+The cleanup removes 78 unused starter files, 23 unused direct package declarations, 51 unused translation entries, 77 obsolete CSS selectors, and the redundant browser matching fallback. Dynamic city-name translations and generated API error translations are retained. The SQL-backed whole-meeting test still covers matching different people’s partial availability. TypeScript now rejects unused imports, locals, and parameters. Production migration history, supported finalization/calendar API routes, and the hosting/preview integration remain intact. No database migration or data deletion is required.

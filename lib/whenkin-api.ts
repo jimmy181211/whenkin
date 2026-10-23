@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { Temporal } from '@js-temporal/polyfill';
-import { allSlots, contains, isTimezone, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
+import { allSlots, contains, isTimezone, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
 import type { CreateInput, MeetingEvent, TimeRange } from '../src/lib/types';
 import { weekdayDate } from '../src/lib/weekly';
 
@@ -27,7 +27,7 @@ async function body(request:Request) {
   try { const parsed:unknown=JSON.parse(new TextDecoder().decode(buffer)); if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw Error(); return parsed as Record<string,unknown>; }
   catch { throw new Problem(400,'The information could not be read. Please try again.'); }
 }
-export function validateEvent(input:CreateInput,allowExistingDates=false) {
+export function validateEvent(input:CreateInput) {
   const title=text(input.title,'an event name',100), organizer=text(input.organizer_name??'','your name',60,true), description=text(input.description??'','a description',1000,true);
   if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
   if(!Number.isInteger(input.duration)||input.duration<15||input.duration>240||input.duration%15) throw new Problem(400,'Choose a meeting length between 15 minutes and 4 hours.');
@@ -47,7 +47,7 @@ export function validateEvent(input:CreateInput,allowExistingDates=false) {
     if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Problem(400,'Please choose valid dates.');
     try {
       const d=Temporal.PlainDate.from(date), today=Temporal.Now.plainDateISO(input.timezone);
-      if(mode==='dates'&&((!allowExistingDates&&Temporal.PlainDate.compare(d,today)<0)||Temporal.PlainDate.compare(d,today.add({years:1}))>0)) throw new Problem(400,'Choose dates between today and one year from now.');
+      if(mode==='dates'&&((Temporal.PlainDate.compare(d,today)<0)||Temporal.PlainDate.compare(d,today.add({years:1}))>0)) throw new Problem(400,'Choose dates between today and one year from now.');
       const clockZone=mode==='weekdays'?'UTC':input.timezone;
       const start=localToUTC(date,input.startTime,clockZone),end=localToUTC(date,input.endTime,clockZone);
       if(Date.parse(end)-Date.parse(start)<input.duration*60000) throw new Problem(400,'The time window must be at least as long as the meeting.');
