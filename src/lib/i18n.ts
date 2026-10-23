@@ -20,8 +20,8 @@ export const messages: Record<string, [string, string]> = {
 
   'Month': ['月份', 'Mes'],
   'Year': ['年份', 'Año'],
-  'Saved Changes': ['更改已保存', 'Cambios guardados'],
-  'Unsaved Changes': ['更改未保存', 'Cambios sin guardar'],
+  'Saved': ['已保存', 'Guardado'],
+  'Unsaved': ['未保存', 'Sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
   'Edit': ['编辑', 'Editar'],
