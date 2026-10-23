@@ -2,7 +2,7 @@
 
 ## Current Changes
 
-The creation form uses **Event Name** and offers two modes: **Specific dates** and **Days of the week**. Switching modes keeps both selections. Weekday polls select Monday–Sunday and now have the same searchable time-zone selector as dated events. Weekly display conversions use offsets at the poll’s creation time, disclosed in the interface; stored selections remain in organizer-clock coordinates. Date-based events retain automatic local-time conversion.
+The creation form uses **Event Name** and offers two modes: **Specific dates** and **Days of the week**. Switching modes keeps both selections. Weekday polls select Monday–Sunday and now have the same searchable time-zone selector as dated events. Weekly display conversions use offsets at the poll’s creation time; stored selections remain in organizer-clock coordinates. Date-based events retain automatic local-time conversion.
 
 Desktop and mobile use the same **Edit / Done** availability controls. A drag starting on a blank block marks time; a drag starting on a marked or partly marked block clears time. The action stays consistent throughout the drag. Done locks selection and permits scrolling; Undo is disabled until Edit is selected again. The time-label column can also scroll while editing.
 
@@ -23,3 +23,9 @@ The managed browser preview opens the updated homepage and its weekly/date contr
 ## Release Requirement
 
 Apply `migrations/005_weekday_polls.sql` before deploying this version. Its default keeps existing events in date mode. Publication and source synchronization use the existing public Site and GitHub repository.
+
+## Participant Control Layout
+
+The event-page weekly conversion note is removed. The searchable time-zone selector sits beside the name input on event cards with at least 620px of content width. On narrower cards it moves above the name input. The hint remains directly below the name input. These layout changes preserve name gating, saving, and all time-zone conversion behavior.
+
+The creation page also removes the “When might work?” heading and explanatory sentence beneath the date/weekday mode switch. The mode buttons and both pickers remain available in all three languages.
