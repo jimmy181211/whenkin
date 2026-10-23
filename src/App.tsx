@@ -25,9 +25,9 @@ export default function App(){
   const path=usePathname()||'/',match=path.match(/^\/e\/([0-9a-f-]{36})\/?$/i);
   const legalKind=path.replace(/\/$/,'')==='/terms'?'terms':path.replace(/\/$/,'')==='/privacy'?'privacy':null;
   useEffect(()=>{document.documentElement.lang=language==='zh'?'zh-CN':language;document.title=legalKind?`${legalDocuments[language][legalKind].title} — Whenkin`:`Whenkin — ${t("Find Your Shared Time.")}`;},[language,legalKind]);
-  return <><Header inEvent={!!match}/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:path==='/how-it-works'?<HowItWorksPage/>:legalKind?<LegalPage kind={legalKind}/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><PageLink className="button primary" href="/">{t("Create an Event")} <ArrowRight size={17}/></PageLink></main>}<Footer/></>;
+  return <><Header/>{match?<EventPage id={match[1]}/>:path==='/'?<CreatePage/>:path==='/how-it-works'?<HowItWorksPage/>:legalKind?<LegalPage kind={legalKind}/>:<main className="error-page"><h1>{t("That Page Is a Little Off-Grid.")}</h1><PageLink className="button primary" href="/">{t("Create an Event")} <ArrowRight size={17}/></PageLink></main>}<Footer/></>;
 }
-function Header({inEvent}:{inEvent:boolean}){return <header className="site-header"><PageLink className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></PageLink><nav aria-label={t('Main navigation')}><LanguageSelector/>{inEvent&&<PageLink className="button secondary compact header-new-event" href="/"><Plus size={16}/> {t('New Event')}</PageLink>}</nav></header>;}
+function Header(){return <header className="site-header"><PageLink className="brand" href="/" aria-label={t('Whenkin home')}><Image src="/favicon.svg" alt="" width={40} height={40} unoptimized/><span>{BRAND.name.toLowerCase()}</span></PageLink><nav aria-label={t('Main navigation')}><LanguageSelector/></nav></header>;}
 function Footer(){return <footer className="site-footer"><span>{t(BRAND.tagline)}</span><nav aria-label={t('Legal Information')}><PageLink href="/terms">{t('Terms of Use')}</PageLink><PageLink href="/privacy">{t('Privacy Policy')}</PageLink></nav><span>© {new Date().getFullYear()} {LEGAL.operator}<GlobeIcon/></span></footer>;}
 function GlobeIcon(){return <span className="footer-dot" aria-hidden="true"/>;}
 const steps=[
@@ -115,7 +115,7 @@ function EventPage({id}:{id:string}){
   function changeDraft(change:Partial<typeof latest.current>={}){dirty.current=true;generation.current++;setSaveState('dirty');const value={...latest.current,...change};saveSecret(`meetgrid:draft:${id}`,JSON.stringify({name:value.name,zone:value.zone,slots:[...value.selected]}));}
   function changeZone(next:string){if(next===zone)return;setZone(next);if(latest.current.name.trim())changeDraft({zone:next});}
   const save=useCallback(async()=>{
-    if(saving.current||!eventRef.current||!latest.current.name.trim())return;const value=latest.current;
+    if(saving.current||!eventRef.current)return;const value=latest.current;
     saving.current=true;setIsSaving(true);const version=generation.current;setSaveState('saving');setError('');
     try{
       const person=identityRef.current,payload={name:value.name,timezone:value.zone,ranges:slotsToRanges(value.selected),revision:revisionRef.current,schedule_revision:eventRef.current.schedule_revision};
@@ -146,7 +146,7 @@ function EventPage({id}:{id:string}){
       <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime??Date.parse(event.windows[0].start)}/>
       </div>
       <AvailabilityGrid key={event.id+':'+event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
-      <div className="save-bar"><button className="button primary compact" disabled={!name.trim()||saveState==='saving'} onClick={()=>void save()}>{t(saveState==='saving'?'Saving…':'Save Availability')}<Check size={16}/></button></div>
+      <div className="save-bar"><button className="button primary compact" disabled={saveState==='saved'||saveState==='saving'} onClick={()=>void save()}>{t(saveState==='saving'?'Saving…':'Save Availability')}<Check size={16}/></button></div>
 
       <PrivateEditLink url={identity?eventLink+`#edit=${identity.id}.${identity.token}`:undefined} copied={copied==='edit'} onCopy={value=>{void copy(value,'edit');}}/>
     </section>{organizer&&<aside className="results-sidebar"><section className="suggestions-card"><div className="sidebar-title"><span className="sparkle-icon"><Sparkles size={18}/></span><h2>{t("Your Common Ground")}</h2></div><div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}',{zone:zoneLabel(zone)})}{organizer&&zone!==event.timezone&&<button className="text-button" onClick={()=>changeZone(event.timezone)}>{t("Use Organizer’s Zone")}</button>}</div>

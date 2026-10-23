@@ -36,7 +36,8 @@ describe('private edit link availability',()=>{
     const html=renderToStaticMarkup(<PrivateEditLink copied={false} onCopy={()=>{}}/>);
     expect(html).toContain('Copy My Private Edit Link');
     expect(html).toContain('disabled=""');
-    expect(html).toContain('Save your availability to get a private edit link.');
+    expect(html).not.toContain('private-edit-help');
+    expect(html).not.toContain('Save your availability to get a private edit link.');
   });
   it('enables copying a saved response link without rendering its token into the page markup',()=>{
     const html=renderToStaticMarkup(<PrivateEditLink url="https://example.test/e/event#edit=participant.private-token" copied={false} onCopy={()=>{}}/>);

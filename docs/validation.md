@@ -8,7 +8,7 @@ Desktop and mobile use the same **Edit / Done** availability controls. A drag st
 
 The fine-tune controls and the event-hour editor have been removed, including the schedule-update API. Event hours and meeting length are chosen at creation. Existing events, responses, and private links are retained.
 
-The grid instruction line is removed. The name hint is directly under the input. Empty names block editing upfront, with an accessible notice and focus on the name field when editing is attempted. Save remains disabled until a name is supplied; the late save-time name error is removed. The API keeps its required-name validation. A time-zone change preserves the current Edit/Done mode.
+The grid instruction line is removed. The name field has no routine hint. Empty names block editing upfront, with an accessible notice and focus on the name field when editing is attempted. The Save button is disabled when there are no pending changes or a save is running; there is no separate name-based button lock or late client-side name guard. The API keeps its required-name validation. A time-zone change preserves the current Edit/Done mode.
 
 ## Automated Verification
 
@@ -26,7 +26,7 @@ Apply `migrations/005_weekday_polls.sql` before deploying this version. Its defa
 
 ## Participant Control Layout
 
-The event-page weekly conversion note is removed. The searchable time-zone selector sits beside the name input on event cards with at least 620px of content width. On narrower cards it moves above the name input. The hint remains directly below the name input. These layout changes preserve name gating, saving, and all time-zone conversion behavior.
+The event-page weekly conversion note is removed. The searchable time-zone selector sits beside the name input on event cards with at least 620px of content width. On narrower cards it moves above the name input. An attempted edit without a name shows the editing notice directly below the input. These layout changes preserve name gating, saving, and all time-zone conversion behavior.
 
 The creation page also removes the “When might work?” heading and explanatory sentence beneath the date/weekday mode switch. The mode buttons and both pickers remain available in all three languages.
 
@@ -36,6 +36,10 @@ Availability has three visible statuses: Not Started for a fresh response, Unsav
 
 ## Private Edit Links and Title Case
 
-Every event page shows the private edit-link section. The copy button is disabled until the current participant has a saved response and an edit token. The helper text explains when the link becomes available. Organizer and other participant credentials are never substituted. Built-in English titles, field labels, and action buttons use Title Case, while descriptions and visitor-entered event names are preserved.
+Every event page shows the private edit-link section. The copy button is disabled until the current participant has a saved response and an edit token. No placeholder helper text appears before the link is available. Organizer and other participant credentials are never substituted. Built-in English titles, field labels, and action buttons use Title Case, while descriptions and visitor-entered event names are preserved.
 
 The response status now sits beside the Edit / Done control on both desktop and mobile. It no longer appears next to the name input or in the event header. Labels are Not Started, Unsaved Changes, and Saved Changes.
+
+## Event Page Spacing and Actions
+
+Your Common Ground has 16px of space before its time-zone line. New Event and Share Event are grouped beside each other at every width; the event title can move above the pair when space is limited. The redundant header action is removed. The routine name-to-save hint and private-link placeholder sentence are removed in all languages. The up-front name requirement for editing and server validation remain in place.

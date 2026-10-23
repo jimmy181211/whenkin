@@ -4,7 +4,6 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
-  'Save your availability to get a private edit link.': ['保存空闲时间后，即可获取私密编辑链接。', 'Guarda tu disponibilidad para obtener un enlace privado de edición.'],
   'Saved Changes': ['更改已保存', 'Cambios guardados'],
   'Unsaved Changes': ['更改未保存', 'Cambios sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
@@ -799,10 +798,6 @@ export const messages: Record<string, [string, string]> = {
   "Your change could not be saved. Please try again in a moment.": [
     "无法保存更改。请稍后重试。",
     "No se pudo guardar el cambio. Inténtalo de nuevo en un momento."
-  ],
-  "Enter your name to save your availability.": [
-    "请输入姓名以保存你的空闲时间。",
-    "Escribe tu nombre para guardar tu disponibilidad."
   ],
   "Please enter your name.": [
     "请输入你的姓名。",

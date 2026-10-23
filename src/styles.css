@@ -106,14 +106,20 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 .guide-card .how-it-works strong{font-size:14px}.guide-card .how-it-works p:not(.eyebrow){font-size:13px}
 }
 
-.event-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.event-new-event{display:none}.save-bar{justify-content:flex-end}
+/* Keep event actions together, allowing the title to move above them. */
+.event-summary .event-heading{flex-wrap:wrap}
+.event-actions{display:flex;align-items:stretch;gap:10px;flex-wrap:nowrap;max-width:100%}
+.event-summary .event-heading>.event-actions{flex:0 1 auto;margin-left:auto}
+.event-actions .button{min-width:0;min-height:44px;white-space:normal;text-align:center;justify-content:center}
+.event-actions .button svg{flex-shrink:0}
+.event-new-event{display:inline-flex}
+.save-bar{justify-content:flex-end}
+.suggestions-card .suggestion-zone{margin-top:16px}
 @media(max-width:699px){
-body:has(.event-page) .header-new-event{display:none}
-.event-new-event{display:inline-flex}.event-actions{flex-wrap:wrap;justify-content:flex-start;max-width:100%;gap:8px}
-.event-actions .button{min-height:44px;font-size:12px;padding:10px 12px}
-.event-summary .event-heading>div.event-actions{flex:0 1 auto}
+  .event-summary .event-heading>.event-actions{margin-left:0}
+  .event-actions{gap:8px}
+  .event-actions .button{font-size:12px;padding:10px 12px}
 }
-.event-summary .event-heading>.event-actions{flex:0 1 auto;margin-left:auto}@media(max-width:699px){.event-summary .event-heading>.event-actions{margin-left:0}}
 
 /* The clock column always scrolls; selection cells reserve gestures for painting. */
 .time-grid{touch-action:pan-x pan-y}.time-label,.time-corner,.day-heading{touch-action:pan-x pan-y}
