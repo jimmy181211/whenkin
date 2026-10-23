@@ -1,5 +1,5 @@
 import { Check, Clock3, RefreshCw, Sparkles, Users, X } from 'lucide-react';
-import { displayRange, formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
+import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import type { Candidate, MeetingEvent } from '../../lib/types';
 import type { projectWeekly } from '../../lib/weekly';
@@ -80,12 +80,6 @@ export default function EventResults({ event, zone, identityId, active, suggesti
           <span>
             <strong>{r.name}{r.id === identityId && <small> {t("(you)")}</small>}</strong>
             <small>{zoneLabel(r.timezone)}</small>
-            <details className="person-availability">
-              <summary>{t('View Availability')}</summary>
-              {r.ranges.length ? <ul>{r.ranges.map(range => <li key={range.start}>
-                {displayRange(weeklyView ? weeklyView.range(range) : range, viewZone, weekly)}
-              </li>)}</ul> : <p>{t('No availability selected.')}</p>}
-            </details>
           </span>
           <Check size={14}/>
         </div>) : <p className="field-help">
