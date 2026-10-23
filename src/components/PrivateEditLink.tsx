@@ -4,9 +4,9 @@ import { t } from '../lib/i18n';
 type Props={url?:string;copied:boolean;onCopy:(url:string)=>void};
 export default function PrivateEditLink({url,copied,onCopy}:Props){
   return <div className="edit-link-line">
-    <button type="button" className="text-button" disabled={!url} aria-describedby="private-edit-help" onClick={()=>{if(url)onCopy(url);}}>
+    <button type="button" className="text-button" disabled={!url} aria-describedby={url?'private-edit-help':undefined} onClick={()=>{if(url)onCopy(url);}}>
       {copied?<Check size={14}/>:<Copy size={14}/>} {t(copied?'Copied Private Edit Link':'Copy My Private Edit Link')}
     </button>
-    <span id="private-edit-help">{t(url?'Save this link to edit from another device.':'Save your availability to get a private edit link.')}</span>
+    {url&&<span id="private-edit-help">{t('Save this link to edit from another device.')}</span>}
   </div>;
 }

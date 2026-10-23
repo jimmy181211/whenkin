@@ -9,13 +9,14 @@ import type { MeetingEvent } from '../src/lib/types';
 
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 describe('name before availability editing',()=>{
-  it('places the hint immediately under the input and turns an edit attempt into an accessible notice',()=>{
+  it('keeps the name field quiet until an edit attempt needs an accessible notice',()=>{
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
       const html=renderToStaticMarkup(<ParticipantName name="" onChange={()=>{}} editNotice={false}/>);
-      expect(html).toMatch(/<div class="participant-name-field"><input[^>]*\/><p id="name-help"/);
-      expect(html).toContain(t('Enter your name to save your availability.'));
+      expect(html).not.toContain('name-help');
+      expect(html).not.toContain('aria-describedby');
       const noticed=renderToStaticMarkup(<ParticipantName name="  " onChange={()=>{}} editNotice/>);
+      expect(noticed).toMatch(/<input[^>]*aria-describedby="name-help"[^>]*\/><p id="name-help"/);
       expect(noticed).toContain('role="alert"');expect(noticed).toContain(t('Enter your name before editing availability.'));
     }
   });

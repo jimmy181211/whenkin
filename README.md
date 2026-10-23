@@ -106,3 +106,5 @@ On wider event cards, the time-zone selector sits beside the participant name fi
 Availability status has three states: “Not Started,” “Unsaved Changes,” and “Saved Changes.” A save in progress stays unsaved until the server confirms it. Your Common Ground shows at most five matching times on both computers and phones, without an extra description or a Show more button.
 
 The private edit-link section is visible on every event page. Save your availability first to enable copying your own link, then keep it to edit from another device. Built-in English headings, field labels, and action buttons use Title Case; descriptions and visitor-entered text keep their natural wording.
+
+Event pages keep New Event and Share Event together on every screen size. The name field only shows a notice after an attempt to edit without a name; it has no routine save reminder. The private edit-link section stays visible without a placeholder explanation.
