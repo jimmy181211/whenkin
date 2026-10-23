@@ -79,14 +79,6 @@ describe('shared results and sharing UI', () => {
       expect(html).not.toContain('Best 60-minute');
     }
   });
-  it('shows individual availability, including an explicitly empty response', () => {
-    const shown = { ...event, responses: [...responses, person('Unavailable guest', [])] };
-    const html = renderToStaticMarkup(<EventResults event={shown} zone="UTC" active={null} suggestions={[]} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}} onRefresh={() => {}}/>);
-    expect(html).toContain('View Availability');
-    expect(html).toContain('9:00'); expect(html).toContain('10:30');
-    expect(html).toContain('No availability selected.');
-    expect(html).not.toContain('editToken');
-  });
   it('shares only the common event link', () => {
     const html = renderToStaticMarkup(<ShareEventDialog eventLink="https://whenkin.example/e/shared" copied="" onClose={() => {}} onCopy={async () => {}}/>);
     expect(html).toContain('Event Link'); expect(html).toContain('https://whenkin.example/e/shared');

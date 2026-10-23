@@ -4,8 +4,6 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
-  'View Availability': ['查看空闲时间', 'Ver disponibilidad'],
-  'No availability selected.': ['未选择空闲时间。', 'No se ha seleccionado disponibilidad.'],
   'Links expire in 1 year': ['链接将在 1 年后失效', 'Los enlaces caducan en 1 año'],
   'Event Link': ['活动链接', 'Enlace del evento'],
   'Primary Selection': ['首选时间', 'Selección principal'],
