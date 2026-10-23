@@ -40,7 +40,7 @@ The single Neon step uses the event's current saved data; see [Website and Stora
 
 Only people who have responded enter the count. A person counts as available only when their saved availability covers the whole meeting; separate people's partial availability cannot be combined to cover it. **Best Fit** means the highest attendance count, with the earliest start breaking a tie. It does not require everyone to be available.
 
-To keep the list useful, skip a candidate if a kept suggestion has the same attendee count and starts less than one meeting length away. Keep up to 20 suggestions, show five initially, and reveal five more at a time. Times are displayed in the viewer's chosen time zone. The organizer can always view these results; participant access follows [Participant Privacy](#participant-privacy).
+To keep the list useful, skip a candidate if a kept suggestion has the same attendee count and starts less than one meeting length away. Keep and show only the top five suggestions on desktop and mobile. There is no “Show more” control. Times are displayed in the viewer's chosen time zone. The organizer can always view these results; participant access follows [Participant Privacy](#participant-privacy).
 
 ## Participant Privacy
 
@@ -100,3 +100,5 @@ flowchart TD
 Date-based events retain UTC comparisons and local-time display. Weekday polls describe a typical week, not repeating calendar appointments. They retain the organizer’s clock as their storage coordinates, but every viewer can change the displayed time zone. Conversions use the offsets at the poll’s creation time; daylight-saving changes can alter the difference. Their stored ranges encode a fixed Monday–Sunday coordinate week rather than real appointment dates. Existing events stay date-based. The mode switch on the creation form preserves both date and weekday choices.
 
 The name hint sits directly below the participant input on both desktop and mobile. An empty or whitespace-only name locks grid editing, including mouse, touch, keyboard, and Undo. Attempting Edit or a cell focuses the name input and shows an accessible notice. The former late save-time name error is removed; the API still requires a valid participant name. Changing time zones remains available before entering a name.
+
+Availability has three visible states: **Not Started** before a new response is changed, **Availability Unsaved** while changes are pending or a save fails, and **Availability Saved** after the server confirms them. Every event page shows the private edit-link section; copying becomes available after the participant saves a response.

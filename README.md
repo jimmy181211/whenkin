@@ -32,7 +32,7 @@ See the [participant privacy flow](docs/flowchart.md#participant-privacy) for or
 - In Edit, start dragging on a blank block to mark availability, or on a marked block to clear it. Choose Done to lock the grid and scroll. The same controls work on computers and phones.
 - Zoom in, see exact times while selecting, and undo mistakes. The former fine-tune panel has been removed.
 - Date-based events show your device’s time zone, with a searchable selector. Typical-week polls also have the searchable selector. Their conversions use the time-zone offsets when the poll was created; daylight-saving changes can alter the difference.
-- Organizers see all responses and suggested meeting times. Participants see only their own response and the count.
+- Organizers see all responses and the top five suggested meeting times. Participants see only their own response and the count.
 - Enter your name before editing availability. An edit attempt without a name focuses the name field and shows a notice directly under it. Changes save automatically after that.
 - Communicate the final arrangement outside Whenkin.
 - Use private links to manage an event or edit your own response from another device.
@@ -102,3 +102,7 @@ Mobile time-label columns support scrolling in every grid mode. The shorter mobi
 Apply `migrations/005_weekday_polls.sql` before deploying this feature. Existing events default to `dates`. Dated event ranges remain real instants in PostgreSQL `timestamptz`. Weekly ranges reuse the range and matching code with a fixed Monday–Sunday coordinate week starting January 3, 2000; these values encode shared wall-clock times, not real appointments in 2000. Weekly pages never show the coordinate dates as appointments. A reversible cyclic-week projection changes weekday/time labels for the selected zone; selections are mapped back to the original organizer-clock coordinates before saving. Changing the displayed zone preserves availability and Done mode. Calendar invitations are disabled for weekday polls.
 
 On wider event cards, the time-zone selector sits beside the participant name field. When space is limited, including on phones, it moves above the name field. The event page omits the weekly daylight-saving note.
+
+Availability status has three states: “Not Started,” “Availability Unsaved,” and “Availability Saved.” A save in progress stays unsaved until the server confirms it. Your Common Ground shows at most five matching times on both computers and phones, without an extra description or a Show more button.
+
+The private edit-link section is visible on every event page. Save your availability first to enable copying your own link, then keep it to edit from another device. Built-in English headings, field labels, and action buttons use Title Case; descriptions and visitor-entered text keep their natural wording.

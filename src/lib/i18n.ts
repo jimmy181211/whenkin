@@ -4,6 +4,10 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Save your availability to get a private edit link.': ['保存空闲时间后，即可获取私密编辑链接。', 'Guarda tu disponibilidad para obtener un enlace privado de edición.'],
+  'Availability Saved': ['空闲时间已保存', 'Disponibilidad guardada'],
+  'Availability Unsaved': ['空闲时间未保存', 'Disponibilidad sin guardar'],
+  'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
   'Guests can change time zones. Weekly conversions use offsets when the poll is created.': ['参与者可以切换时区。每周时间按调查创建时的时差换算。', 'Los invitados pueden cambiar de zona horaria. La conversión semanal usa las diferencias horarias al crear la encuesta.'],
   'Edit': ['编辑', 'Editar'],
@@ -12,8 +16,8 @@ export const messages: Record<string, [string, string]> = {
   'Done. Scroll without changing your availability.': ['已完成。现在可以滚动，不会改变你的空闲时间。', 'Listo. Desplázate sin cambiar tu disponibilidad.'],
   'Event Name': ['活动名称', 'Nombre del evento'],
   'Calendar mode': ['日历模式', 'Modo de calendario'],
-  'Specific dates': ['具体日期', 'Fechas específicas'],
-  'Days of the week': ['星期几', 'Días de la semana'],
+  'Specific Dates': ['具体日期', 'Fechas específicas'],
+  'Days of the Week': ['星期几', 'Días de la semana'],
   'Choose days of the week': ['选择星期几', 'Elige días de la semana'],
   '{count} day selected': ['已选 {count} 天', '{count} día seleccionado'],
   '{count} days selected': ['已选 {count} 天', '{count} días seleccionados'],
@@ -43,7 +47,7 @@ export const messages: Record<string, [string, string]> = {
     "Whenkin 首页",
     "Inicio de Whenkin"
   ],
-  "New event": [
+  "New Event": [
     "新建活动",
     "Nuevo evento"
   ],
@@ -55,7 +59,7 @@ export const messages: Record<string, [string, string]> = {
     "找不到这个页面。",
     "No encontramos esta página."
   ],
-  "Create an event": [
+  "Create an Event": [
     "创建活动",
     "Crear un evento"
   ],
@@ -139,8 +143,8 @@ export const messages: Record<string, [string, string]> = {
     "例如：周五聚餐、团队交流……",
     "Por ejemplo: cena del viernes, reunión del equipo…"
   ],
-  "How it works": ["使用方法", "Cómo funciona"],
-  "Your name": [
+  "How It Works": ["使用方法", "Cómo funciona"],
+  "Your Name": [
     "你的姓名",
     "Tu nombre"
   ],
@@ -148,7 +152,7 @@ export const messages: Record<string, [string, string]> = {
     "让大家知道是谁发起的",
     "Para que sepan quién lo organiza"
   ],
-  "A little more detail": [
+  "A Little More Detail": [
     "补充一些细节",
     "Un poco más de detalle"
   ],
@@ -160,7 +164,7 @@ export const messages: Record<string, [string, string]> = {
     "地点、内容，或其他需要说明的信息",
     "Lugar, detalles o algo que deban saber"
   ],
-  "Add a note": [
+  "Add a Note": [
     "添加备注",
     "Añadir una nota"
   ],
@@ -180,7 +184,7 @@ export const messages: Record<string, [string, string]> = {
     "结束",
     "Hasta"
   ],
-  "Meeting length": [
+  "Meeting Length": [
     "活动时长",
     "Duración"
   ],
@@ -216,7 +220,7 @@ export const messages: Record<string, [string, string]> = {
     "你填写的内容还在。请重试连接。",
     "Tu formulario sigue aquí. Vuelve a intentar la conexión."
   ],
-  "Retry connection": [
+  "Retry Connection": [
     "重试连接",
     "Reintentar conexión"
   ],
@@ -228,7 +232,7 @@ export const messages: Record<string, [string, string]> = {
     "正在检查连接……",
     "Comprobando conexión…"
   ],
-  "Create event & get a link": [
+  "Create Event & Get a Link": [
     "创建活动并获取链接",
     "Crear evento y obtener enlace"
   ],
@@ -304,7 +308,7 @@ export const messages: Record<string, [string, string]> = {
     "此设备上有一份未保存的草稿。",
     "Tienes un borrador sin guardar en este dispositivo."
   ],
-  "Restore draft": [
+  "Restore Draft": [
     "恢复草稿",
     "Recuperar borrador"
   ],
@@ -328,15 +332,15 @@ export const messages: Record<string, [string, string]> = {
     "无需注册。你可以在此设备上修改回复。",
     "No necesitas una cuenta. Puedes editar tu respuesta en este dispositivo."
   ],
-  "Save availability": [
+  "Save Availability": [
     "保存空闲时间",
     "Guardar disponibilidad"
   ],
-  "Copied private edit link": [
+  "Copied Private Edit Link": [
     "已复制私人编辑链接",
     "Enlace privado copiado"
   ],
-  "Copy my private edit link": [
+  "Copy My Private Edit Link": [
     "复制我的私人编辑链接",
     "Copiar mi enlace privado"
   ],
@@ -348,23 +352,19 @@ export const messages: Record<string, [string, string]> = {
     "大家的共同时间",
     "Sus horas en común"
   ],
-  "Best {count}-minute times, based on everyone who has responded.": [
-    "根据已回复的人，推荐适合 {count} 分钟活动的时段。",
-    "Las mejores opciones de {count} minutos según las respuestas recibidas."
-  ],
   "Times shown in {zone}": [
     "时间显示为：{zone}",
     "Horas en {zone}"
   ],
-  "Use organizer’s zone": [
+  "Use Organizer’s Zone": [
     "使用组织者时区",
     "Usar la zona de quien organiza"
   ],
-  "No shared times yet": [
+  "No Shared Times Yet": [
     "暂时没有共同时间",
     "Aún no hay horas en común"
   ],
-  "The possibilities start with you.": [
+  "The Possibilities Start With You.": [
     "从你的空闲时间开始。",
     "Todo empieza contigo."
   ],
@@ -376,7 +376,7 @@ export const messages: Record<string, [string, string]> = {
     "先标记空闲时间，再把活动分享给大家。",
     "Marca cuándo estás libre y comparte el evento con el grupo."
   ],
-  "Best fit": [
+  "Best Fit": [
     "最合适",
     "Mejor opción"
   ],
@@ -387,10 +387,6 @@ export const messages: Record<string, [string, string]> = {
   "{count} of {total} available": [
     "{total} 人中有 {count} 人有空",
     "{count} de {total} disponibles"
-  ],
-  "Show more times": [
-    "显示更多时段",
-    "Ver más horas"
   ],
   "Who can make it?": [
     "谁能参加？",
@@ -440,19 +436,19 @@ export const messages: Record<string, [string, string]> = {
     "好计划，一起分享。",
     "Los buenos planes se comparten."
   ],
-  "Participant link": [
+  "Participant Link": [
     "参与者链接",
     "Enlace para participantes"
   ],
-  "Link copied": [
+  "Link Copied": [
     "链接已复制",
     "Enlace copiado"
   ],
-  "Copy event link": [
+  "Copy Event Link": [
     "复制活动链接",
     "Copiar enlace del evento"
   ],
-  "Just for you": [
+  "Just for You": [
     "仅限你使用",
     "Solo para ti"
   ],
@@ -468,7 +464,7 @@ export const messages: Record<string, [string, string]> = {
     "已复制",
     "Copiado"
   ],
-  "Copy organizer link": [
+  "Copy Organizer Link": [
     "复制组织者链接",
     "Copiar enlace de organización"
   ],
@@ -476,7 +472,7 @@ export const messages: Record<string, [string, string]> = {
     "无法打开此活动。",
     "No pudimos abrir este evento."
   ],
-  "Back to home": [
+  "Back to Home": [
     "返回首页",
     "Volver al inicio"
   ],
@@ -584,11 +580,11 @@ export const messages: Record<string, [string, string]> = {
     "选择可能合适的日期",
     "Elige las fechas que podrían servir"
   ],
-  "Your time zone · detected": [
+  "Your Time Zone · Detected": [
     "你的时区 · 自动检测",
     "Tu zona horaria · detectada"
   ],
-  "Your time zone · selected": [
+  "Your Time Zone · Selected": [
     "你的时区 · 手动选择",
     "Tu zona horaria · seleccionada"
   ],
@@ -596,7 +592,7 @@ export const messages: Record<string, [string, string]> = {
     "选择你的时区",
     "Elige tu zona horaria"
   ],
-  "Search by city or time zone": [
+  "Search by City or Time Zone": [
     "搜索城市或时区",
     "Buscar por ciudad o zona horaria"
   ],
@@ -612,7 +608,7 @@ export const messages: Record<string, [string, string]> = {
     "关闭时区选择",
     "Cerrar selector de zonas"
   ],
-  "Use device time zone": [
+  "Use Device Time Zone": [
     "使用设备时区",
     "Usar zona del dispositivo"
   ],
@@ -820,11 +816,11 @@ export const messages: Record<string, [string, string]> = {
     "要放弃保存这些更改并离开吗？",
     "¿Quieres salir sin guardar tus cambios?"
   ],
-  "Keep editing": [
+  "Keep Editing": [
     "继续编辑",
     "Seguir editando"
   ],
-  "Leave without saving": [
+  "Leave Without Saving": [
     "不保存并离开",
     "Salir sin guardar"
   ],
