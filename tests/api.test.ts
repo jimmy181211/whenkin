@@ -18,6 +18,14 @@ beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_init
 beforeEach(async()=>{await pg.exec('TRUNCATE events CASCADE');});
 afterAll(async()=>{await pg.close();});
 describe('PostgreSQL-backed event lifecycle',()=>{
+  it('creates events after 2027 through the end of 2050 and rejects 2051',async()=>{
+    for(const date of ['2028-02-29','2050-12-31']){
+      const response=await request('/events','POST',{...input,dates:[date]});expect(response.status).toBe(201);
+      const created=await response.json() as {id:string;adminToken:string};owners.set(created.id,created.adminToken);
+      expect((await get(created.id)).windows[0].start).toContain(date);
+    }
+    expect((await request('/events','POST',{...input,dates:['2051-01-01']})).status).toBe(400);
+  });
   it('creates events without an organizer name and still requires a title',async()=>{
     for(const organizer_name of [undefined,'','   ']){
       const response=await request('/events','POST',{...input,organizer_name});expect(response.status).toBe(201);
