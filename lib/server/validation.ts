@@ -4,7 +4,7 @@ import type { CreateInput, TimeRange } from '../../src/lib/types';
 import { weekdayDate } from '../../src/lib/weekly';
 import { isEventDateAllowed } from '../../src/lib/date-limits';
 export class Problem extends Error {
-    constructor(public status: 400 | 403 | 404 | 409 | 413 | 429 | 503, message: string) {
+    constructor(public status: 400 | 403 | 404 | 409 | 410 | 413 | 429 | 503, message: string) {
         super(message);
     }
 }

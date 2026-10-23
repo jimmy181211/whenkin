@@ -4,6 +4,7 @@ import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import Steps from '../components/Steps';
 import PageLink from '../components/PageLink';
+import EventLimits from '../components/EventLimits';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { api, saveSecret } from '../lib/api';
 import { deviceTimezone } from '../lib/time';
@@ -166,6 +167,7 @@ export default function CreateEventPage() {
             </div>
           </div>}
           {error && <p className="error-message" role="alert">{t(error)}</p>}
+          <EventLimits />
           <button disabled={busy || connection !== 'ready'} className="button primary create-submit" type="submit">
             {busy ? <><LoaderCircle className="spin" size={18}/> {t("Creating your event…")}</> : connection === 'checking' ? <><LoaderCircle className="spin" size={18}/> {t("Checking connection…")}</> : <>{t("Create Event & Get a Link")} <ArrowRight size={18}/></>}
           </button>

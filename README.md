@@ -36,6 +36,7 @@ See the [participant privacy flow](docs/flowchart.md#participant-privacy) for or
 - Enter your name before editing availability. An edit attempt without a name focuses the name field and shows a notice directly under it. Changes save automatically after that.
 - Communicate the final arrangement outside Whenkin.
 - Use private links to manage an event or edit your own response from another device.
+- All event links expire one calendar month after creation. Each event accepts up to 1,000 saved responses; existing participants can still update their availability when it is full. Expired event data is cleaned up automatically each day.
 
 Participants see only their own availability and the response count. The API excludes other respondents’ names, time zones, availability, and meeting suggestions. The organizer always sees all responses and suggestions. Organizer and response-edit links remain private. There is no group-view switch or sharing setting.
 
@@ -75,7 +76,7 @@ The Site is public. Its audience is independent of each event’s server-enforce
 
 ## Terms and Privacy
 
-[Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) are available from every page’s footer in English, Simplified Chinese, and Spanish. UCSD CSSA operates Whenkin; privacy and deletion requests go to j4ouyang@ucsd.edu. The policies describe the current access controls, local drafts and credentials, hosting providers, and absence of automatic event expiry.
+[Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) are available from every page’s footer in English, Simplified Chinese, and Spanish. UCSD CSSA operates Whenkin; privacy and deletion requests go to j4ouyang@ucsd.edu. The policies describe the current access controls, local drafts and credentials, hosting providers, and automatic event expiry.
 
 ## Run It Locally
 
@@ -122,3 +123,13 @@ The date calendar browses 2026–2050. Choose future dates through December 31, 
 ## Code Structure
 
 Pages, shared controls, scheduling rules, and server validation and queries have separate modules. See [Project Structure](docs/architecture.md) to find where a change belongs and how to verify it.
+
+## Expiry and Participant Limit
+
+Apply `006_event_lifetime.sql` before deploying this change. Existing events get an expiry date one calendar month after their original creation, measured in UTC. A January 31 creation expires on the last day of February. Saving a response does not extend the deadline. The invitation, organizer, private edit, and calendar links all stop working at the same deadline, even before cleanup runs.
+
+A PostgreSQL trigger locks the event before counting its saved responses. This prevents simultaneous submissions from going over 1,000 without storing a duplicate counter. An empty response counts as a participant; editing a saved response does not use another place.
+
+The linked Whenkin Sites automation runs daily at 03:15 UTC. It uses the connected Neon account to call `SELECT * FROM public.purge_expired_events(100);` on production, repeating until no expired events remain. The function locks small batches and deletes only expired events. Foreign keys remove their dates, responses, and availability together. There is no public cleanup endpoint or cleanup key in the browser. Provider backups and logs follow their own retention policies.
+
+See [Event Retention](docs/retention.md) for setup, checks, and scheduler recovery.

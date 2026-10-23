@@ -15,6 +15,9 @@ import { t } from '../lib/i18n';
 import type { Candidate, MeetingEvent } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
+import EventLimits from '../components/EventLimits';
+import { ApiError } from '../lib/api';
+import { EVENT_EXPIRED_MESSAGE, EVENT_FULL_MESSAGE, isEventFull } from '../lib/event-limits';
 type Identity = ResponseIdentity;
 export default function EventPage({ id }: {
     id: string;
@@ -30,6 +33,7 @@ export default function EventPage({ id }: {
     const nameInput = useRef<HTMLInputElement>(null);
     const adminRef = useRef('');
     const [error, setError] = useState('');
+    const [unavailable, setUnavailable] = useState(false);
     const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
     const [share, setShare] = useState(false);
     const [copied, setCopied] = useState('');
@@ -122,21 +126,42 @@ export default function EventPage({ id }: {
         window.addEventListener('hashchange', reloadAccess);
         return () => window.removeEventListener('hashchange', reloadAccess);
     }, []);
-    const hasEvent = event !== null;
+    const hasEvent = event !== null && !unavailable;
+    const atCapacity = isEventFull(event?.response_count ?? event?.responses.length ?? 0, !!identity);
+    const expire = useCallback(() => {
+        setUnavailable(true);
+        eventRef.current = null;
+        dirty.current = false;
+        setSaveState('saved');
+        setError(EVENT_EXPIRED_MESSAGE);
+    }, []);
+    useEffect(() => {
+        if (!event?.expires_at) return;
+        let timer: ReturnType<typeof setTimeout>;
+        const checkExpiry = () => {
+            const remaining = Date.parse(event.expires_at!) - Date.now();
+            if (remaining <= 0) expire();
+            // A calendar month can exceed the browser's maximum timer length.
+            else timer = setTimeout(checkExpiry, Math.min(remaining, 2147483647));
+        };
+        checkExpiry();
+        return () => clearTimeout(timer);
+    }, [event?.expires_at, expire]);
     useEffect(() => {
         if (!hasEvent) {
             return;
         }
+        const refreshError = (error: unknown) => {
+            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire();
+        };
         const timer = setInterval(() => {
             if (document.visibilityState === 'visible') {
-                load().then(applyEvent).catch(() => {
-                });
+                load().then(applyEvent).catch(refreshError);
             }
         }, 10000);
         const refresh = () => {
             if (document.visibilityState === 'visible') {
-                load().then(applyEvent).catch(() => {
-                });
+                load().then(applyEvent).catch(refreshError);
             }
         };
         window.addEventListener('focus', refresh);
@@ -146,14 +171,16 @@ export default function EventPage({ id }: {
             window.removeEventListener('focus', refresh);
             document.removeEventListener('visibilitychange', refresh);
         };
-    }, [hasEvent, load, applyEvent]);
+    }, [hasEvent, load, applyEvent, expire]);
     const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
+        if (atCapacity) { setError(EVENT_FULL_MESSAGE); return; }
         setEditNotice(true);
         nameInput.current?.focus();
         nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
     function mark(next: Set<number>) {
+        if (atCapacity) { setError(EVENT_FULL_MESSAGE); return; }
         if (!latest.current.name.trim()) {
             requestEditing();
             return;
@@ -173,12 +200,12 @@ export default function EventPage({ id }: {
             return;
         }
         setZone(next);
-        if (latest.current.name.trim()) {
+        if (latest.current.name.trim() && !atCapacity) {
             changeDraft({ zone: next });
         }
     }
     const save = useCallback(async () => {
-        if (saving.current || !eventRef.current) {
+        if (saving.current || !eventRef.current || atCapacity || unavailable) {
             return;
         }
         const value = latest.current;
@@ -217,23 +244,25 @@ export default function EventPage({ id }: {
             }
         }
         catch (e) {
+            if (e instanceof ApiError && e.status === 410) { expire(); return; }
             setError(e instanceof Error ? e.message : 'Could not save. Your draft stays on this device.');
             setSaveState('error');
+            if (e instanceof Error && e.message === EVENT_FULL_MESSAGE) load().then(applyEvent).catch(() => {});
         }
         finally {
             saving.current = false;
             setIsSaving(false);
         }
-    }, [id, load, applyEvent]);
+    }, [id, load, applyEvent, atCapacity, unavailable, expire]);
     useEffect(() => {
-        if (saveState !== 'dirty' || !name.trim() || isSaving) {
+        if (saveState !== 'dirty' || !name.trim() || isSaving || atCapacity || unavailable) {
             return;
         }
         const timer = setTimeout(() => {
             void save();
         }, 1000);
         return () => clearTimeout(timer);
-    }, [saveState, name, selected, zone, save, isSaving]);
+    }, [saveState, name, selected, zone, save, isSaving, atCapacity, unavailable]);
     const suggestions = useMemo(() => {
         const result: Candidate[] = [];
         for (const candidate of event?.candidates ?? []) {
@@ -276,7 +305,7 @@ export default function EventPage({ id }: {
         setShowRestore(false);
     }
     const weeklyView = useMemo(() => event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null, [event, zone]);
-    if (!event) {
+    if (!event || unavailable) {
         return <main className="loading-page">
       {error ? <>
         <h1>{t("We Couldn’t Open That Event.")}</h1>
@@ -312,9 +341,11 @@ export default function EventPage({ id }: {
                 {t(responseCount === 1 ? '{count} response' : '{count} responses', { count: responseCount })}
               </span>
             </p>
+            <EventLimits expiresAt={event.expires_at} timezone={zone}/>
             {event.description && <p className="event-description">{event.description}</p>}
           </header>
           {error && <div className="error-message" role="alert">{t(error)}</div>}
+          {atCapacity && !error && <p className="error-message" role="status">{t(EVENT_FULL_MESSAGE)}</p>}
           {showRestore && <div className="draft-banner">
             <span>{t("You have an unsaved draft on this device.")}</span>
             <button className="text-button" onClick={restore}>{t("Restore Draft")}</button>
@@ -326,13 +357,13 @@ export default function EventPage({ id }: {
             <ParticipantName name={name} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
         setEditNotice(false);
-        changeDraft({ name: value });
+        if (!atCapacity) changeDraft({ name: value });
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim() && !atCapacity} onEditBlocked={requestEditing}/>
           <div className="save-bar">
-            <button className="button primary compact" disabled={saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
+            <button className="button primary compact" disabled={atCapacity || saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
               {t(saveState === 'saving' ? 'Saving…' : 'Save Availability')}
               <Check size={16}/>
             </button>

@@ -69,7 +69,7 @@ describe('language changes across the website',()=>{
         expect(html).toContain(`<h1 id="legal-title">${titles[language][index]}</h1>`);
         expect(html).toContain('UCSD CSSA');
         expect(html).toContain('href="mailto:j4ouyang@ucsd.edu"');
-        expect(html).toMatch(/<time datetime="2026-10-22"/i);
+        expect(html).toMatch(/<time datetime="2026-10-23"/i);
         expect(html).not.toContain('create-submit');
         expect(html).not.toContain('That Page Is a Little Off-Grid.');
       }

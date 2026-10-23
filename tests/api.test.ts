@@ -1,6 +1,6 @@
 import { readEventAccess } from '../src/lib/event-access';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { Temporal } from '@js-temporal/polyfill';
 import type { Candidate, MeetingEvent, ResponseData, TimeRange } from '../src/lib/types';
@@ -14,7 +14,11 @@ const owners=new Map<string,string>();
 async function create(){const r=await request('/events','POST',input);expect(r.status).toBe(201);const result=await r.json() as {id:string;adminToken:string};owners.set(result.id,result.adminToken);return result;}
 async function get(id:string){return await (await request(`/events/${id}`,'GET',undefined,owners.get(id))).json() as MeetingEvent;}
 async function respond(id:string,ranges:TimeRange[],name='Sam'){const r=await request(`/events/${id}/responses`,'POST',{name,timezone:'America/New_York',ranges});expect(r.status).toBe(201);return await r.json() as {id:string;editToken:string;revision:number};}
-beforeAll(async()=>{await pg.exec(await readFile(new URL('../migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/002_participant_privacy.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/003_schedule_revision.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/004_optional_organizer_name.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../migrations/005_weekday_polls.sql',import.meta.url),'utf8'));},30000);
+beforeAll(async()=>{
+  for(const file of (await readdir(new URL('../migrations/',import.meta.url))).filter(name=>name.endsWith('.sql')).sort()) {
+    await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  }
+},30000);
 beforeEach(async()=>{await pg.exec('TRUNCATE events CASCADE');});
 afterAll(async()=>{await pg.close();});
 describe('PostgreSQL-backed event lifecycle',()=>{
@@ -168,5 +172,85 @@ describe('weekday polls',()=>{
       const after=await get(created.id);
       expect(after.windows).toEqual(before.windows);expect(after.duration).toBe(before.duration);
     }
+  });
+});
+
+describe('event expiry and participant limits',()=>{
+  const payload={name:'Sam',timezone:'UTC',ranges:[]};
+  async function expire(id:string){await pg.query("UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1",[id]);}
+  async function seedResponses(id:string,count:number){
+    await pg.query(`INSERT INTO responses(id,event_id,name,timezone,edit_hash)
+      SELECT gen_random_uuid(),$1,'Guest '||n,'UTC','test-hash' FROM generate_series(1,$2::int) n`,[id,count]);
+  }
+  it('sets one fixed calendar-month deadline in UTC, including month ends',async()=>{
+    const created=await create(),before=await get(created.id);
+    const result=await pg.query<{correct:boolean}>(`SELECT expires_at=(((created_at AT TIME ZONE 'UTC')+interval '1 month') AT TIME ZONE 'UTC') AS correct FROM events WHERE id=$1`,[created.id]);
+    expect(result.rows[0].correct).toBe(true);expect(before.expires_at).toBeTruthy();
+    await respond(created.id,[]);
+    expect((await get(created.id)).expires_at).toBe(before.expires_at);
+    const end=await pg.query<{day:string}>(`SELECT to_char((TIMESTAMPTZ '2028-01-31 12:00Z' AT TIME ZONE 'UTC')+interval '1 month','YYYY-MM-DD') AS day`);
+    expect(end.rows[0].day).toBe('2028-02-29');
+  });
+  it('expires invitations, organizer links, private edit links, writes and calendar downloads',async()=>{
+    const created=await create(),response=await respond(created.id,[]);
+    await expire(created.id);
+    for(const [path,method,data,token] of [
+      [`/events/${created.id}`,'GET',undefined,undefined],
+      [`/events/${created.id}`,'GET',undefined,created.adminToken],
+      [`/events/${created.id}?response_id=${response.id}`,'GET',undefined,response.editToken],
+      [`/events/${created.id}/responses`,'POST',payload,undefined],
+      [`/events/${created.id}/responses/${response.id}`,'PUT',{...payload,revision:1},response.editToken],
+      [`/events/${created.id}/finalize`,'POST',{start:null},created.adminToken],
+      [`/events/${created.id}/calendar`,'GET',undefined,undefined],
+    ] as const){
+      const result=await request(path,method,data,token);expect(result.status).toBe(410);
+      expect(await result.json()).toEqual({error:'This event has expired.'});
+    }
+    expect((await pg.query('SELECT id FROM responses WHERE event_id=$1',[created.id])).rows).toHaveLength(1);
+  });
+  it('catches expiration between validation and the write and leaves the response unchanged',async()=>{
+    const created=await create(),response=await respond(created.id,[]);
+    const racing=createApp(()=>({query:async<T,>(q:string,p:unknown[]=[])=>{
+      if(q.includes('WITH gate AS'))await expire(created.id);
+      return (await pg.query<T>(q,p)).rows;
+    }}));
+    const result=await racing.request(`http://localhost/api/events/${created.id}/responses/${response.id}`,{method:'PUT',headers:{Authorization:'Bearer '+response.editToken,'Content-Type':'application/json'},body:JSON.stringify({...payload,revision:1})},{});
+    expect(result.status).toBe(410);
+    expect((await pg.query<{revision:number}>('SELECT revision FROM responses WHERE id=$1',[response.id])).rows[0].revision).toBe(1);
+  });
+  it('allows exactly 1,000 saved responses, counts empty responses, and permits existing edits',async()=>{
+    const created=await create();await seedResponses(created.id,999);
+    const last=await respond(created.id,[]);
+    expect((await get(created.id)).response_count).toBe(1000);
+    const blocked=await request(`/events/${created.id}/responses`,'POST',payload);
+    expect(blocked.status).toBe(409);expect(await blocked.json()).toEqual({error:'This event has reached its limit of 1,000 participants.'});
+    const edit=await request(`/events/${created.id}/responses/${last.id}`,'PUT',{...payload,name:'Updated',revision:1},last.editToken);
+    expect(edit.status).toBe(200);
+    expect((await pg.query<{count:number}>('SELECT count(*)::int AS count FROM responses WHERE event_id=$1',[created.id])).rows[0].count).toBe(1000);
+  });
+  it('enforces capacity and expiry in PostgreSQL even if the API is bypassed',async()=>{
+    const created=await create();await seedResponses(created.id,1000);
+    await expect(seedResponses(created.id,1)).rejects.toMatchObject({code:'WK002'});
+    const other=await create();await expire(other.id);
+    await expect(seedResponses(other.id,1)).rejects.toMatchObject({code:'WK001'});
+  });
+  it('removes an expired event and all its child records, while preserving active events',async()=>{
+    const old=await create(),live=await create();
+    const oldResponse=await respond(old.id,(await get(old.id)).windows);
+    await respond(live.id,(await get(live.id)).windows);
+    await expire(old.id);
+    const result=await pg.query<{deleted_events:number}>('SELECT * FROM purge_expired_events(100)');
+    expect(result.rows[0].deleted_events).toBe(1);
+    expect((await request(`/events/${old.id}`)).status).toBe(404);
+    expect((await pg.query('SELECT id FROM event_windows WHERE event_id=$1',[old.id])).rows).toEqual([]);
+    expect((await pg.query('SELECT id FROM responses WHERE event_id=$1',[old.id])).rows).toEqual([]);
+    expect((await pg.query('SELECT id FROM availability WHERE response_id=$1',[oldResponse.id])).rows).toEqual([]);
+    expect((await get(live.id)).response_count).toBe(1);
+    expect((await pg.query<{deleted_events:number}>('SELECT * FROM purge_expired_events(100)')).rows[0].deleted_events).toBe(0);
+  });
+  it('bounds cleanup batches and safely resumes remaining expired records',async()=>{
+    for(let n=0;n<3;n++){const created=await create();await expire(created.id);}
+    expect((await pg.query<{deleted_events:number}>('SELECT * FROM purge_expired_events(2)')).rows[0].deleted_events).toBe(2);
+    expect((await pg.query<{deleted_events:number}>('SELECT * FROM purge_expired_events(2)')).rows[0].deleted_events).toBe(1);
   });
 });

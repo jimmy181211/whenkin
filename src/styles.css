@@ -161,3 +161,8 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 .calendar-selects select{min-width:0;font-size:13px;font-weight:500;padding:10px 24px 10px 10px}
 .calendar-navigation{flex-shrink:0;margin-left:auto}
 @media(max-width:699px){.calendar-selects select{font-size:14px;padding-left:8px}}
+
+/* Shared expiry and capacity notice on desktop and mobile. */
+.event-limits{display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.65;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}
+.event-limits svg{margin-top:2px}
+.event-summary .event-limits{margin:12px 0 0}
