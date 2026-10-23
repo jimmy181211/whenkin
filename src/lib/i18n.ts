@@ -4,12 +4,20 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
-  'Links expire in 1 month': ['链接将在 1 个月后失效', 'Los enlaces caducan en 1 mes'],
-  'Links expire {date}': ['链接将于 {date} 失效', 'Los enlaces caducan el {date}'],
-  'Max. {count} participants': ['最多 {count} 位参与者', 'Máx. {count} participantes'],
+  'Links expire in 1 year': ['链接将在 1 年后失效', 'Los enlaces caducan en 1 año'],
+  'Event Link': ['活动链接', 'Enlace del evento'],
+  'Primary Selection': ['首选时间', 'Selección principal'],
+  'Secondary Selection': ['备选时间', 'Selección secundaria'],
+  'Everyone': ['所有人', 'Todos'],
+  'All but One': ['除一人外', 'Todos menos uno'],
+  'Use Event’s Zone': ['使用活动时区', 'Usar la zona del evento'],
+  'Everyone with the link can see group availability.': ['持有链接的所有人都能查看群组空闲时间。', 'Todos los que tengan el enlace pueden ver la disponibilidad del grupo.'],
+
+
+
   'This event has expired.': ['此活动已过期。', 'Este evento ha caducado.'],
   'This event could not be found. It may have expired.': ['找不到此活动，可能已过期。', 'No se encontró este evento. Puede que haya caducado.'],
-  'This event has reached its limit of 1,000 participants.': ['此活动已达到 1,000 位参与者的上限。', 'Este evento ha alcanzado el límite de 1.000 participantes.'],
+
   'Month': ['月份', 'Mes'],
   'Year': ['年份', 'Año'],
   'Saved Changes': ['更改已保存', 'Cambios guardados'],
@@ -29,8 +37,8 @@ export const messages: Record<string, [string, string]> = {
   'Choose at least one day of the week.': ['请至少选择一周中的一天。', 'Elige al menos un día de la semana.'],
   'Choose specific dates or days of the week.': ['请选择具体日期或星期模式。', 'Elige fechas específicas o días de la semana.'],
   'Week': ['每周', 'Semana'],
-  'Weekly polls have no calendar date. Create a specific-date event for a calendar invitation.': ['每周调查没有具体日期。如需日历邀请，请创建指定日期的活动。', 'Las encuestas semanales no tienen fecha. Crea un evento con fechas específicas para una invitación de calendario.'],
-  "Participants see only their own availability.": ["参与者只能看到自己的空闲时间。", "Los participantes solo ven su propia disponibilidad."],
+
+
   "Find your shared time.": [
     "找到大家的共同时间。",
     "Encuentra un momento para todos."
@@ -120,10 +128,7 @@ export const messages: Record<string, [string, string]> = {
     "结束",
     "Hasta"
   ],
-  "Meeting Length": [
-    "活动时长",
-    "Duración"
-  ],
+
   "{count} min": [
     "{count} 分钟",
     "{count} min"
@@ -224,10 +229,7 @@ export const messages: Record<string, [string, string]> = {
     "时间显示为：{zone}",
     "Horas en {zone}"
   ],
-  "Use Organizer’s Zone": [
-    "使用组织者时区",
-    "Usar la zona de quien organiza"
-  ],
+
   "No Shared Times Yet": [
     "暂时没有共同时间",
     "Aún no hay horas en común"
@@ -244,10 +246,7 @@ export const messages: Record<string, [string, string]> = {
     "先标记空闲时间，再把活动分享给大家。",
     "Marca cuándo estás libre y comparte el evento con el grupo."
   ],
-  "Best Fit": [
-    "最合适",
-    "Mejor opción"
-  ],
+
   "Everyone available": [
     "所有人都有空",
     "Todos disponibles"
@@ -280,10 +279,7 @@ export const messages: Record<string, [string, string]> = {
     "关闭分享窗口",
     "Cerrar ventana para compartir"
   ],
-  "Participant Link": [
-    "参与者链接",
-    "Enlace para participantes"
-  ],
+
   "Link Copied": [
     "链接已复制",
     "Enlace copiado"
@@ -292,22 +288,13 @@ export const messages: Record<string, [string, string]> = {
     "复制活动链接",
     "Copiar enlace del evento"
   ],
-  "Just for You": [
-    "仅限你使用",
-    "Solo para ti"
-  ],
-  "Private organizer link": [
-    "私人组织者链接",
-    "Enlace privado de organización"
-  ],
+
+
   "Copied": [
     "已复制",
     "Copiado"
   ],
-  "Copy Organizer Link": [
-    "复制组织者链接",
-    "Copiar enlace de organización"
-  ],
+
   "Back to Home": [
     "返回首页",
     "Volver al inicio"
@@ -508,10 +495,7 @@ export const messages: Record<string, [string, string]> = {
     "请选择有效的时区。",
     "Elige una zona horaria válida."
   ],
-  "Choose a meeting length between 15 minutes and 4 hours.": [
-    "请选择 15 分钟至 4 小时之间的活动时长。",
-    "Elige una duración entre 15 minutos y 4 horas."
-  ],
+
   "Choose between 1 and 31 different dates.": [
     "请选择 1 至 31 个不同的日期。",
     "Elige entre 1 y 31 fechas diferentes."
@@ -528,10 +512,7 @@ export const messages: Record<string, [string, string]> = {
     "请选择今天至 2050 年 12 月 31 日之间的日期。",
     "Elige fechas desde hoy hasta el 31 de diciembre de 2050."
   ],
-  "The time window must be at least as long as the meeting.": [
-    "所选时段不能短于活动时长。",
-    "El intervalo debe durar al menos lo mismo que la reunión."
-  ],
+
   "A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.": [
     "所选时间在夏令时切换时无效或重复。请选择其他开始或结束时间。",
     "Una hora elegida no existe o se repite por el cambio de horario. Elige otra hora de inicio o fin."
@@ -584,18 +565,12 @@ export const messages: Record<string, [string, string]> = {
     "此回复已在另一个标签页中更改。草稿仍保存在这里，请刷新后再保存。",
     "Esta respuesta cambió en otra pestaña. Tu borrador sigue aquí. Recarga antes de guardar de nuevo."
   ],
-  "Only the organizer can confirm the final time. Use the organizer link.": [
-    "只有组织者可以确认最终时间。请使用组织者链接。",
-    "Solo quien organiza puede confirmar la hora final. Usa el enlace de organización."
-  ],
+
   "Choose a meeting time within the event dates.": [
     "请选择活动日期范围内的时间。",
     "Elige una hora dentro de las fechas del evento."
   ],
-  "The organizer has not confirmed a time yet.": [
-    "组织者尚未确认最终时间。",
-    "Aún no se ha confirmado una hora."
-  ],
+
   "This action could not be found.": [
     "找不到此操作。",
     "No encontramos esta acción."
@@ -604,10 +579,7 @@ export const messages: Record<string, [string, string]> = {
     "无法保存更改。请稍后重试。",
     "No se pudo guardar el cambio. Inténtalo de nuevo en un momento."
   ],
-  "Use your private organizer link to manage this event.": [
-    "请使用你的组织者私密链接管理此活动。",
-    "Usa tu enlace privado de organizador para gestionar este evento."
-  ],
+
   "Leave without saving your changes?": [
     "要放弃保存这些更改并离开吗？",
     "¿Quieres salir sin guardar tus cambios?"

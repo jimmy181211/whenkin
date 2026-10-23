@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CalendarDays, Info, LoaderCircle, LockKeyhole, Plus, RefreshCw } from 'lucide-react';
+import { ArrowRight, CalendarDays, Info, LoaderCircle, Users, Plus, RefreshCw } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import Steps from '../components/Steps';
 import PageLink from '../components/PageLink';
 import EventLimits from '../components/EventLimits';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
-import { api, saveSecret } from '../lib/api';
+import { api } from '../lib/api';
 import { deviceTimezone } from '../lib/time';
 import { getLocale, t } from '../lib/i18n';
 const times = Array.from({ length: 97 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String(i % 4 * 15).padStart(2, '0')}`);
@@ -38,10 +38,9 @@ export default function CreateEventPage() {
     const [notes, setNotes] = useState(false);
     const [start, setStart] = useState('09:00');
     const [end, setEnd] = useState('18:00');
-    const [duration, setDuration] = useState(60);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const createSnapshot = JSON.stringify({ zone, dates, scheduleMode, weekdays, title, organizer, description, start, end, duration });
+    const createSnapshot = JSON.stringify({ zone, dates, scheduleMode, weekdays, title, organizer, description, start, end });
     const [initialSnapshot] = useState(createSnapshot);
     const navigation = useUnsavedNavigation(createSnapshot !== initialSnapshot, "Your Event Has Not Been Saved.");
     const [connection, setConnection] = useState<'checking' | 'ready' | 'setup' | 'unreachable'>('checking');
@@ -78,11 +77,9 @@ export default function CreateEventPage() {
         try {
             const result = await api<{
                 id: string;
-                adminToken: string;
-            }>('/events', { method: 'POST', body: JSON.stringify({ title, organizer_name: organizer, description, timezone: zone, dates, schedule_mode: scheduleMode, weekdays, startTime: start, endTime: end, duration }) });
-            saveSecret(`meetgrid:owner:${result.id}`, result.adminToken);
+            }>('/events', { method: 'POST', body: JSON.stringify({ title, organizer_name: organizer, description, timezone: zone, dates, schedule_mode: scheduleMode, weekdays, startTime: start, endTime: end }) });
             navigation.allowNavigation();
-            window.location.assign(new URL(`/e/${result.id}#organizer=${result.adminToken}`, location.href).href);
+            window.location.assign(new URL(`/e/${result.id}`, location.href).href);
         }
         catch (e) {
             setError(e instanceof Error ? e.message : 'Could not create your event. Please try again.');
@@ -128,7 +125,7 @@ export default function CreateEventPage() {
         setScheduleMode(mode);
         setError('');
     }} dates={dates} onDatesChange={setDates} weekdays={weekdays} onWeekdaysChange={setWeekdays} timezone={zone}/>
-          <div className="fields-row">
+          <div className="fields-row two-fields">
             <label className="field">
               {t("From")}
               <select value={start} onChange={e => setStart(e.target.value)}>
@@ -139,14 +136,6 @@ export default function CreateEventPage() {
               {t("Until")}
               <select value={end} onChange={e => setEnd(e.target.value)}>
                 {times.slice(1).map(t => <option key={t} value={t}>{labelTime(t)}</option>)}
-              </select>
-            </label>
-            <label className="field">
-              {t("Meeting Length")}
-              <select value={duration} onChange={e => setDuration(Number(e.target.value))}>
-                {[15, 30, 45, 60, 90, 120, 180, 240].map(n => <option key={n} value={n}>
-                  {n < 60 ? t('{count} min', { count: n }) : t(n === 60 ? '{count} hour' : '{count} hours', { count: n / 60 })}
-                </option>)}
               </select>
             </label>
           </div>
@@ -171,7 +160,7 @@ export default function CreateEventPage() {
           <button disabled={busy || connection !== 'ready'} className="button primary create-submit" type="submit">
             {busy ? <><LoaderCircle className="spin" size={18}/> {t("Creating your event…")}</> : connection === 'checking' ? <><LoaderCircle className="spin" size={18}/> {t("Checking connection…")}</> : <>{t("Create Event & Get a Link")} <ArrowRight size={18}/></>}
           </button>
-          <p className="privacy-note mobile-hide"><LockKeyhole size={12}/> {t("Participants see only their own availability.")}</p>
+          <p className="privacy-note mobile-hide"><Users size={12}/> {t("Everyone with the link can see group availability.")}</p>
         </form>
       </section>
     </main>;

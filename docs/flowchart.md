@@ -1,138 +1,44 @@
 # How Whenkin Works
 
-Whenkin collects availability. The organizer compares responses and communicates the final arrangement outside the website.
+Everyone uses the same event link and sees the same page. Each person keeps a private link for editing their own response.
 
-## Big Picture
-
-```mermaid
-flowchart TD
-  H["Main Page"] -->|"Create Event"| O["Organizer View"]
-  O -->|"Share Participant Link"| P["Participant View"]
-  O -->|"Save Event"| N["Save Event and Responses to Neon"]
-  P -->|"Submit or Update Availability"| N
-  N --> C["Whenkin Calculates Best Meeting Times"]
-  C -->|"Show Ranked Suggestions"| O
-  O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
-```
-
-Creating an event saves its details and opens the organizer view. Responses feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Invitation and private edit links work until the event expires one calendar month after creation.
-
-See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for ranking, [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
-
-## Calculating the Best Meeting Time
-
-```mermaid
-flowchart TB
-  subgraph candidates["Find Possible Times"]
-    direction LR
-    A["Load Event Hours, Length,<br/>and Responses from Neon"] --> B["Try 15-Minute Starts<br/>That Fit the Full Meeting"]
-    B --> C["Count People Free<br/>for the Entire Meeting"]
-  end
-  subgraph results["Rank and Display"]
-    direction LR
-    D["Most Available First<br/>Then Earliest Start"] --> E["Drop Zero Attendance<br/>Skip Nearby Equal Counts"]
-    E --> F["Show Ranked Times in Local Time<br/>or No Suggestions Yet"]
-  end
-  candidates --> results
-```
-
-The single Neon step uses the event's current saved data; see [Website and Storage](#website-and-storage). Overlapping or touching event windows are combined before calculation. Candidate starts are 15 minutes apart, even though the selection grid uses 30-minute blocks. Each candidate must fit the entire meeting length within the event hours.
-
-Only people who have responded enter the count. A person counts as available only when their saved availability covers the whole meeting; separate people's partial availability cannot be combined to cover it. **Best Fit** means the highest attendance count, with the earliest start breaking a tie. It does not require everyone to be available.
-
-To keep the list useful, skip a candidate if a kept suggestion has the same attendee count and starts less than one meeting length away. Keep and show only the top five suggestions on desktop and mobile. There is no “Show more” control. Times are displayed in the viewer's chosen time zone. The organizer can always view these results; participant access follows [Participant Privacy](#participant-privacy).
-
-## Participant Privacy
-
-Participants see their own saved response and the response count. Only the organizer sees all responses, participant names, and ranked meeting suggestions. The availability grid always edits the current person's response; there are no personal/group tabs or sharing setting.
-
-A valid private response token is required to load or update that person's saved availability. A valid organizer token is required to see all responses and suggestions. Event hours are set at creation; there is no event-hour editor or schedule-update API. Legacy sharing flags do not grant access.
-
-## Website and Storage
-
-```mermaid
-flowchart LR
-  D[Desktop and Mobile Browser] <-->|HTTPS requests| S[ChatGPT Sites Website and Server]
-  S <-->|Server-only database connection| N[(Neon PostgreSQL)]
-  S --> A[Validate organizer and participant edit tokens]
-  A --> P[Return data allowed by organizer or response token]
-  P --> D
-```
-
-The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private link tokens may be backed up in local browser storage. Organizer tokens authenticate only when explicitly opened in a private link fragment; requests authenticate with an authorization header. Neon stores token hashes, availability ranges, and event/response revisions. Date-based ranges are actual UTC instants. Weekday ranges encode a typical shared-clock week; see the mode explanation below.
-
-## Editing and Navigation
+## Shared Event Flow
 
 ```mermaid
 flowchart TD
-  A[Enter name before editing availability] --> B[Keep local draft]
-  B --> C{Valid name supplied?}
-  C -->|Yes| D[Save automatically]
-  C -->|No| E[Block editing and focus name field with notice]
-  B --> F{Leaving with unsaved changes?}
-  F -->|In-app navigation| G[Keep editing or leave without saving dialog]
-  F -->|Browser close, reload, or navigation| H[Standard browser unsaved-changes warning]
-  D --> I[Show saved status and clear dirty draft]
+  C["Choose Dates or Weekdays and Hours"] --> E["Create Event"]
+  E --> L["Share One Link"]
+  L --> R["Enter Name and Mark Availability"]
+  R --> N["Save to Neon"]
+  N --> P["Primary: Everyone Free"]
+  N --> S["Secondary: All but One Free"]
+  P --> G["Everyone Sees Common Ground"]
+  S --> G
 ```
 
-English and Spanish interface titles use Title Case. English, Simplified Chinese, and Spanish share the same scheduling data. Time-zone changes preserve the saved selection; 30-minute display blocks retain the original 15-minute precision, including partial blocks and repeated daylight-saving hours.
+There is no meeting-length setting and no participant limit. Only saved responses enter the calculation. An empty response counts as unavailable. Times are shown in the viewer’s selected time zone.
 
-## Editing Availability
+## Finding Common Ground
 
-Dates or weekdays, event hours, and meeting length are fixed when an event is created. Organizers and participants can continue editing their own availability. Open pages refresh responses every ten seconds and when focused. Active event links and saved availability remain available until the event expires.
+The server sorts the start and end of availability ranges. At each boundary it updates who is free. It combines touching periods only if the available group stays the same.
 
-On computers and phones, use the Edit/Done switch. In Edit, start on an empty block to mark availability or a marked block to clear it; that action stays the same for the whole drag. In Done, the grid is locked and scrolls without changing availability. The time-label column also scrolls while editing. The fine-tune panel is removed. Mobile 30-minute blocks are 26 pixels high by default; desktop blocks remain 32 pixels high. The wider mobile grid uses smaller outer margins.
+A primary result includes every respondent. A secondary result excludes exactly one fixed respondent for its entire duration. A result never joins two halves where different people are missing. Gaps remain separate. Primary results come first, then secondary results, with up to five suggestions overall.
 
-## Choosing Dates or Weekdays
+## Saving and Editing
+
+The same Edit/Done control works with a mouse or touch. Enter a name before editing; changes save automatically. Only a valid private response token can update that response. Viewing the group does not grant permission to change anyone else’s selections.
+
+Date mode stores real instants in PostgreSQL `timestamptz`. Weekday mode retains its existing reference-week projection. Display-zone changes preserve availability. English, Chinese, and Spanish use the same scheduling data.
+
+## Expiry and Manual Cleanup
 
 ```mermaid
 flowchart TD
-  M["Choose Calendar Mode"] --> D["Specific Dates"]
-  M --> W["Days of the Week"]
-  D --> C["Pick Dates on the Calendar"]
-  W --> P["Pick Monday–Sunday"]
-  C --> T["Convert Real Instants for Each Viewer"]
-  P --> Z["Choose Display Time Zone"]
-  T --> A["Collect Availability and Rank Times"]
-  Z --> A
+  C["Event Created"] --> A["Link Works for One Calendar Year"]
+  A --> E["Deadline Reached: Link Stops Working"]
+  E --> W["Data Waits for Manual Cleanup"]
+  W --> M["Administrator Runs Cleanup Method"]
+  M --> D["Delete Old Event, Dates, Responses, and Availability"]
 ```
 
-Date-based events retain UTC comparisons and local-time display. Weekday polls describe a typical week, not repeating calendar appointments. They retain the organizer’s clock as their storage coordinates, but every viewer can change the displayed time zone. Conversions use the offsets at the poll’s creation time; daylight-saving changes can alter the difference. Their stored ranges encode a fixed Monday–Sunday coordinate week rather than real appointment dates. Existing events stay date-based. The mode switch on the creation form preserves both date and weekday choices.
-
-The name hint sits directly below the participant input on both desktop and mobile. An empty or whitespace-only name locks grid editing, including mouse, touch, keyboard, and Undo. Attempting Edit or a cell focuses the name input and shows an accessible notice. The former late save-time name error is removed; the API still requires a valid participant name. Changing time zones remains available before entering a name.
-
-Availability has three visible states: **Not Started** before a new response is changed, **Unsaved Changes** while changes are pending or a save fails, and **Saved Changes** after the server confirms them. Every event page shows the private edit-link section; copying becomes available after the participant saves a response.
-
-## Explicit Link Access
-
-```mermaid
-flowchart TD
-  A[Open event link] --> B{Private organizer token in link?}
-  B -->|Yes| C[Server checks organizer token]
-  C -->|Valid| D[All responses and Common Ground]
-  C -->|Invalid| E[No organizer access]
-  B -->|No| F[Participant view]
-  F --> G{Valid private response token?}
-  G -->|Yes| H[Own response and response count]
-  G -->|No| I[Event details and response count]
-```
-
-A normal invitation never inherits a saved organizer credential. Private organizer links keep their fragment on reload. Changing the link fragment reloads the page and reevaluates access. Matching is calculated in PostgreSQL; the browser only chooses the five displayed suggestions from the returned ranking.
-
-## Expiry and Capacity
-
-```mermaid
-flowchart TD
-  C["Create Event"] --> E["Set Expiry: One Calendar Month"]
-  E --> R["Receive Availability"]
-  R --> A{"Event Active?"}
-  A -->|"No"| X["Reject All Event Links"]
-  A -->|"Yes"| P{"New Participant?"}
-  P -->|"No"| U["Update Saved Response"]
-  P -->|"Yes"| L{"Fewer Than 1,000 Responses?"}
-  L -->|"Yes"| S["Save Response"]
-  L -->|"No"| F["Event Full"]
-  X --> D["Daily Cleanup Deletes Event and Related Data"]
-```
-
-The database enforces both rules. Responses do not extend the expiry. Saved participants can edit at capacity. Cleanup runs without a visitor opening the website.
+Editing does not extend the deadline. Cleanup removes only events whose creation anniversary is at least one year ago. It processes batches until finished, preserving younger events. There is no scheduled ChatGPT task or automatic backend job.

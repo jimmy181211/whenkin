@@ -3,28 +3,17 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { sqlStatements } from '../scripts/sql-statements.mjs';
 import EventLimits from '../src/components/EventLimits';
-import { isEventFull } from '../src/lib/event-limits';
 import { setLanguage, t } from '../src/lib/i18n';
 
 afterEach(() => setLanguage('en'));
-describe('event limit notices', () => {
-  it('explains both limits in all three languages', () => {
+describe('event expiry notice', () => {
+  it('shows only the one-year notice in all three languages', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(<EventLimits/>);
-      expect(html).toContain(t('Links expire in 1 month'));
-      expect(html).toContain(t('Max. {count} participants', { count: 1000 }));
+      expect(html).toContain(t('Links expire in 1 year'));
+      expect(html).not.toMatch(/1,000|participants|1 month/);
     }
-  });
-  it('shows the fixed expiry date in the selected time zone', () => {
-    const expiresAt = '2026-11-23T01:00:00Z';
-    expect(renderToStaticMarkup(<EventLimits expiresAt={expiresAt} timezone="America/Los_Angeles"/>)).toContain('Nov 22, 2026');
-    expect(renderToStaticMarkup(<EventLimits expiresAt={expiresAt} timezone="Asia/Shanghai"/>)).toContain('Nov 23, 2026');
-  });
-  it('blocks new participants at capacity but leaves existing participants able to edit', () => {
-    expect(isEventFull(999, false)).toBe(false);
-    expect(isEventFull(1000, false)).toBe(true);
-    expect(isEventFull(1000, true)).toBe(false);
   });
 });
 

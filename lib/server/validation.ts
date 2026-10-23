@@ -27,9 +27,6 @@ export function validateEvent(input: CreateInput) {
     if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
         throw new Problem(400, 'Please choose a valid time zone.');
     }
-    if (!Number.isInteger(input.duration) || input.duration < 15 || input.duration > 240 || input.duration % 15) {
-        throw new Problem(400, 'Choose a meeting length between 15 minutes and 4 hours.');
-    }
     const mode = input.schedule_mode ?? 'dates';
     if (mode !== 'dates' && mode !== 'weekdays') {
         throw new Problem(400, 'Choose specific dates or days of the week.');
@@ -64,9 +61,6 @@ export function validateEvent(input: CreateInput) {
             const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
             const start = localToUTC(date, input.startTime, clockZone);
             const end = localToUTC(date, input.endTime, clockZone);
-            if (Date.parse(end) - Date.parse(start) < input.duration * 60000) {
-                throw new Problem(400, 'The time window must be at least as long as the meeting.');
-            }
             return { start, end };
         }
         catch (error) {

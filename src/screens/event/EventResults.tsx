@@ -15,7 +15,10 @@ type Props = {
     onRefresh: () => void;
 };
 export default function EventResults({ event, zone, identityId, active, suggestions, weeklyView, onZoneChange, onSelect, onRefresh }: Props) {
-    const organizer = event.is_organizer === true;
+    const groups = [
+      { title: 'Primary Selection', items: suggestions.filter(item => !item.missing.length) },
+      { title: 'Secondary Selection', items: suggestions.filter(item => item.missing.length === 1) },
+    ];
     const weekly = event.schedule_mode === 'weekdays';
     const viewZone = weekly ? 'UTC' : zone;
     return <aside className="results-sidebar">
@@ -24,8 +27,8 @@ export default function EventResults({ event, zone, identityId, active, suggesti
           <span className="sparkle-icon"><Sparkles size={18}/></span>
           <h2>{t("Your Common Ground")}</h2>
         </div>
-        <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{organizer && zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
-            {t("Use Organizer’s Zone")}
+        <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
+            {t("Use Event’s Zone")}
           </button>}</div>
         {!suggestions.length ? <div className="empty-results">
           <Users size={28}/>
@@ -34,12 +37,14 @@ export default function EventResults({ event, zone, identityId, active, suggesti
             {t(event.responses.length ? 'Add more availability to find a time that works.' : 'Mark your availability, then share the event with your group.')}
           </p>
         </div> : <div className="suggestions">
-          {suggestions.map((candidate, i) => {
+          {groups.filter(group => group.items.length).map(group => <div className="selection-group" key={group.title}>
+          <h3 className="selection-heading">{t(group.title)}</h3>
+          {group.items.map(candidate => {
                 const shown = weeklyView ? weeklyView.range(candidate) : candidate;
                 return <button className={`suggestion ${active?.start === candidate.start ? 'active' : ''}`} key={candidate.start} onClick={() => onSelect(candidate)}>
             <div className="suggestion-top">
               <strong>{formatDay(shown.start, viewZone, false, weekly)}</strong>
-              {i === 0 && <span className="best-badge">{t("Best Fit")}</span>}
+              <span className="best-badge">{t(candidate.missing.length ? "All but One" : "Everyone")}</span>
             </div>
             <span className="suggestion-time">{formatTime(shown.start, viewZone)} – {localDate(shown.start, viewZone) !== localDate(shown.end, viewZone) ? formatDay(shown.end, viewZone, false, weekly) + ' ' : ''}{formatTime(shown.end, viewZone)}</span>
             <span className="attendance">
@@ -49,7 +54,7 @@ export default function EventResults({ event, zone, identityId, active, suggesti
               {candidate.available.length === event.responses.length ? t('Everyone available') : t('{count} of {total} available', { count: candidate.available.length, total: event.responses.length })}
             </span>
           </button>;
-            })}
+            })}</div>)}
         </div>}
         {active && <div className="candidate-detail">
           <strong>{t("Who Can Make It?")}</strong>

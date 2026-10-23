@@ -1,39 +1,37 @@
-# Event Retention
+# Retention and Manual Cleanup
 
-## Rules
+Every event link expires one calendar year after creation, calculated in UTC. Existing events use their original creation date. A February 29 event expires on February 28 of the following year. Responding or editing does not extend the deadline.
 
-- All links for an event expire one calendar month after its creation, calculated in UTC. Both calendar modes use this rule, including events whose proposed dates are further in the future.
-- There are at most 1,000 saved participant responses per event. Empty responses count. Updates do not count twice.
-- The API returns HTTP 410 for an expired event while its row still exists, then HTTP 404 after deletion. Both messages explain that the event has expired or may have expired.
-- A daily cleanup removes expired events and all their dates, responses, and availability. Events become inaccessible at expiry even if a cleanup run is delayed. Provider history, backups, and logs follow their separate retention processes.
+The API rejects expired event reads and response writes even before cleanup. Saved data remains until an administrator runs the manual operation. There is no participant cap and no automatic cleanup schedule.
 
-## Setup
+## Run Manually
 
-Run `npm run db:migrate` with a server-only database connection. The migration runner preserves SQL function bodies and commits each migration with its checksum. Never change an already-applied migration.
+Set the server-only `DATABASE_URL` in a trusted terminal environment, then run:
 
-Production uses the existing Whenkin Neon project (`gentle-thunder-71894819`), production branch (`br-rapid-mode-ar9ly6x2`), database `whenkin`. The temporary validation branch has an automatic expiry and is not a production scheduler target.
-
-The linked Sites automation **Clean Expired Whenkin Events** runs every day at **03:15 UTC**. It uses the connected Neon account, rather than an unauthenticated website route. No credentials belong in the schedule instructions or this repository.
-
-## Cleanup Operation
-
-Use the connected Neon account with the production project, branch, and database above:
-
-```sql
-SELECT * FROM public.purge_expired_events(100);
+```sh
+npm run db:cleanup -- --dry-run
+npm run db:cleanup
 ```
 
-Repeat until `deleted_events` is zero. Each call commits a small batch independently, so a failed run can safely resume. The function can only select expired events. Its batch size is clamped to 1–1,000, and locked events are skipped for the next run. The function runs with the caller's database privileges; execution is revoked from PUBLIC.
+The dry run counts eligible events without deleting data. The cleanup command repeatedly calls `public.purge_expired_events(100)` until no eligible events remain. It also verifies the remaining count. If records are locked by another request, it reports that cleanup should be run again.
 
-Read back the number of expired events after cleanup:
+The same method is available in code:
 
-```sql
-SELECT count(*)::integer AS remaining_expired_events
-FROM public.events WHERE expires_at <= statement_timestamp();
+```js
+import { cleanupExpiredEvents } from './scripts/cleanup.mjs';
+await cleanupExpiredEvents((query, params) => database.query(query, params));
 ```
 
-No schema changes or website deployment are needed for routine cleanup. If a run fails, check the connected Neon account and the linked schedule, then retry the same bounded operation. Keep one enabled cleanup schedule rather than creating duplicates. Check its enabled status when transferring ownership or changing the hosting/database connection.
+The callback must return an array of rows. The method is never called by a visitor request or a timer. Database credentials must stay out of source, browser code, and command arguments.
 
-## Verification
+## What Gets Deleted
 
-The API tests cover fixed month-end expiry, all link types, writes racing expiry, the 1,000-response boundary, updates at capacity, cascade deletion, and bounded repeated cleanup. The migration was also tested on a separate Neon branch with simultaneous requests for the last participant place.
+An event is eligible only when its one-year creation anniversary has passed. Cleanup uses creation age, regardless of the stored expiry.
+
+Foreign keys remove the event’s possible dates, responses, and availability in the same transaction. A newer response belonging to an old event is removed with that event. Younger events and their data remain intact. Provider backups and logs follow their own retention policies.
+
+## Database Change
+
+Apply `007_shared_events.sql` and `008_manual_cleanup_by_age.sql` with the normal migration runner. It extends all existing event deadlines from one month to one year, removes the participant-limit check, and updates the bounded cleanup function. It does not run cleanup or delete event data.
+
+The previous ChatGPT cleanup task is disabled. The unfinished Cloudflare scheduler is not used. Hosting remains on ChatGPT Sites and Neon.

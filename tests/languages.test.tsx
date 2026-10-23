@@ -80,7 +80,7 @@ describe('language is independent of scheduling data',()=>{
   it('keeps selected instants and UTC ranges unchanged in every language',()=>{
     vi.stubGlobal('window',{innerWidth:390});
     const start=localToUTC('2027-01-15','10:00','America/Los_Angeles');
-    const event:MeetingEvent={id:'test',title:'原文 / texto original',description:'',organizer_name:'Ana',timezone:'America/Los_Angeles',duration:60,windows:[{start,end:'2027-01-15T19:00:00Z'}],responses:[],final_start:null,final_end:null};
+    const event:MeetingEvent={id:'test',title:'原文 / texto original',description:'',organizer_name:'Ana',timezone:'America/Los_Angeles',windows:[{start,end:'2027-01-15T19:00:00Z'}],responses:[]};
     const selected=new Set(allSlots(event.windows).slice(0,2)),before=slotsToRanges(selected);
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
