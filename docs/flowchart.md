@@ -22,7 +22,7 @@ There is no meeting-length setting and no participant limit. Only saved response
 
 The server sorts the start and end of availability ranges. At each boundary it updates who is free. It combines touching periods only if the available group stays the same.
 
-A primary result includes every respondent. A secondary result excludes exactly one fixed respondent for its entire duration. A result never joins two halves where different people are missing. Gaps remain separate. Primary results come first, then secondary results, with up to five suggestions overall.
+A primary result includes every respondent. A secondary result excludes exactly one fixed respondent for its entire duration. A result never joins two halves where different people are missing. Gaps remain separate. Primary results come first, then secondary results, without discarding later matching periods.
 
 ## Saving and Editing
 

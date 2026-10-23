@@ -165,6 +165,11 @@ describe('one-year expiry and manual cleanup', () => {
     expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 0 });
     expect((await request('/events/' + old.id)).status).toBe(404);
   });
+  it('uses creation age even with an incorrect future expiry', async () => {
+    const old = await create();
+    await query("UPDATE events SET created_at=now()-interval '1 year'-interval '1 second',expires_at=now()+interval '1 year' WHERE id=$1", [old.id]);
+    expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 1 });
+  });
   it('cleans the complete backlog across multiple bounded batches', async () => {
     await query(`INSERT INTO events(id,title,organizer_name,timezone,created_at,expires_at) SELECT gen_random_uuid(),'Old','','UTC',now()-interval '1 year'-interval '1 second',now()-interval '1 second' FROM generate_series(1,205)`);
     expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 205 });

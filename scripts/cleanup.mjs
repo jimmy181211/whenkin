@@ -11,7 +11,7 @@ export async function cleanupExpiredEvents(query) {
     deletedEvents += count;
     if (count === 0) break;
   }
-  const rows = await query('SELECT count(*)::integer AS remaining FROM public.events WHERE expires_at<=statement_timestamp() AND (((created_at AT TIME ZONE \'UTC\')+interval \'1 year\') AT TIME ZONE \'UTC\')<=statement_timestamp()');
+  const rows = await query('SELECT count(*)::integer AS remaining FROM public.events WHERE (((created_at AT TIME ZONE \'UTC\')+interval \'1 year\') AT TIME ZONE \'UTC\')<=statement_timestamp()');
   if (rows[0]?.remaining !== 0) throw new Error('Some old events are busy. Run cleanup again.');
   return { deletedEvents };
 }

@@ -26,12 +26,12 @@ The callback must return an array of rows. The method is never called by a visit
 
 ## What Gets Deleted
 
-An event is eligible only when its one-year creation anniversary has passed and its stored expiry has passed. The extra age check prevents early deletion if someone has changed an expiry field incorrectly.
+An event is eligible only when its one-year creation anniversary has passed. Cleanup uses creation age, regardless of the stored expiry.
 
 Foreign keys remove the event’s possible dates, responses, and availability in the same transaction. A newer response belonging to an old event is removed with that event. Younger events and their data remain intact. Provider backups and logs follow their own retention policies.
 
 ## Database Change
 
-Apply `007_shared_events.sql` with the normal migration runner. It extends all existing event deadlines from one month to one year, removes the participant-limit check, and updates the bounded cleanup function. It does not run cleanup or delete event data.
+Apply `007_shared_events.sql` and `008_manual_cleanup_by_age.sql` with the normal migration runner. It extends all existing event deadlines from one month to one year, removes the participant-limit check, and updates the bounded cleanup function. It does not run cleanup or delete event data.
 
 The previous ChatGPT cleanup task is disabled. The unfinished Cloudflare scheduler is not used. Hosting remains on ChatGPT Sites and Neon.

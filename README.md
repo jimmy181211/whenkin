@@ -14,7 +14,7 @@ Whenkin helps a group find a time to meet. Create an event, share one link, and 
 - Drag across empty blocks to mark availability, or marked blocks to clear it. Choose Done to lock the grid and scroll.
 - **Primary Selection:** everyone who has responded is free for the whole period.
 - **Secondary Selection:** all but the same one person are free for the whole period.
-- Shows up to five results in total, with primary matches first.
+- Shows all matching periods, with primary matches first.
 - Has no participant limit. Empty saved responses count as unavailable.
 - Uses one event link for everyone. A separate private edit link protects each person’s own response.
 - Links expire one calendar year after the event is created.
@@ -62,7 +62,7 @@ See [retention and cleanup](docs/retention.md). Never put database credentials i
 
 Use Node.js 22.13 or newer. Install dependencies with `npm run install:ci`, configure an ignored local `.dev.vars` file with `DATABASE_URL`, and apply migrations with `npm run db:migrate`. Start the website with `npm run dev`.
 
-Apply migration `007_shared_events.sql` before publishing the shared-event version. It extends existing events to one year from their original creation, removes the response cap, and makes cleanup manual. Historical meeting-length and organizer-token columns remain unused for safe deployment compatibility; no current feature reads them.
+Apply migrations `007_shared_events.sql` and `008_manual_cleanup_by_age.sql` before publishing the shared-event version. It extends existing events to one year from their original creation, removes the response cap, and makes cleanup manual. Historical meeting-length and organizer-token columns remain unused for safe deployment compatibility; no current feature reads them.
 
 Run `npm run check`, `npm test`, and `npm run build`. Tests cover shared visibility, private response editing, primary and secondary matches, time zones, weekday polls, unlimited participants, expiry, and manual cleanup.
 
