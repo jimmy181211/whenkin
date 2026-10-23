@@ -1,21 +1,23 @@
 # Validation and Release Checks
 
-## Current Change
+## Current Changes
 
-Remove the requested homepage and event-page details. Mobile uses a linked instructions page, shorter 26px time blocks, a wider grid, and New event beside Share Event inside the event card. Desktop slots remain 32px. The time-label column allows native scrolling in Mark and Clear modes, while touches on cells remain reserved for selecting availability.
+The creation form uses **Event Name** and offers two modes: **Specific dates** and **Days of the week**. Switching modes keeps both selections. Weekday polls select Monday–Sunday and use one shared time zone. Date-based events retain automatic local-time conversion.
 
-Remove personal/group view switching, heatmap rendering, sharing settings, its API endpoint, and visibility flags. Participants receive only their own response and response counts; organizers retain all responses and ranked meeting suggestions. Existing sharing flags are ignored. Event titles are required and organizer names are optional; participant response names remain required.
+Desktop and mobile use the same **Edit / Done** availability controls. A drag starting on a blank block marks time; a drag starting on a marked or partly marked block clears time. The action stays consistent throughout the drag. Done locks selection and permits scrolling; Undo is disabled until Edit is selected again. The time-label column can also scroll while editing.
+
+The fine-tune controls and the event-hour editor have been removed, including the schedule-update API. Event hours and meeting length are chosen at creation. Existing events, responses, and private links are retained.
 
 ## Automated Verification
 
-TypeScript passes, all 43 tests pass, and the production build passes. Tests cover blank organizer names and invalid event titles, schedule edits, private response isolation even with legacy sharing enabled, removal of the settings endpoint and visibility fields, preserved availability and links, time zones and daylight-saving changes, all three languages, stale revisions, network failures, and write limits.
+TypeScript passes, all 47 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly clock ranges, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
 
-## Browser Verification
+Tests use PGlite for the PostgreSQL-backed API lifecycle. Migration 005 was also applied and smoke-tested on the existing Neon development branch: the new mode persists, a Monday range retains its shared clock, and the optional organizer name remains supported. Temporary verification rows were removed from that development branch.
 
-Local fixture-based previews verify the homepage, the instructions page, organizer and participant card layouts, absence of availability tabs, 26px mobile cells, 32px desktop cells, and wider mobile calendar spacing. Scrolling on the left clock column moves the grid from 0px to 100px in Mark mode and to 200px in Clear mode without selecting any availability. Computed touch-action permits native scrolling on the column and its ancestors while selection cells reserve touch input for painting. Physical iOS and Android touch gestures still require a device check.
+## Verification Limits
 
-## Deployment Status
+The managed preview server started, but the available browser could not open it. Visual browser checks and physical iOS/Android gestures have not been verified in this run. The responsive interface shares its components and selection logic across desktop and mobile; render checks cover the new labels and controls.
 
-These changes have not been deployed to Sites. The Windows environment rejects secure terminal input to the Sites source helper through automatic approval review. Migration 004 has been tested locally but not applied to production. Apply it before publishing.
+## Release Requirement
 
-The earlier public release was Sites version 3 on October 22, 2026, with source commit d6b2895415ba075125e8e50a5b2416eedcd554c4. Its historical sharing-mode checks do not validate the current removal of that feature. The public audience must remain unchanged when publishing.
+Apply `migrations/005_weekday_polls.sql` before deploying this version. Its default keeps existing events in date mode. Publication and source synchronization use the existing public Site and GitHub repository.

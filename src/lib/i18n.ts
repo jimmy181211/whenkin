@@ -4,6 +4,30 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Edit': ['编辑', 'Editar'],
+  'Done': ['完成', 'Listo'],
+  'Availability editing': ['编辑空闲时间', 'Edición de disponibilidad'],
+  'Start on a blank time to mark; start on a marked time to clear.': ['从空白时段开始拖动可标记，从已标记时段开始拖动可清除。', 'Arrastra desde una hora en blanco para marcar; desde una marcada para borrar.'],
+  'Done. Scroll without changing your availability.': ['已完成。现在可以滚动，不会改变你的空闲时间。', 'Listo. Desplázate sin cambiar tu disponibilidad.'],
+  'Event Name': ['活动名称', 'Nombre del evento'],
+  'When might work?': ['哪些时间合适？', '¿Cuándo les viene bien?'],
+  'Calendar mode': ['日历模式', 'Modo de calendario'],
+  'Specific dates': ['具体日期', 'Fechas específicas'],
+  'Days of the week': ['星期几', 'Días de la semana'],
+  'Choose dates for a one-time event.': ['为单次活动选择日期。', 'Elige fechas para un evento puntual.'],
+  'Choose days that usually work. No specific dates.': ['选择通常合适的星期，无需指定日期。', 'Elige los días que suelen venir bien, sin fechas concretas.'],
+  'Choose days of the week': ['选择星期几', 'Elige días de la semana'],
+  '{count} day selected': ['已选 {count} 天', '{count} día seleccionado'],
+  '{count} days selected': ['已选 {count} 天', '{count} días seleccionados'],
+  'Choose at least one day of the week.': ['请至少选择一周中的一天。', 'Elige al menos un día de la semana.'],
+  'Choose specific dates or days of the week.': ['请选择具体日期或星期模式。', 'Elige fechas específicas o días de la semana.'],
+  'Weekly availability': ['每周空闲时间', 'Disponibilidad semanal'],
+  'Week': ['每周', 'Semana'],
+  'All times in {zone}': ['所有时间均使用{zone}时区', 'Todas las horas en {zone}'],
+  'Weekly polls use this time zone for everyone. Choose specific dates for automatic local-time conversion.': ['每周调查统一使用此时区。如需自动转换为各自的当地时间，请选择具体日期。', 'Las encuestas semanales usan esta zona horaria para todos. Elige fechas específicas para convertir automáticamente a la hora local.'],
+  'Mark when you are usually free. Everyone uses the same time zone because this poll has no specific dates.': ['标记你通常有空的时间。此调查没有具体日期，因此所有人统一使用同一时区。', 'Marca cuándo sueles estar libre. Todos usan la misma zona horaria porque esta encuesta no tiene fechas concretas.'],
+  'Weekly polls use the organizer’s shared time zone.': ['每周调查使用组织者指定的统一时区。', 'Las encuestas semanales usan la zona horaria compartida del organizador.'],
+  'Weekly polls have no calendar date. Create a specific-date event for a calendar invitation.': ['每周调查没有具体日期。如需日历邀请，请创建指定日期的活动。', 'Las encuestas semanales no tienen fecha. Crea un evento con fechas específicas para una invitación de calendario.'],
   "Participants see only their own availability.": ["参与者只能看到自己的空闲时间。", "Los participantes solo ven su propia disponibilidad."],
   "Find your shared time.": [
     "找到大家的共同时间。",
@@ -526,14 +550,6 @@ export const messages: Record<string, [string, string]> = {
     "每个数字表示在该 15 分钟时段内有多少位已回复者有空。",
     "Cada número indica cuántas personas están libres en ese intervalo de 15 minutos."
   ],
-  "Scroll mode is on. Choose Mark to paint your free time.": [
-    "已启用滚动模式。选择“标记”以涂选空闲时间。",
-    "El modo Desplazar está activado. Elige Marcar para indicar tus horas libres."
-  ],
-  "Drag across the grid to mark 15-minute slots. Use + for more room, or Scroll to move around.": [
-    "拖动选择每个 15 分钟时段。点击 + 放大，或选择“滚动”移动时间表。",
-    "Arrastra para marcar intervalos de 15 minutos. Usa + para ampliarlos o Desplazar para moverte."
-  ],
   "Previous days": [
     "前几天",
     "Días anteriores"
@@ -549,18 +565,6 @@ export const messages: Record<string, [string, string]> = {
   "not selected": [
     "未选择",
     "sin seleccionar"
-  ],
-  "Fine-tune your last selection": [
-    "微调刚才选择的时段",
-    "Ajusta tu última selección"
-  ],
-  "Adjust selection start": [
-    "调整开始时间",
-    "Ajustar el inicio de la selección"
-  ],
-  "Adjust selection end": [
-    "调整结束时间",
-    "Ajustar el fin de la selección"
   ],
   "Previous month": [
     "上个月",
@@ -830,10 +834,6 @@ export const messages: Record<string, [string, string]> = {
     "部分时段有空",
     "Disponibilidad parcial"
   ],
-  "Mark 30-minute blocks. Fine-tune your selection in 15-minute steps, or use Scroll to move around.": [
-    "选择30分钟时段，再以15分钟为单位微调。使用“滚动”浏览时间表。",
-    "Marca bloques de 30 minutos. Ajusta la selección en pasos de 15 minutos o usa Desplazar para moverte."
-  ],
   "We compare availability. The organizer shares the chosen time.": [
     "我们对比空闲时间，由组织者在群聊等渠道通知最终时间。",
     "Comparamos la disponibilidad. El organizador comunica el horario elegido."
@@ -861,10 +861,6 @@ export const messages: Record<string, [string, string]> = {
   "Who Can Make It?": [
     "谁能参加？",
     "¿Quién Puede Asistir?"
-  ],
-  "Fine-Tune Your Last Selection": [
-    "微调刚才选择的时段",
-    "Ajusta tu Última Selección"
   ],
   "That Page Is a Little Off-Grid.": [
     "找不到这个页面。",
@@ -899,15 +895,6 @@ export const messages: Record<string, [string, string]> = {
     "Whenkin Sugiere los Mejores Horarios"
   ]
 ,"Share Event":["分享活动","Compartir Evento"]
-,"Edit Event Hours":["编辑活动时段","Editar Horarios del Evento"]
-,"Event start time":["活动开始时间","Hora de Inicio del Evento"]
-,"Event end time":["活动结束时间","Hora de Fin del Evento"]
-,"Event meeting length":["活动会议时长","Duración de la Reunión"]
-,"Save Event Hours":["保存活动时段","Guardar Horarios del Evento"]
-,"These hours apply to every event date. Times use {zone}.":["这些时段适用于活动的所有日期，时间以{zone}时区为准。","Estos horarios se aplican a todas las fechas del evento. Se usa la zona horaria de {zone}."]
-,"Availability outside the revised hours will be removed. Availability inside the hours keeps its actual time. All participant links will use the updated schedule.":["新时段以外的空闲时间将被移除，时段内的时间将保持原来的实际时间。所有参与者链接都会显示更新后的安排。","Se eliminará la disponibilidad fuera del nuevo horario. La disponibilidad dentro del horario conservará su hora real. Todos los enlaces de participantes mostrarán el horario actualizado."]
-,"The organizer updated the event hours. Your availability has been kept within the new hours.":["组织者更新了活动时段。你的空闲时间已保留在新时段内。","El organizador actualizó los horarios. Se conservó tu disponibilidad dentro del nuevo horario."]
-,"Dismiss schedule update":["关闭时段更新提示","Cerrar aviso de horario"]
 ,"The event schedule changed. Reload before saving your changes.":["活动安排已更改。请重新加载后再保存。","El horario del evento cambió. Vuelve a cargar la página antes de guardar."]
 ,"Cancel":["取消","Cancelar"]
 ,"Terms of Use":["使用条款","Condiciones de Uso"]

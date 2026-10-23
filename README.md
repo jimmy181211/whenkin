@@ -10,7 +10,7 @@ Whenkin helps a group choose a time to meet. Create an event, share its link, an
 flowchart TD
   H["Main Page"] -->|"Create Event"| O["Organizer View"]
   O -->|"Share Participant Link"| P["Participant View"]
-  O -->|"Save Event or Change Its Hours"| N["Save Event and Responses to Neon"]
+  O -->|"Save Event"| N["Save Event and Responses to Neon"]
   P -->|"Submit or Update Availability"| N
   N --> C["Whenkin Calculates Best Meeting Times"]
   C -->|"Show Ranked Suggestions"| O
@@ -28,9 +28,10 @@ The website works on computers and phones. You do not need an account to respond
 See the [participant privacy flow](docs/flowchart.md#participant-privacy) for organizer and participant access rules.
 
 - Choose English (default), 简体中文, or Español. The website remembers your choice and updates the date and time labels too.
-- Paint 30-minute blocks with a mouse or finger, then fine-tune in 15-minute increments.
-- Zoom in, see exact times while selecting, adjust the start and end, and undo mistakes.
-- Automatically show your device’s time zone. Search for another city or time zone whenever you need to.
+- Choose specific dates for a one-time event, or Monday–Sunday for a typical-week availability poll. Switch modes without losing your selections.
+- In Edit, start dragging on a blank block to mark availability, or on a marked block to clear it. Choose Done to lock the grid and scroll. The same controls work on computers and phones.
+- Zoom in, see exact times while selecting, and undo mistakes. The former fine-tune panel has been removed.
+- Date-based events show your device’s time zone, with a searchable selector. Typical-week polls use the organizer’s shared time zone for everyone because there is no date to determine daylight-saving offsets.
 - Organizers see all responses and suggested meeting times. Participants see only their own response and the count.
 - Save changes automatically after entering your name.
 - Communicate the final arrangement outside Whenkin.
@@ -42,9 +43,9 @@ Participants see only their own availability and the response count. The API exc
 
 ```mermaid
 flowchart TD
-  C["Create Event"] --> O["Private Organizer Link<br/>Edit Event Hours"]
+  C["Create Event"] --> O["Private Organizer Link<br/>View Responses and Suggestions"]
   C --> P["Participant Invitation Link"]
-  P --> R["Mark 30-Minute Blocks<br/>Fine-Tune in 15-Minute Steps"]
+  P --> R["Edit: Drag to Mark or Clear<br/>Done: Lock and Scroll"]
   R --> N["Enter Name and Save<br/>ChatGPT Sites → Neon"]
   N --> E["Private Edit Link<br/>Edit Own Response Only"]
   N --> F["Organizer Compares All Responses<br/>and Shares Final Arrangement Outside Whenkin"]
@@ -54,9 +55,9 @@ More diagrams: [How the website works](docs/flowchart.md).
 
 ## Time Zones, Without Extra Copies
 
-Availability uses PostgreSQL’s `timestamptz` type for its start and end. PostgreSQL handles comparisons between different time zones. We do not store separate local-time copies.
+For date-based events, availability uses PostgreSQL’s `timestamptz` type for its start and end. PostgreSQL handles comparisons between different time zones. We do not store separate local-time copies.
 
-An event and a response each have one time-zone preference. Changing the display zone changes the labels, not the actual availability. Dates and daylight saving changes are taken into account.
+An event and a response each have one time-zone preference. For date-based events, changing the display zone changes the labels, not the actual availability. Dates and daylight saving changes are taken into account. Weekday polls use one shared zone, as explained below.
 
 ## Built With
 
@@ -88,8 +89,14 @@ Run `npm run check`, `npm test`, and `npm run build`. The tests cover time zones
 
 The original source is at https://github.com/jimmy181211/whenkin. This Sites checkout retains the existing design and scheduling logic, with a managed hosting entry point. See `docs/flowchart.md` for the complete flow.
 
-Organizer schedule edits require `003_schedule_revision.sql` before the new API is deployed. It adds a positive schedule revision counter without changing existing event windows or availability. The organizer can edit From, Until, and Meeting Length; unchanged participant links reflect new windows and retain availability only where it still fits. Run `npm run lint -- --max-warnings 0` alongside the other verification commands.
+Event hours and meeting length are set at creation. The event-hour editor and its API route have been removed. Migration `003_schedule_revision.sql` remains part of the schema history; existing saved data and private links are preserved.
 
 Apply `004_optional_organizer_name.sql` before publishing the optional-organizer-name change. It relaxes the existing name-length constraint to allow an empty organizer name and preserves existing names. Participant response names remain required.
 
 Mobile time-label columns support scrolling in every grid mode. The shorter mobile blocks and wider grid reduce vertical scrolling. Individual availability editing remains available to organizers and participants; organizer suggestions and saved responses are preserved.
+
+## Date and Weekday Modes
+
+**Specific dates** keeps the month calendar and automatic local-time conversion. **Days of the week** lets you select Monday through Sunday to ask when people are usually free. It collects a weekly pattern; it does not schedule repeating appointments. Everyone uses the shared time zone shown on the weekly event page.
+
+Apply `migrations/005_weekday_polls.sql` before deploying this feature. Existing events default to `dates`. Dated event ranges remain real instants in PostgreSQL `timestamptz`. Weekly ranges reuse the range and matching code with a fixed Monday–Sunday coordinate week starting January 3, 2000; these values encode shared wall-clock times, not real appointments in 2000. Weekly pages never show the coordinate dates or convert them as real instants. Calendar invitations are disabled for weekday polls.
