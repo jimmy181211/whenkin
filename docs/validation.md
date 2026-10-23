@@ -12,7 +12,7 @@ The grid instruction line is removed. The name field has no routine hint. Empty 
 
 ## Automated Verification
 
-TypeScript passes, all 65 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
+TypeScript passes, all 67 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
 
 Tests use PGlite for the PostgreSQL-backed API lifecycle. Migration 005 was also applied and smoke-tested on the existing Neon development branch: the new mode persists, a Monday range retains its shared clock, and the optional organizer name remains supported. Temporary verification rows were removed from that development branch.
 
@@ -58,4 +58,8 @@ Event Name and Your Name have no example placeholders. Expanding Add a Note show
 
 ## Calendar Month and Year Selectors
 
-The date-calendar heading has native Month and Year dropdowns styled like the event-hour selectors. Month names follow the selected website language. The arrow buttons remain for stepping one month at a time. Both navigation methods stay within the existing today-to-one-year date range; changing the year clamps to an available month if necessary. Date selections are independent of the visible month. The same controls serve mobile and desktop, without visible Month or Year labels. On very narrow cards the arrow controls can move to the next line so the selected values stay readable. Browser preview verified direct month changes, year-boundary clamping, and preservation of selected dates.
+The date-calendar heading has native Month and Year dropdowns styled like the event-hour selectors. Month names follow the selected website language. The arrow buttons remain for stepping one month at a time. Both navigation methods browse January 2026 through December 2050. Past dates remain unavailable, and future dates through December 31, 2050 can be selected and saved. The client and API share the same limits. Date selections are independent of the visible month. The same controls serve mobile and desktop, without visible Month or Year labels. On very narrow cards the arrow controls can move to the next line so the selected values stay readable. Browser preview verified direct month changes, year changes, and preservation of selected dates.
+
+The month and year controls retain native keyboard type-ahead, like the time selectors: in English, A jumps to April, and typing 2028 in the year dropdown jumps to 2028. Month names follow the selected site language. No extra visible labels or search boxes are added.
+
+A browser check confirmed that typing A in the month selector selects April and typing 2028 in the year selector selects 2028. PostgreSQL API tests also create 2028 and 2050 events and reject dates in 2051.

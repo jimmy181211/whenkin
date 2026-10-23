@@ -518,9 +518,9 @@ export const messages: Record<string, [string, string]> = {
     "请选择有效的日期。",
     "Elige fechas válidas."
   ],
-  "Choose dates between today and one year from now.": [
-    "请选择从今天起一年内的日期。",
-    "Elige fechas entre hoy y dentro de un año."
+  "Choose dates from today through December 31, 2050.": [
+    "请选择今天至 2050 年 12 月 31 日之间的日期。",
+    "Elige fechas desde hoy hasta el 31 de diciembre de 2050."
   ],
   "The time window must be at least as long as the meeting.": [
     "所选时段不能短于活动时长。",

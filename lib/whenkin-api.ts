@@ -4,6 +4,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import { allSlots, contains, isTimezone, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
 import type { CreateInput, MeetingEvent, TimeRange } from '../src/lib/types';
 import { weekdayDate } from '../src/lib/weekly';
+import { isEventDateAllowed } from '../src/lib/date-limits';
 
 export type Database = { query: <T = Record<string, unknown>>(query: string, params?: unknown[]) => Promise<T[]> };
 type Env = { DATABASE_URL?: string; ASSETS?: Fetcher; WRITE_LIMITER?: { limit: (arg: {key:string}) => Promise<{success:boolean}> } };
@@ -47,7 +48,7 @@ export function validateEvent(input:CreateInput) {
     if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Problem(400,'Please choose valid dates.');
     try {
       const d=Temporal.PlainDate.from(date), today=Temporal.Now.plainDateISO(input.timezone);
-      if(mode==='dates'&&((Temporal.PlainDate.compare(d,today)<0)||Temporal.PlainDate.compare(d,today.add({years:1}))>0)) throw new Problem(400,'Choose dates between today and one year from now.');
+      if(mode==='dates'&&!isEventDateAllowed(d,today)) throw new Problem(400,'Choose dates from today through December 31, 2050.');
       const clockZone=mode==='weekdays'?'UTC':input.timezone;
       const start=localToUTC(date,input.startTime,clockZone),end=localToUTC(date,input.endTime,clockZone);
       if(Date.parse(end)-Date.parse(start)<input.duration*60000) throw new Problem(400,'The time window must be at least as long as the meeting.');
