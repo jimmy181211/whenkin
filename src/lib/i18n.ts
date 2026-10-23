@@ -423,10 +423,6 @@ export const messages: Record<string, [string, string]> = {
     "回复会显示在这里。未回复的人不会被算作没空。",
     "Las respuestas aparecerán aquí. Quienes aún no responden no se cuentan como no disponibles."
   ],
-  "Responded · people without a response aren’t counted": [
-    "已回复 · 未回复的人不参与统计",
-    "Respuestas recibidas · no se cuenta a quienes aún no responden"
-  ],
   "Close sharing": [
     "关闭分享窗口",
     "Cerrar ventana para compartir"
@@ -591,10 +587,6 @@ export const messages: Record<string, [string, string]> = {
     "选择你的时区",
     "Elige tu zona horaria"
   ],
-  "Search by City or Time Zone": [
-    "搜索城市或时区",
-    "Buscar por ciudad o zona horaria"
-  ],
   "Search time zones": [
     "搜索时区",
     "Buscar zonas horarias"
@@ -610,10 +602,6 @@ export const messages: Record<string, [string, string]> = {
   "Use Device Time Zone": [
     "使用设备时区",
     "Usar zona del dispositivo"
-  ],
-  "This device reports: {zone}. No location access needed.": [
-    "设备设置的时区：{zone}。无需获取位置信息。",
-    "Zona del dispositivo: {zone}. No necesitamos acceder a tu ubicación."
   ],
   "No time zones found. Try a nearby major city.": [
     "未找到时区。请试试附近的大城市。",
