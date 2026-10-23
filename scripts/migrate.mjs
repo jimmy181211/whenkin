@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { sqlStatements } from './sql-statements.mjs';
 
 if (!process.env.DATABASE_URL) {
   console.error('Set DATABASE_URL in your environment before running migrations. Never commit it.');
@@ -17,8 +18,8 @@ try {
       if (existing[0].checksum!==checksum) throw new Error('A previously applied migration changed.');
       console.log('Already applied: '+name); continue;
     }
-    // This initial schema is idempotent. Each statement and the ledger entry commit together.
-    const statements=contents.split(';').map(s=>s.trim()).filter(Boolean);
+    // Each migration and its checksum commit together, including function bodies.
+    const statements=sqlStatements(contents);
     await sql.transaction([...statements.map(s=>sql.query(s)),sql.query('INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)',[name,checksum])]);
     console.log('Applied: '+name);
   }

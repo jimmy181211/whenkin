@@ -15,7 +15,7 @@ flowchart TD
   O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
 ```
 
-Creating an event saves its details and opens the organizer view. Responses feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
+Creating an event saves its details and opens the organizer view. Responses feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Invitation and private edit links work until the event expires one calendar month after creation.
 
 See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for ranking, [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
 
@@ -79,7 +79,7 @@ English and Spanish interface titles use Title Case. English, Simplified Chinese
 
 ## Editing Availability
 
-Dates or weekdays, event hours, and meeting length are fixed when an event is created. Organizers and participants can continue editing their own availability. Open pages refresh responses every ten seconds and when focused. Existing event links and saved availability are preserved.
+Dates or weekdays, event hours, and meeting length are fixed when an event is created. Organizers and participants can continue editing their own availability. Open pages refresh responses every ten seconds and when focused. Active event links and saved availability remain available until the event expires.
 
 On computers and phones, use the Edit/Done switch. In Edit, start on an empty block to mark availability or a marked block to clear it; that action stays the same for the whole drag. In Done, the grid is locked and scrolls without changing availability. The time-label column also scrolls while editing. The fine-tune panel is removed. Mobile 30-minute blocks are 26 pixels high by default; desktop blocks remain 32 pixels high. The wider mobile grid uses smaller outer margins.
 
@@ -118,3 +118,21 @@ flowchart TD
 ```
 
 A normal invitation never inherits a saved organizer credential. Private organizer links keep their fragment on reload. Changing the link fragment reloads the page and reevaluates access. Matching is calculated in PostgreSQL; the browser only chooses the five displayed suggestions from the returned ranking.
+
+## Expiry and Capacity
+
+```mermaid
+flowchart TD
+  C["Create Event"] --> E["Set Expiry: One Calendar Month"]
+  E --> R["Receive Availability"]
+  R --> A{"Event Active?"}
+  A -->|"No"| X["Reject All Event Links"]
+  A -->|"Yes"| P{"New Participant?"}
+  P -->|"No"| U["Update Saved Response"]
+  P -->|"Yes"| L{"Fewer Than 1,000 Responses?"}
+  L -->|"Yes"| S["Save Response"]
+  L -->|"No"| F["Event Full"]
+  X --> D["Daily Cleanup Deletes Event and Related Data"]
+```
+
+The database enforces both rules. Responses do not extend the expiry. Saved participants can edit at capacity. Cleanup runs without a visitor opening the website.

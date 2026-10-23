@@ -4,6 +4,12 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Links expire in 1 month': ['链接将在 1 个月后失效', 'Los enlaces caducan en 1 mes'],
+  'Links expire {date}': ['链接将于 {date} 失效', 'Los enlaces caducan el {date}'],
+  'Max. {count} participants': ['最多 {count} 位参与者', 'Máx. {count} participantes'],
+  'This event has expired.': ['此活动已过期。', 'Este evento ha caducado.'],
+  'This event could not be found. It may have expired.': ['找不到此活动，可能已过期。', 'No se encontró este evento. Puede que haya caducado.'],
+  'This event has reached its limit of 1,000 participants.': ['此活动已达到 1,000 位参与者的上限。', 'Este evento ha alcanzado el límite de 1.000 participantes.'],
   'Month': ['月份', 'Mes'],
   'Year': ['年份', 'Año'],
   'Saved Changes': ['更改已保存', 'Cambios guardados'],

@@ -5,6 +5,7 @@ import type { CreateInput } from '../src/lib/types';
 import { Problem, checkId, text, validateEvent, validateRanges } from './server/validation';
 import { hash, token } from './server/tokens';
 import { readEvent, type Database } from './server/event-queries';
+import { EVENT_EXPIRED_MESSAGE, EVENT_FULL_MESSAGE } from '../src/lib/event-limits';
 // Keep these imports stable for the Worker entry point and existing tests.
 export { hash } from './server/tokens';
 export { validateEvent, validateRanges } from './server/validation';
@@ -134,12 +135,13 @@ export function createApp(factory?: (env: Env) => Database) {
         const id = crypto.randomUUID();
         const secret = token();
         const created = await database.query(`WITH gate AS (
-      UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$7 RETURNING id
+      UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$7 AND expires_at>clock_timestamp() RETURNING id
     ), response AS (
       INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT $1,gate.id,$3,$4,$5 FROM gate RETURNING id
     ), inserted AS (INSERT INTO availability(response_id,starts_at,ends_at)
       SELECT response.id,a.start::timestamptz,a.end::timestamptz FROM response CROSS JOIN jsonb_to_recordset($6::jsonb) AS a(start text,"end" text) RETURNING id) SELECT id FROM response`, [id, event.id, name, input.timezone, await hash(secret), JSON.stringify(ranges), expectedSchedule]);
         if (!created.length) {
+            await readEvent(database, event.id);
             throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
         }
         return c.json({ id, editToken: secret, revision: 1 }, 201);
@@ -169,7 +171,7 @@ export function createApp(factory?: (env: Env) => Database) {
             id: string;
             revision: number;
         }>(`WITH gate AS (
-      UPDATE events SET write_revision=write_revision+1 WHERE id=$7 AND schedule_revision=$8 RETURNING id
+      UPDATE events SET write_revision=write_revision+1 WHERE id=$7 AND schedule_revision=$8 AND expires_at>clock_timestamp() RETURNING id
     ), target AS (
       UPDATE responses SET name=$1,timezone=$2,revision=revision+1,updated_at=now() WHERE id=$3 AND edit_hash=$4 AND revision=$5 AND EXISTS (SELECT 1 FROM gate) RETURNING id,revision
     ), removed AS (
@@ -180,6 +182,7 @@ export function createApp(factory?: (env: Env) => Database) {
       WHERE (SELECT count(*) FROM removed)>=0 RETURNING id
     ) SELECT id,revision FROM target`, [name, input.timezone, id, digest, input.revision, JSON.stringify(ranges), event.id, expectedSchedule]);
         if (!updated.length) {
+            await readEvent(database, event.id);
             throw new Problem(409, 'This response changed in another tab. Your draft is kept here. Reload before saving again.');
         }
         return c.json(updated[0]);
@@ -198,7 +201,8 @@ export function createApp(factory?: (env: Env) => Database) {
         }
         const input = await body(c.req.raw);
         if (input.start === null) {
-            await database.query('UPDATE events SET final_start=NULL,final_end=NULL WHERE id=$1', [id]);
+            const updated = await database.query('UPDATE events SET final_start=NULL,final_end=NULL WHERE id=$1 AND expires_at>clock_timestamp() RETURNING id', [id]);
+            if (!updated.length) throw new Problem(410, EVENT_EXPIRED_MESSAGE);
             return c.json({ ok: true });
         }
         const start = Date.parse(String(input.start));
@@ -206,7 +210,8 @@ export function createApp(factory?: (env: Env) => Database) {
         if (!allSlots(event.windows).includes(start) || !contains(event.windows, start, end)) {
             throw new Problem(400, 'Choose a meeting time within the event dates.');
         }
-        await database.query('UPDATE events SET final_start=$1::timestamptz,final_end=$2::timestamptz WHERE id=$3', [new Date(start).toISOString(), new Date(end).toISOString(), id]);
+        const updated = await database.query('UPDATE events SET final_start=$1::timestamptz,final_end=$2::timestamptz WHERE id=$3 AND expires_at>clock_timestamp() RETURNING id', [new Date(start).toISOString(), new Date(end).toISOString(), id]);
+        if (!updated.length) throw new Problem(410, EVENT_EXPIRED_MESSAGE);
         return c.json({ ok: true });
     });
     app.get('/api/events/:id/calendar', async (c) => {
@@ -245,6 +250,10 @@ export function createApp(factory?: (env: Env) => Database) {
         if (error instanceof Problem) {
             return c.json({ error: error.message }, error.status);
         }
+        // These SQLSTATE codes come from the database's capacity/expiry trigger.
+        const code = error && typeof error === 'object' && 'code' in error ? error.code : '';
+        if (code === 'WK001') return c.json({ error: EVENT_EXPIRED_MESSAGE }, 410);
+        if (code === 'WK002') return c.json({ error: EVENT_FULL_MESSAGE }, 409);
         // Do not return database details, connection strings, or tokens to visitors or logs.
         return c.json({ error: 'Your change could not be saved. Please try again in a moment.' }, 503);
     });

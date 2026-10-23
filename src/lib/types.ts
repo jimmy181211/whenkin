@@ -5,7 +5,7 @@ export type MeetingEvent = {
   schedule_mode?: 'dates' | 'weekdays';
   duration: number; windows: TimeRange[]; responses: ResponseData[];
   schedule_revision?: number; response_count?: number; is_organizer?: boolean;
-  final_start: string | null; final_end: string | null; created_at?: string; candidates?: Candidate[];
+  final_start: string | null; final_end: string | null; created_at?: string; expires_at?: string; candidates?: Candidate[];
 };
 export type CreateInput = { title: string; description: string; organizer_name?: string; timezone: string; dates: string[]; schedule_mode?: 'dates' | 'weekdays'; weekdays?: number[]; startTime: string; endTime: string; duration: number };
 export type Candidate = TimeRange & { available: string[]; missing: string[] };
