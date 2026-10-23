@@ -14,7 +14,8 @@ export function localToUTC(date: string, time: string, zone: string) {
 export function formatTime(value: string | number, zone: string) {
   return new Intl.DateTimeFormat(getLocale(), { timeZone: zone, hour: 'numeric', minute: '2-digit' }).format(new Date(value));
 }
-export function formatDay(value: string | number, zone: string, long = false) {
+export function formatDay(value: string | number, zone: string, long = false, weekly = false) {
+  if(weekly)return new Intl.DateTimeFormat(getLocale(),{timeZone:'UTC',weekday:long?'long':'short'}).format(new Date(value));
   return new Intl.DateTimeFormat(getLocale(), { timeZone: zone, weekday: long ? 'long' : 'short', month: long ? 'long' : 'short', day: 'numeric' }).format(new Date(value));
 }
 export function localDate(value: string | number, zone: string) {
@@ -58,9 +59,9 @@ export function bestTimes(event: MeetingEvent): Candidate[] {
     return { start: new Date(t).toISOString(), end: new Date(t + duration).toISOString(), available, missing };
   }).sort((a,b) => b.available.length - a.available.length || Date.parse(a.start) - Date.parse(b.start));
 }
-export function displayRange(range: TimeRange, zone: string) {
+export function displayRange(range: TimeRange, zone: string, weekly = false) {
   const same = localDate(range.start, zone) === localDate(range.end, zone);
-  return `${formatDay(range.start, zone)} · ${formatTime(range.start, zone)}–${same ? '' : formatDay(range.end, zone) + ' '}${formatTime(range.end, zone)}`;
+  return `${formatDay(range.start, zone, false, weekly)} · ${formatTime(range.start, zone)}–${same ? '' : formatDay(range.end, zone, false, weekly) + ' '}${formatTime(range.end, zone)}`;
 }
 export type GridCell = { stamp: number; key: string; date: string; minute: number; occurrence: number; offset: string };
 export function gridModel(windows: TimeRange[], zone: string, interval:15|30=15) {

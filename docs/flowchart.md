@@ -8,14 +8,14 @@ Whenkin collects availability. The organizer compares responses and communicates
 flowchart TD
   H["Main Page"] -->|"Create Event"| O["Organizer View"]
   O -->|"Share Participant Link"| P["Participant View"]
-  O -->|"Save Event or Change Its Hours"| N["Save Event and Responses to Neon"]
+  O -->|"Save Event"| N["Save Event and Responses to Neon"]
   P -->|"Submit or Update Availability"| N
   N --> C["Whenkin Calculates Best Meeting Times"]
   C -->|"Show Ranked Suggestions"| O
   O -->|"Choose and Communicate a Time"| F["Social Media or Other External Channel"]
 ```
 
-Creating an event saves its details and opens the organizer view. Responses and event changes feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
+Creating an event saves its details and opens the organizer view. Responses feed the same stored event; Whenkin returns updated suggestions for the full meeting length. Existing invitation and private edit links continue to work.
 
 See [Calculating the Best Meeting Time](#calculating-the-best-meeting-time) for ranking, [Participant Privacy](#participant-privacy) for access rules, [Website and Storage](#website-and-storage) for storage details, and [Editing and Navigation](#editing-and-navigation) for saving and returning home.
 
@@ -46,7 +46,7 @@ To keep the list useful, skip a candidate if a kept suggestion has the same atte
 
 Participants see their own saved response and the response count. Only the organizer sees all responses, participant names, and ranked meeting suggestions. The availability grid always edits the current person's response; there are no personal/group tabs or sharing setting.
 
-A valid private response token is required to load or update that person's saved availability. A valid organizer token is required to see all responses or edit event hours. Legacy sharing flags do not grant access.
+A valid private response token is required to load or update that person's saved availability. A valid organizer token is required to see all responses and suggestions. Event hours are set at creation; there is no event-hour editor or schedule-update API. Legacy sharing flags do not grant access.
 
 ## Website and Storage
 
@@ -59,7 +59,7 @@ flowchart LR
   P --> D
 ```
 
-The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private tokens stay in link fragments and local browser storage; requests authenticate with an authorization header. Neon stores token hashes, availability ranges as actual UTC instants, and event/response revisions.
+The website is public. Event access permissions are enforced by the server independently of the site's public audience. Private tokens stay in link fragments and local browser storage; requests authenticate with an authorization header. Neon stores token hashes, availability ranges, and event/response revisions. Date-based ranges are actual UTC instants. Weekday ranges encode a typical shared-clock week; see the mode explanation below.
 
 ## Editing and Navigation
 
@@ -77,8 +77,24 @@ flowchart TD
 
 English and Spanish interface titles use Title Case. English, Simplified Chinese, and Spanish share the same scheduling data. Time-zone changes only change clock labels; 30-minute display blocks retain the original 15-minute precision, including partial blocks and repeated daylight-saving hours.
 
-## Editing Event Hours
+## Editing Availability
 
-The private organizer page can change From, Until, and Meeting Length after creation. Hours apply to every existing event date in the event time zone. Saving atomically replaces the event windows, clips saved availability to their intersection, increments schedule and response revisions, and retains the same invitation and private edit links. Old schedule submissions are rejected so stale tabs cannot restore removed times. Open pages refresh every ten seconds and when focused; unsaved participant drafts are clipped to the new windows.
+Dates or weekdays, event hours, and meeting length are fixed when an event is created. Organizers and participants can continue editing their own availability. Open pages refresh responses every ten seconds and when focused. Existing event links and saved availability are preserved.
 
-On phones, drag the time-label column to scroll the grid in any mode. Mark/Clear gestures inside the blocks edit availability. Mobile 30-minute blocks are 26 pixels high by default; desktop blocks remain 32 pixels high. The wider mobile grid uses smaller outer margins.
+On computers and phones, use the Edit/Done switch. In Edit, start on an empty block to mark availability or a marked block to clear it; that action stays the same for the whole drag. In Done, the grid is locked and scrolls without changing availability. The time-label column also scrolls while editing. The fine-tune panel is removed. Mobile 30-minute blocks are 26 pixels high by default; desktop blocks remain 32 pixels high. The wider mobile grid uses smaller outer margins.
+
+## Choosing Dates or Weekdays
+
+```mermaid
+flowchart TD
+  M["Choose Calendar Mode"] --> D["Specific Dates"]
+  M --> W["Days of the Week"]
+  D --> C["Pick Dates on the Calendar"]
+  W --> P["Pick Monday–Sunday"]
+  C --> T["Convert Real Instants for Each Viewer"]
+  P --> Z["Use One Shared Time Zone"]
+  T --> A["Collect Availability and Rank Times"]
+  Z --> A
+```
+
+Date-based events retain UTC comparisons and local-time display. Weekday polls describe a typical week, not repeating calendar appointments. They use the named time zone selected by the organizer; without a date, automatic daylight-saving conversion would be ambiguous. Their stored ranges encode a fixed Monday–Sunday coordinate week rather than real appointment dates. Existing events stay date-based. The mode switch on the creation form preserves both date and weekday choices.

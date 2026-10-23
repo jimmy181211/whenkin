@@ -15,6 +15,8 @@ describe('language changes across the website',()=>{
   it('starts in English with desktop steps and a link to the mobile guide',()=>{
     expect(getLanguage()).toBe('en');
     const html=page();
+    expect(html).toContain('Event Name');
+    expect(html).not.toContain('What are you planning?');
     expect(html).toContain('The Organizer Creates an Event');
     expect(html).toContain('Participants Mark When They’re Free');
     expect(html).toContain('Whenkin Suggests the Best Times');

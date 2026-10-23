@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { Temporal } from '@js-temporal/polyfill';
 import { allSlots, contains, isTimezone, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
 import type { CreateInput, MeetingEvent, TimeRange } from '../src/lib/types';
+import { weekdayDate } from '../src/lib/weekly';
 
 export type Database = { query: <T = Record<string, unknown>>(query: string, params?: unknown[]) => Promise<T[]> };
 type Env = { DATABASE_URL?: string; ASSETS?: Fetcher; WRITE_LIMITER?: { limit: (arg: {key:string}) => Promise<{success:boolean}> } };
@@ -30,15 +31,25 @@ export function validateEvent(input:CreateInput,allowExistingDates=false) {
   const title=text(input.title,'an event name',100), organizer=text(input.organizer_name??'','your name',60,true), description=text(input.description??'','a description',1000,true);
   if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
   if(!Number.isInteger(input.duration)||input.duration<15||input.duration>240||input.duration%15) throw new Problem(400,'Choose a meeting length between 15 minutes and 4 hours.');
-  if(!Array.isArray(input.dates)||!input.dates.length||input.dates.length>31||new Set(input.dates).size!==input.dates.length) throw new Problem(400,'Choose between 1 and 31 different dates.');
+  const mode=input.schedule_mode??'dates';
+  if(mode!=='dates'&&mode!=='weekdays')throw new Problem(400,'Choose specific dates or days of the week.');
+  let dates:string[];
+  if(mode==='weekdays'){
+    if(!Array.isArray(input.weekdays)||!input.weekdays.length||input.weekdays.length>7||input.weekdays.some(day=>!Number.isInteger(day)||day<1||day>7)||new Set(input.weekdays).size!==input.weekdays.length)throw new Problem(400,'Choose at least one day of the week.');
+    dates=input.weekdays.map(weekdayDate);
+  }else{
+    if(!Array.isArray(input.dates)||!input.dates.length||input.dates.length>31||new Set(input.dates).size!==input.dates.length) throw new Problem(400,'Choose between 1 and 31 different dates.');
+    dates=input.dates;
+  }
   const validTime=/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/;
   if(!validTime.test(input.startTime)||!(validTime.test(input.endTime)||input.endTime==='24:00')||input.endTime<=input.startTime) throw new Problem(400,'The end time must be after the start time on the same day.');
-  const windows:TimeRange[]=input.dates.map(date=>{
+  const windows:TimeRange[]=dates.map(date=>{
     if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Problem(400,'Please choose valid dates.');
     try {
       const d=Temporal.PlainDate.from(date), today=Temporal.Now.plainDateISO(input.timezone);
-      if((!allowExistingDates&&Temporal.PlainDate.compare(d,today)<0)||Temporal.PlainDate.compare(d,today.add({years:1}))>0) throw new Problem(400,'Choose dates between today and one year from now.');
-      const start=localToUTC(date,input.startTime,input.timezone),end=localToUTC(date,input.endTime,input.timezone);
+      if(mode==='dates'&&((!allowExistingDates&&Temporal.PlainDate.compare(d,today)<0)||Temporal.PlainDate.compare(d,today.add({years:1}))>0)) throw new Problem(400,'Choose dates between today and one year from now.');
+      const clockZone=mode==='weekdays'?'UTC':input.timezone;
+      const start=localToUTC(date,input.startTime,clockZone),end=localToUTC(date,input.endTime,clockZone);
       if(Date.parse(end)-Date.parse(start)<input.duration*60000) throw new Problem(400,'The time window must be at least as long as the meeting.');
       return {start,end};
     } catch(error) {
@@ -46,7 +57,7 @@ export function validateEvent(input:CreateInput,allowExistingDates=false) {
       throw new Problem(400,'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.');
     }
   });
-  return {title,organizer,description,windows:windows.sort((a,b)=>Date.parse(a.start)-Date.parse(b.start))};
+  return {title,organizer,description,mode,windows:windows.sort((a,b)=>Date.parse(a.start)-Date.parse(b.start))};
 }
 export function validateRanges(input:unknown,windows:TimeRange[]) {
   if(!Array.isArray(input)||input.length>3000) throw new Problem(400,'Please choose valid availability.');
@@ -86,10 +97,10 @@ export function createApp(factory?:(env:Env)=>Database) {
   app.post('/api/events',async c=>{
     const input=await body(c.req.raw) as CreateInput, valid=validateEvent(input),id=crypto.randomUUID(),secret=token(),digest=await hash(secret);
     await db(c.env).query(`WITH event AS (
-      INSERT INTO events(id,title,description,organizer_name,timezone,duration,admin_hash) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id
+      INSERT INTO events(id,title,description,organizer_name,timezone,duration,admin_hash,schedule_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$9) RETURNING id
     ) INSERT INTO event_windows(event_id,starts_at,ends_at)
       SELECT event.id,w.start::timestamptz,w.end::timestamptz FROM event CROSS JOIN jsonb_to_recordset($8::jsonb) AS w(start text,"end" text)`,
-    [id,valid.title,valid.description,valid.organizer,input.timezone,input.duration,digest,JSON.stringify(valid.windows)]);
+    [id,valid.title,valid.description,valid.organizer,input.timezone,input.duration,digest,JSON.stringify(valid.windows),valid.mode]);
     return c.json({id,adminToken:secret},201);
   });
   async function readEvent(database:Database,id:string,viewer?:{secret:string;responseId?:string}) {
@@ -105,7 +116,7 @@ export function createApp(factory?:(env:Env)=>Database) {
       if(!owned.length) throw new Problem(403,'Use your private edit link to change this response.');
       ownId=viewer.responseId;
     } else if(viewer?.secret&&!organizer) throw new Problem(403,'Use your private organizer link to manage this event.');
-    const rows=await database.query<MeetingEvent>(`SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.duration,e.final_start,e.final_end,e.created_at,e.schedule_revision,
+    const rows=await database.query<MeetingEvent>(`SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.duration,e.final_start,e.final_end,e.created_at,e.schedule_revision,e.schedule_mode,
       (SELECT count(*)::int FROM responses r WHERE r.event_id=e.id) AS response_count,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('start',w.starts_at,'end',w.ends_at) ORDER BY w.starts_at) FROM event_windows w WHERE w.event_id=e.id),'[]'::jsonb) AS windows,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'timezone',r.timezone,'revision',r.revision,
@@ -132,42 +143,10 @@ export function createApp(factory?:(env:Env)=>Database) {
     return event;
   }
   app.get('/api/events/:id',async c=>c.json(await readEvent(db(c.env),c.req.param('id'),{secret:c.req.header('Authorization')?.replace(/^Bearer /,'')||'',responseId:c.req.query('response_id')})));
-  app.patch('/api/events/:id/schedule',async c=>{
-    const database=db(c.env),id=c.req.param('id'),secret=c.req.header('Authorization')?.replace(/^Bearer /,'')||'';
-    const event=await readEvent(database,id,{secret});
-    if(!event.is_organizer)throw new Problem(403,'Use your private organizer link to manage this event.');
-    const input=await body(c.req.raw);
-    if(input.schedule_revision!==event.schedule_revision)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
-    const valid=validateEvent({title:event.title,description:event.description,organizer_name:event.organizer_name,timezone:event.timezone,dates:event.windows.map(w=>localDate(w.start,event.timezone)),startTime:input.startTime,endTime:input.endTime,duration:input.duration} as CreateInput,true);
-    const [version]=await database.query<{write_revision:string}>('SELECT write_revision::text AS write_revision FROM events WHERE id=$1',[id]);
-    const updated=await database.query<{id:string; schedule_revision:number}>(`WITH target AS (
-      UPDATE events SET duration=$1,schedule_revision=schedule_revision+1,write_revision=write_revision+1,final_start=NULL,final_end=NULL
-      WHERE id=$2 AND admin_hash=$3 AND schedule_revision=$4 AND write_revision=$6 RETURNING id,schedule_revision
-    ), new_windows AS MATERIALIZED (
-      SELECT w.start::timestamptz AS starts_at,w.end::timestamptz AS ends_at FROM jsonb_to_recordset($5::jsonb) AS w(start text,"end" text)
-    ), clipped AS MATERIALIZED (
-      SELECT a.response_id,GREATEST(a.starts_at,w.starts_at) AS starts_at,LEAST(a.ends_at,w.ends_at) AS ends_at
-      FROM availability a JOIN responses r ON r.id=a.response_id CROSS JOIN new_windows w
-      WHERE r.event_id IN (SELECT id FROM target) AND a.starts_at<w.ends_at AND a.ends_at>w.starts_at
-    ), removed_windows AS (
-      DELETE FROM event_windows WHERE event_id IN (SELECT id FROM target) RETURNING id
-    ), inserted_windows AS (
-      INSERT INTO event_windows(event_id,starts_at,ends_at) SELECT target.id,w.starts_at,w.ends_at FROM target CROSS JOIN new_windows w
-      WHERE (SELECT count(*) FROM removed_windows)>=0 RETURNING id
-    ), removed_availability AS (
-      DELETE FROM availability WHERE response_id IN (SELECT id FROM responses WHERE event_id IN (SELECT id FROM target)) RETURNING id
-    ), inserted_availability AS (
-      INSERT INTO availability(response_id,starts_at,ends_at) SELECT response_id,starts_at,ends_at FROM clipped
-      WHERE (SELECT count(*) FROM removed_availability)>=0 RETURNING id
-    ), revised_responses AS (
-      UPDATE responses SET revision=revision+1,updated_at=now() WHERE event_id IN (SELECT id FROM target) RETURNING id
-    ) SELECT id,schedule_revision FROM target`,[input.duration,id,await hash(secret),input.schedule_revision,JSON.stringify(valid.windows),version.write_revision]);
-    if(!updated.length)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
-    return c.json(await readEvent(database,id,{secret}));
-  });
   app.post('/api/events/:id/responses',async c=>{
     const database=db(c.env),event=await readEvent(database,c.req.param('id')),input=await body(c.req.raw);
     const name=text(input.name,'your name',60);if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
+    if(event.schedule_mode==='weekdays'&&input.timezone!==event.timezone)throw new Problem(400,'Weekly polls use the organizer’s shared time zone.');
     const expectedSchedule=input.schedule_revision??event.schedule_revision;
     if(expectedSchedule!==event.schedule_revision)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
     const ranges=validateRanges(input.ranges,event.windows),id=crypto.randomUUID(),secret=token();
@@ -188,6 +167,7 @@ export function createApp(factory?:(env:Env)=>Database) {
     if(!owned.length) throw new Problem(403,'Use your private edit link to change this response.');
     const input=await body(c.req.raw),name=text(input.name,'your name',60);
     if(typeof input.timezone!=='string'||!isTimezone(input.timezone)||typeof input.revision!=='number'||!Number.isInteger(input.revision)||input.revision<1) throw new Problem(400,'Please reload this response and choose a valid time zone.');
+    if(event.schedule_mode==='weekdays'&&input.timezone!==event.timezone)throw new Problem(400,'Weekly polls use the organizer’s shared time zone.');
     const expectedSchedule=input.schedule_revision??event.schedule_revision;
     if(expectedSchedule!==event.schedule_revision)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
     const ranges=validateRanges(input.ranges,event.windows);
@@ -210,6 +190,7 @@ export function createApp(factory?:(env:Env)=>Database) {
     const secret=c.req.header('Authorization')?.replace(/^Bearer /,'')||'';
     const owned=await database.query('SELECT id FROM events WHERE id=$1 AND admin_hash=$2',[id,await hash(secret)]);
     if(!owned.length) throw new Problem(403,'Only the organizer can confirm the final time. Use the organizer link.');
+    if(event.schedule_mode==='weekdays')throw new Problem(400,'Weekly polls have no calendar date. Create a specific-date event for a calendar invitation.');
     const input=await body(c.req.raw);
     if(input.start===null) { await database.query('UPDATE events SET final_start=NULL,final_end=NULL WHERE id=$1',[id]);return c.json({ok:true}); }
     const start=Date.parse(String(input.start)),end=start+event.duration*60000;
@@ -219,6 +200,7 @@ export function createApp(factory?:(env:Env)=>Database) {
   });
   app.get('/api/events/:id/calendar',async c=>{
     const event=await readEvent(db(c.env),c.req.param('id'));
+    if(event.schedule_mode==='weekdays')throw new Problem(400,'Weekly polls have no calendar date. Create a specific-date event for a calendar invitation.');
     if(!event.final_start||!event.final_end) throw new Problem(400,'The organizer has not confirmed a time yet.');
     const stamp=(v:string)=>new Date(v).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
     const escape=(v:string)=>v.replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
