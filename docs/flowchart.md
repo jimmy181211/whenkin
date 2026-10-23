@@ -101,4 +101,4 @@ Date-based events retain UTC comparisons and local-time display. Weekday polls d
 
 The name hint sits directly below the participant input on both desktop and mobile. An empty or whitespace-only name locks grid editing, including mouse, touch, keyboard, and Undo. Attempting Edit or a cell focuses the name input and shows an accessible notice. The former late save-time name error is removed; the API still requires a valid participant name. Changing time zones remains available before entering a name.
 
-Availability has three visible states: **Not Started** before a new response is changed, **Availability Unsaved** while changes are pending or a save fails, and **Availability Saved** after the server confirms them. Every event page shows the private edit-link section; copying becomes available after the participant saves a response.
+Availability has three visible states: **Not Started** before a new response is changed, **Unsaved Changes** while changes are pending or a save fails, and **Saved Changes** after the server confirms them. Every event page shows the private edit-link section; copying becomes available after the participant saves a response.

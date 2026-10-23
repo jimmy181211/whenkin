@@ -103,6 +103,6 @@ Apply `migrations/005_weekday_polls.sql` before deploying this feature. Existing
 
 On wider event cards, the time-zone selector sits beside the participant name field. When space is limited, including on phones, it moves above the name field. The event page omits the weekly daylight-saving note.
 
-Availability status has three states: “Not Started,” “Availability Unsaved,” and “Availability Saved.” A save in progress stays unsaved until the server confirms it. Your Common Ground shows at most five matching times on both computers and phones, without an extra description or a Show more button.
+Availability status has three states: “Not Started,” “Unsaved Changes,” and “Saved Changes.” A save in progress stays unsaved until the server confirms it. Your Common Ground shows at most five matching times on both computers and phones, without an extra description or a Show more button.
 
 The private edit-link section is visible on every event page. Save your availability first to enable copying your own link, then keep it to edit from another device. Built-in English headings, field labels, and action buttons use Title Case; descriptions and visitor-entered text keep their natural wording.

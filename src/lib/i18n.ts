@@ -5,8 +5,8 @@ export const languageOptions: { value: Language; label: string }[] = [
 ];
 export const messages: Record<string, [string, string]> = {
   'Save your availability to get a private edit link.': ['保存空闲时间后，即可获取私密编辑链接。', 'Guarda tu disponibilidad para obtener un enlace privado de edición.'],
-  'Availability Saved': ['空闲时间已保存', 'Disponibilidad guardada'],
-  'Availability Unsaved': ['空闲时间未保存', 'Disponibilidad sin guardar'],
+  'Saved Changes': ['更改已保存', 'Cambios guardados'],
+  'Unsaved Changes': ['更改未保存', 'Cambios sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
   'Guests can change time zones. Weekly conversions use offsets when the poll is created.': ['参与者可以切换时区。每周时间按调查创建时的时差换算。', 'Los invitados pueden cambiar de zona horaria. La conversión semanal usa las diferencias horarias al crear la encuesta.'],
