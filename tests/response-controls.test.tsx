@@ -10,14 +10,14 @@ describe('participant response status',()=>{
   it('starts without claiming that an untouched response is saved or unsaved',()=>{
     const html=renderToStaticMarkup(<AvailabilityStatus state="saved" hasSavedResponse={false}/>);
     expect(html).toContain('Not Started');
-    expect(html).not.toMatch(/Availability Saved|Availability Unsaved|lucide-check/);
+    expect(html).not.toMatch(/Saved Changes|Unsaved Changes|lucide-check/);
   });
   it('keeps draft, pending, and failed writes unsaved until confirmation',()=>{
     for(const state of ['dirty','saving','error'] as const){
       for(const hasSavedResponse of [false,true]){
         const html=renderToStaticMarkup(<AvailabilityStatus state={state} hasSavedResponse={hasSavedResponse}/>);
-        expect(html).toContain('Availability Unsaved');
-        expect(html).not.toContain('Availability Saved');
+        expect(html).toContain('Unsaved Changes');
+        expect(html).not.toContain('Saved Changes');
         expect(html).toContain(`aria-busy="${state==='saving'}"`);
       }
     }
@@ -26,7 +26,7 @@ describe('participant response status',()=>{
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
       const html=renderToStaticMarkup(<AvailabilityStatus state="saved" hasSavedResponse/>);
-      expect(html).toContain(t('Availability Saved'));
+      expect(html).toContain(t('Saved Changes'));
       expect(html).toContain('lucide-check');
     }
   });

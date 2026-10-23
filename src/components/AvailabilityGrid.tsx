@@ -1,14 +1,14 @@
 import { t, getLocale } from '../lib/i18n';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownUp, Check, ChevronLeft, ChevronRight, Pencil, Minus, Plus, Undo2 } from 'lucide-react';
 import { displayRange, formatDay, formatTime, gridModel, SLOT, zoneLabel } from '../lib/time';
 import type { MeetingEvent, TimeRange } from '../lib/types';
 import { clearsSelection, paintSelection } from '../lib/selection';
 import { projectWeekly } from '../lib/weekly';
 
-type Props={event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlight?:TimeRange|null;canEdit?:boolean;onEditBlocked?:()=>void};
+type Props={event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlight?:TimeRange|null;canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode};
 type Gesture={base:Set<number>;row:number;col:number;endRow:number;endCol:number;remove:boolean};
-export default function AvailabilityGrid({event,zone,selected,onChange,highlight,canEdit=true,onEditBlocked}:Props) {
+export default function AvailabilityGrid({event,zone,selected,onChange,highlight,canEdit=true,onEditBlocked,status}:Props) {
   const weekly=event.schedule_mode==='weekdays';
   const [editMode,setEditMode]=useState(true),[zoom,setZoom]=useState(1),[page,setPage]=useState(0),[small,setSmall]=useState(()=>window.innerWidth<700);
   const editing=canEdit&&editMode,clockZone=weekly?'UTC':zone;
@@ -50,7 +50,7 @@ export default function AvailabilityGrid({event,zone,selected,onChange,highlight
   function undo(){if(!editing)return;const last=history.current.pop();if(last){onChange(last);setUndos(history.current.length);}}
   return <section className="availability-section" aria-label={t("Your availability grid")}>
     <div className="grid-tools">
-      <div className="segmented small" role="group" aria-label={t('Availability editing')}><button type="button" aria-pressed={editing} onClick={()=>{if(!canEdit){onEditBlocked?.();return;}setEditMode(true);}}><Pencil size={15}/> {t('Edit')}</button><button type="button" aria-pressed={!editing} onClick={()=>{finish();setEditMode(false);}}><Check size={15}/> {t('Done')}</button></div>
+      <div className="grid-edit-controls"><div className="segmented small" role="group" aria-label={t('Availability editing')}><button type="button" aria-pressed={editing} onClick={()=>{if(!canEdit){onEditBlocked?.();return;}setEditMode(true);}}><Pencil size={15}/> {t('Edit')}</button><button type="button" aria-pressed={!editing} onClick={()=>{finish();setEditMode(false);}}><Check size={15}/> {t('Done')}</button></div>{status}</div>
       <div className="grid-tool-actions"><button type="button" className="icon-button" aria-label={t("Undo selection")} disabled={!editing||!undos} onClick={undo}><Undo2 size={17}/></button><button type="button" className="icon-button" aria-label={t("Smaller time slots")} disabled={zoom<=1} onClick={()=>setZoom(zoom-1)}><Minus size={16}/></button><button type="button" className="icon-button" aria-label={t("Larger time slots")} disabled={zoom>=3} onClick={()=>setZoom(zoom+1)}><Plus size={16}/></button></div>
     </div>
     {grid.days.length>perPage&&<div className="grid-pager"><div><button className="icon-button" type="button" aria-label={t("Previous days")} disabled={page===0} onClick={()=>setPage(Math.max(0,page-1))}><ChevronLeft size={17}/></button><button className="icon-button" type="button" aria-label={t("Next days")} disabled={startCol+perPage>=grid.days.length} onClick={()=>setPage(page+1)}><ChevronRight size={17}/></button></div></div>}

@@ -123,21 +123,10 @@ body:has(.event-page) .header-new-event{display:none}
 .time-grid-wrap{margin-inline:-4px}.time-grid{grid-template-columns:46px repeat(var(--days),minmax(0,1fr))}
 }
 
-/* Keep response status near the context it describes at each screen size. */
-.event-meta>.mobile-save-status{display:none}
-.schedule-toolbar{justify-content:flex-end}
-.participant-name{grid-template-columns:auto minmax(0,220px) auto}
-.participant-save-status{align-self:center}.participant-save-status .save-status{margin-left:0}
-@media(max-width:699px){
-.event-summary .event-meta{align-items:center}
-.event-meta>.mobile-save-status{display:inline-flex}.mobile-save-status .save-status{font-size:11px;margin-left:0}
-.participant-save-status{display:none}.participant-name{grid-template-columns:1fr}
-}
-
 .schedule-card,.results-sidebar,.event-heading>div,.participant-name{min-width:0}
 .time-grid-wrap.done-mode .time-cell:disabled{opacity:1;cursor:default}.time-grid-wrap.done-mode .time-cell:hover{box-shadow:none}
 .participant-name-field{min-width:0}.participant-name-field .field-help,.participant-name-field .name-error{margin:8px 0 0;font-size:11px;line-height:1.5}
-.participant-name>label{align-self:start;padding-top:13px}.participant-save-status{align-self:start;padding-top:13px}
+.participant-name>label{align-self:start;padding-top:13px}
 @media(max-width:699px){.participant-name>label{padding-top:0}.participant-name-field .field-help,.participant-name-field .name-error{font-size:12px}}
 
 /* Respond to the event card's width, including beside the organizer sidebar. */
@@ -145,10 +134,9 @@ body:has(.event-page) .header-new-event{display:none}
 .participant-controls{display:flex;flex-direction:column;align-items:stretch;gap:18px;margin:0 0 22px}
 .participant-controls>.participant-line{padding:0;min-width:0;width:100%;display:block}
 .participant-controls>.timezone{order:-1;width:100%;min-width:0}
-.participant-controls .participant-name{grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 12px}
+.participant-controls .participant-name{grid-template-columns:minmax(0,1fr);align-items:start;gap:8px 12px}
 .participant-controls .participant-name>label{grid-column:1 / -1;padding-top:0}
 .participant-controls .participant-name-field{grid-column:1;grid-row:2}
-.participant-controls .participant-save-status{grid-column:2;grid-row:2}
 .participant-controls .zone-trigger{min-height:45px;padding:7px 12px}
 @container schedule-card (min-width:620px){
   .participant-controls{flex-direction:row;gap:24px;align-items:flex-start}
@@ -157,3 +145,10 @@ body:has(.event-page) .header-new-event{display:none}
 }
 
 .schedule-mode-switch{margin-bottom:18px}
+
+/* Keep the response state beside Edit / Done on every screen size. */
+.grid-tools{flex-wrap:wrap;gap:10px}
+.grid-edit-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0;max-width:100%}
+.grid-edit-controls .save-status{margin-left:0;white-space:nowrap;font-size:11px}
+.grid-tool-actions{margin-left:auto}
+@media(max-width:699px){.grid-edit-controls{gap:8px}.grid-edit-controls .save-status{font-size:10px}}

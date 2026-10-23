@@ -32,8 +32,10 @@ The creation page also removes the “When might work?” heading and explanator
 
 ## Availability Status and Top Five Matches
 
-Availability has three visible statuses: Not Started for a fresh response, Availability Unsaved for draft changes (including an in-progress or failed save), and Availability Saved only after a confirmed save. Your Common Ground omits its explanatory sentence and shows at most five ranked, non-repetitive matches on desktop and mobile. Pagination state and the Show more button are removed.
+Availability has three visible statuses: Not Started for a fresh response, Unsaved Changes for draft changes (including an in-progress or failed save), and Saved Changes only after a confirmed save. Your Common Ground omits its explanatory sentence and shows at most five ranked, non-repetitive matches on desktop and mobile. Pagination state and the Show more button are removed.
 
 ## Private Edit Links and Title Case
 
 Every event page shows the private edit-link section. The copy button is disabled until the current participant has a saved response and an edit token. The helper text explains when the link becomes available. Organizer and other participant credentials are never substituted. Built-in English titles, field labels, and action buttons use Title Case, while descriptions and visitor-entered event names are preserved.
+
+The response status now sits beside the Edit / Done control on both desktop and mobile. It no longer appears next to the name input or in the event header. Labels are Not Started, Unsaved Changes, and Saved Changes.
