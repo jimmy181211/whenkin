@@ -12,7 +12,7 @@ The grid instruction line is removed. The name field has no routine hint. Empty 
 
 ## Automated Verification
 
-TypeScript passes, all 63 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
+TypeScript passes, all 65 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
 
 Tests use PGlite for the PostgreSQL-backed API lifecycle. Migration 005 was also applied and smoke-tested on the existing Neon development branch: the new mode persists, a Monday range retains its shared clock, and the optional organizer name remains supported. Temporary verification rows were removed from that development branch.
 
@@ -55,3 +55,7 @@ The cleanup removes 78 unused starter files, 23 unused direct package declaratio
 ## Simple Creation Form
 
 Event Name and Your Name have no example placeholders. Expanding Add a Note shows Note with optional beside it, matching the Your Name label, and an empty note field with no prompt. Both date and weekday modes show the same sentence, “Your guests will see their own local time,” on desktop and mobile. Labels stay short and explanations are shown only when they help complete the task.
+
+## Calendar Month and Year Selectors
+
+The date-calendar heading has native Month and Year dropdowns styled like the event-hour selectors. Month names follow the selected website language. The arrow buttons remain for stepping one month at a time. Both navigation methods stay within the existing today-to-one-year date range; changing the year clamps to an available month if necessary. Date selections are independent of the visible month. The same controls serve mobile and desktop, without visible Month or Year labels. On very narrow cards the arrow controls can move to the next line so the selected values stay readable. Browser preview verified direct month changes, year-boundary clamping, and preservation of selected dates.

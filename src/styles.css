@@ -154,3 +154,10 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 .grid-edit-controls .save-status{margin-left:0;white-space:nowrap;font-size:11px}
 .grid-tool-actions{margin-left:auto}
 @media(max-width:699px){.grid-edit-controls{gap:8px}.grid-edit-controls .save-status{font-size:10px}}
+
+/* Calendar jumps use the same native select controls as the event hours. */
+.calendar-heading{gap:8px;flex-wrap:wrap}
+.calendar-heading .calendar-selects{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:8px;flex:1 1 210px;min-width:0;max-width:280px}
+.calendar-selects select{min-width:0;font-size:13px;font-weight:500;padding:10px 24px 10px 10px}
+.calendar-navigation{flex-shrink:0;margin-left:auto}
+@media(max-width:699px){.calendar-selects select{font-size:14px;padding-left:8px}}

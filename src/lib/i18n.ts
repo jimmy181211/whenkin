@@ -4,6 +4,8 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Month': ['月份', 'Mes'],
+  'Year': ['年份', 'Año'],
   'Saved Changes': ['更改已保存', 'Cambios guardados'],
   'Unsaved Changes': ['更改未保存', 'Cambios sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
