@@ -135,5 +135,8 @@ body:has(.event-page) .header-new-event{display:none}
 }
 
 .schedule-card,.results-sidebar,.event-heading>div,.participant-name{min-width:0}
-.grid-edit-help{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 14px}.time-grid-wrap.done-mode .time-cell:disabled{opacity:1;cursor:default}.time-grid-wrap.done-mode .time-cell:hover{box-shadow:none}
-@media(max-width:699px){.grid-edit-help{font-size:12px}}
+.time-grid-wrap.done-mode .time-cell:disabled{opacity:1;cursor:default}.time-grid-wrap.done-mode .time-cell:hover{box-shadow:none}
+.participant-name-field{min-width:0}.participant-name-field .field-help,.participant-name-field .name-error{margin:8px 0 0;font-size:11px;line-height:1.5}
+.participant-name>label{align-self:start;padding-top:13px}.participant-save-status{align-self:start;padding-top:13px}
+.weekly-zone-note{font-size:11px;color:var(--muted);line-height:1.6;margin:-8px 0 20px}
+@media(max-width:699px){.participant-name>label{padding-top:0}.participant-name-field .field-help,.participant-name-field .name-error,.weekly-zone-note{font-size:12px}}

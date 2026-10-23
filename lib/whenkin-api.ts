@@ -146,7 +146,6 @@ export function createApp(factory?:(env:Env)=>Database) {
   app.post('/api/events/:id/responses',async c=>{
     const database=db(c.env),event=await readEvent(database,c.req.param('id')),input=await body(c.req.raw);
     const name=text(input.name,'your name',60);if(typeof input.timezone!=='string'||!isTimezone(input.timezone)) throw new Problem(400,'Please choose a valid time zone.');
-    if(event.schedule_mode==='weekdays'&&input.timezone!==event.timezone)throw new Problem(400,'Weekly polls use the organizer’s shared time zone.');
     const expectedSchedule=input.schedule_revision??event.schedule_revision;
     if(expectedSchedule!==event.schedule_revision)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
     const ranges=validateRanges(input.ranges,event.windows),id=crypto.randomUUID(),secret=token();
@@ -167,7 +166,6 @@ export function createApp(factory?:(env:Env)=>Database) {
     if(!owned.length) throw new Problem(403,'Use your private edit link to change this response.');
     const input=await body(c.req.raw),name=text(input.name,'your name',60);
     if(typeof input.timezone!=='string'||!isTimezone(input.timezone)||typeof input.revision!=='number'||!Number.isInteger(input.revision)||input.revision<1) throw new Problem(400,'Please reload this response and choose a valid time zone.');
-    if(event.schedule_mode==='weekdays'&&input.timezone!==event.timezone)throw new Problem(400,'Weekly polls use the organizer’s shared time zone.');
     const expectedSchedule=input.schedule_revision??event.schedule_revision;
     if(expectedSchedule!==event.schedule_revision)throw new Problem(409,'The event schedule changed. Reload before saving your changes.');
     const ranges=validateRanges(input.ranges,event.windows);
