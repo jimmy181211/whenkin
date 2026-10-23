@@ -17,7 +17,7 @@ import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
 import { ApiError } from '../lib/api';
-import { EVENT_EXPIRED_MESSAGE, EVENT_FULL_MESSAGE, isEventFull } from '../lib/event-limits';
+import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
 type Identity = ResponseIdentity;
 export default function EventPage({ id }: {
     id: string;
@@ -25,13 +25,11 @@ export default function EventPage({ id }: {
     const [event, setEvent] = useState<MeetingEvent | null>(null);
     const [zone, setZone] = useState(deviceTimezone);
     const [identity, setIdentity] = useState<Identity | null>(null);
-    const [admin, setAdmin] = useState('');
     const [name, setName] = useState('');
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [editNotice, setEditNotice] = useState(false);
     const nameInput = useRef<HTMLInputElement>(null);
-    const adminRef = useRef('');
     const [error, setError] = useState('');
     const [unavailable, setUnavailable] = useState(false);
     const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
@@ -68,26 +66,22 @@ export default function EventPage({ id }: {
         }
         eventRef.current = result;
         setEvent(result);
+        setActive(current => current ? result.candidates?.find(candidate => candidate.start === current.start && candidate.end === current.end) ?? null : null);
     }, []);
     const load = useCallback(async () => {
         const person = identityRef.current;
-        const owner = adminRef.current;
-        return api<MeetingEvent>(`/events/${id}${!owner && person ? '?response_id=' + person.id : ''}`, { headers: owner || person ? { Authorization: `Bearer ${owner || person!.token}` } : {} });
+        return api<MeetingEvent>(`/events/${id}${person ? '?response_id=' + person.id : ''}`, { headers: person ? { Authorization: `Bearer ${person.token}` } : {} });
     }, [id]);
     useEffect(() => {
         let alive = true;
         (async () => {
             try {
-                const { organizerToken: owner, response: restored } = readEventAccess(location.hash, loadSecret(`meetgrid:response:${id}`));
+                const { response: restored } = readEventAccess(location.hash, loadSecret(`meetgrid:response:${id}`));
                 let person = restored;
-                if (owner) {
-                    saveSecret(`meetgrid:owner:${id}`, owner);
-                }
                 if (person) {
                     saveSecret(`meetgrid:response:${id}`, JSON.stringify(person));
                 }
-                // Keep private fragments so reloading preserves the link's explicit role.
-                adminRef.current = owner;
+                // Preserve the private response fragment for editing after a reload.
                 identityRef.current = person;
                 const result = await load();
                 if (!alive) {
@@ -104,7 +98,6 @@ export default function EventPage({ id }: {
                 }
                 setIdentity(person);
                 identityRef.current = person;
-                setAdmin(owner);
                 applyEvent(result);
                 const draft = loadSecret(`meetgrid:draft:${id}`);
                 if (draft) {
@@ -127,7 +120,6 @@ export default function EventPage({ id }: {
         return () => window.removeEventListener('hashchange', reloadAccess);
     }, []);
     const hasEvent = event !== null && !unavailable;
-    const atCapacity = isEventFull(event?.response_count ?? event?.responses.length ?? 0, !!identity);
     const expire = useCallback(() => {
         setUnavailable(true);
         eventRef.current = null;
@@ -174,13 +166,11 @@ export default function EventPage({ id }: {
     }, [hasEvent, load, applyEvent, expire]);
     const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
-        if (atCapacity) { setError(EVENT_FULL_MESSAGE); return; }
         setEditNotice(true);
         nameInput.current?.focus();
         nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
     function mark(next: Set<number>) {
-        if (atCapacity) { setError(EVENT_FULL_MESSAGE); return; }
         if (!latest.current.name.trim()) {
             requestEditing();
             return;
@@ -200,12 +190,12 @@ export default function EventPage({ id }: {
             return;
         }
         setZone(next);
-        if (latest.current.name.trim() && !atCapacity) {
+        if (latest.current.name.trim()) {
             changeDraft({ zone: next });
         }
     }
     const save = useCallback(async () => {
-        if (saving.current || !eventRef.current || atCapacity || unavailable) {
+        if (saving.current || !eventRef.current || unavailable) {
             return;
         }
         const value = latest.current;
@@ -247,37 +237,22 @@ export default function EventPage({ id }: {
             if (e instanceof ApiError && e.status === 410) { expire(); return; }
             setError(e instanceof Error ? e.message : 'Could not save. Your draft stays on this device.');
             setSaveState('error');
-            if (e instanceof Error && e.message === EVENT_FULL_MESSAGE) load().then(applyEvent).catch(() => {});
         }
         finally {
             saving.current = false;
             setIsSaving(false);
         }
-    }, [id, load, applyEvent, atCapacity, unavailable, expire]);
+    }, [id, load, applyEvent, unavailable, expire]);
     useEffect(() => {
-        if (saveState !== 'dirty' || !name.trim() || isSaving || atCapacity || unavailable) {
+        if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable) {
             return;
         }
         const timer = setTimeout(() => {
             void save();
         }, 1000);
         return () => clearTimeout(timer);
-    }, [saveState, name, selected, zone, save, isSaving, atCapacity, unavailable]);
-    const suggestions = useMemo(() => {
-        const result: Candidate[] = [];
-        for (const candidate of event?.candidates ?? []) {
-            if (!candidate.available.length) {
-                continue;
-            }
-            if (!result.some(r => r.available.length === candidate.available.length && Math.abs(Date.parse(r.start) - Date.parse(candidate.start)) < event!.duration * 60000)) {
-                result.push(candidate);
-            }
-            if (result.length >= 5) {
-                break;
-            }
-        }
-        return result;
-    }, [event]);
+    }, [saveState, name, selected, zone, save, isSaving, unavailable]);
+    const suggestions = event?.candidates ?? [];
     async function copy(value: string, label: string) {
         try {
             await navigator.clipboard.writeText(value);
@@ -314,15 +289,12 @@ export default function EventPage({ id }: {
       </> : <><LoaderCircle className="spin"/><p>{t("Finding your shared time…")}</p></>}
     </main>;
     }
-    const organizer = event.is_organizer === true;
     const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
-    // Saved organizer credentials are a recovery link only, never an API identity.
-    const shareOwner = share ? (admin || loadSecret(`meetgrid:owner:${id}`) || '') : '';
     const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
     return <main className="event-page">
       {navigation.dialog}
-      <div className={`event-layout ${organizer ? '' : 'private-view'}`}>
+      <div className="event-layout">
         <section className="schedule-card">
           <header className="event-summary">
             <div className="event-heading">
@@ -341,11 +313,10 @@ export default function EventPage({ id }: {
                 {t(responseCount === 1 ? '{count} response' : '{count} responses', { count: responseCount })}
               </span>
             </p>
-            <EventLimits expiresAt={event.expires_at} timezone={zone}/>
+            <EventLimits/>
             {event.description && <p className="event-description">{event.description}</p>}
           </header>
           {error && <div className="error-message" role="alert">{t(error)}</div>}
-          {atCapacity && !error && <p className="error-message" role="status">{t(EVENT_FULL_MESSAGE)}</p>}
           {showRestore && <div className="draft-banner">
             <span>{t("You have an unsaved draft on this device.")}</span>
             <button className="text-button" onClick={restore}>{t("Restore Draft")}</button>
@@ -357,13 +328,13 @@ export default function EventPage({ id }: {
             <ParticipantName name={name} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
         setEditNotice(false);
-        if (!atCapacity) changeDraft({ name: value });
+        changeDraft({ name: value });
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim() && !atCapacity} onEditBlocked={requestEditing}/>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
           <div className="save-bar">
-            <button className="button primary compact" disabled={atCapacity || saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
+            <button className="button primary compact" disabled={saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
               {t(saveState === 'saving' ? 'Saving…' : 'Save Availability')}
               <Check size={16}/>
             </button>
@@ -372,12 +343,12 @@ export default function EventPage({ id }: {
         void copy(value, 'edit');
     }}/>
         </section>
-        {organizer && <EventResults event={event} zone={zone} identityId={identity?.id} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
+        <EventResults event={event} zone={zone} identityId={identity?.id} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
         setActive(active?.start === candidate.start ? null : candidate);
     }} onRefresh={() => {
         load().then(applyEvent).catch(e => setError(e.message));
-    }}/>}
+    }}/>
       </div>
-      {share && <ShareEventDialog eventLink={eventLink} organizerToken={shareOwner} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
+      {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
     </main>;
 }

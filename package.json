@@ -13,7 +13,8 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:cleanup": "node scripts/cleanup.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",

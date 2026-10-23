@@ -24,7 +24,7 @@ describe('name before availability editing',()=>{
     expect(html).not.toContain('name-help');
   });
   it('locks editing before a name while keeping cells able to report a blocked attempt on desktop and mobile',()=>{
-    const event:MeetingEvent={id:'test',title:'Event',description:'',organizer_name:'',timezone:'UTC',duration:60,windows:[{start:'2027-01-15T09:00:00Z',end:'2027-01-15T10:00:00Z'}],responses:[],final_start:null,final_end:null};
+    const event:MeetingEvent={id:'test',title:'Event',description:'',organizer_name:'',timezone:'UTC',windows:[{start:'2027-01-15T09:00:00Z',end:'2027-01-15T10:00:00Z'}],responses:[]};
     for(const width of [390,1280]){
       vi.stubGlobal('window',{innerWidth:width});
       const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="UTC" selected={new Set()} status={<AvailabilityStatus state="saved" hasSavedResponse={false}/>} canEdit={false} onChange={()=>{}} onEditBlocked={()=>{}}/>);
