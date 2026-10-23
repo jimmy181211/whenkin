@@ -4,10 +4,12 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
+  'Guests can change time zones. Weekly conversions use offsets when the poll is created.': ['参与者可以切换时区。每周时间按调查创建时的时差换算。', 'Los invitados pueden cambiar de zona horaria. La conversión semanal usa las diferencias horarias al crear la encuesta.'],
+  'Weekly conversions use time-zone offsets on {date}. Daylight saving can change the difference.': ['每周时间按 {date} 的时差换算。夏令时可能改变时差。', 'La conversión semanal usa las diferencias horarias del {date}. El horario de verano puede cambiarlas.'],
   'Edit': ['编辑', 'Editar'],
   'Done': ['完成', 'Listo'],
   'Availability editing': ['编辑空闲时间', 'Edición de disponibilidad'],
-  'Start on a blank time to mark; start on a marked time to clear.': ['从空白时段开始拖动可标记，从已标记时段开始拖动可清除。', 'Arrastra desde una hora en blanco para marcar; desde una marcada para borrar.'],
   'Done. Scroll without changing your availability.': ['已完成。现在可以滚动，不会改变你的空闲时间。', 'Listo. Desplázate sin cambiar tu disponibilidad.'],
   'Event Name': ['活动名称', 'Nombre del evento'],
   'When might work?': ['哪些时间合适？', '¿Cuándo les viene bien?'],

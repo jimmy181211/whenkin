@@ -26,10 +26,10 @@ describe('date and weekday scheduling modes',()=>{
   it('uses Edit and Done and renders weekday labels without synthetic dates',()=>{
     vi.stubGlobal('window',{innerWidth:390});
     const event:MeetingEvent={id:'test',title:'Weekly',description:'',organizer_name:'',timezone:'America/Los_Angeles',schedule_mode:'weekdays',duration:60,windows:[{start:'2000-01-03T09:00:00Z',end:'2000-01-03T11:00:00Z'}],responses:[],final_start:null,final_end:null};
-    const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="UTC" selected={new Set()} onChange={()=>{}}/>);
+    const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/Los_Angeles" selected={new Set()} onChange={()=>{}}/>);
     expect(html).toContain('>Mon</strong>');expect(html).toContain('Los Angeles');
     expect(html).toContain('Edit</button>');expect(html).toContain('Done</button>');
     expect(html).not.toMatch(/range-adjust|> Mark<\/button>|> Clear<\/button>|> Scroll<\/button>/);
-    expect(html.replace(/<[^>]*>/g,'')).not.toMatch(/Fine.Tune|Jan 3|2000/);
+    expect(html.replace(/<[^>]*>/g,'')).not.toMatch(/Fine.Tune|Jan 3|2000|Start on a blank time/);
   });
 });

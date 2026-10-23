@@ -130,9 +130,10 @@ describe('weekday polls',()=>{
     expect(publicEvent.response_count).toBe(1);expect(publicEvent.responses).toEqual([]);expect(publicEvent.candidates).toEqual([]);
     const own=await (await request(`/events/${created.id}?response_id=${person.id}`,'GET',undefined,person.editToken)).json() as MeetingEvent;
     expect(own.responses.map(r=>r.id)).toEqual([person.id]);
-    expect((await request(`/events/${created.id}/responses`,'POST',{name:'Wrong zone',timezone:'America/New_York',ranges:[]})).status).toBe(400);
-    const changed=await request(`/events/${created.id}/responses/${person.id}`,'PUT',{name:'Sam',timezone:input.timezone,revision:1,schedule_revision:1,ranges:[]},person.editToken);
+    expect((await request(`/events/${created.id}/responses`,'POST',{name:'New York guest',timezone:'America/New_York',ranges:[]})).status).toBe(201);
+    const changed=await request(`/events/${created.id}/responses/${person.id}`,'PUT',{name:'Sam',timezone:'Asia/Kolkata',revision:1,schedule_revision:1,ranges:[]},person.editToken);
     expect(changed.status).toBe(200);
+    expect((await get(created.id)).responses.find(r=>r.id===person.id)?.timezone).toBe('Asia/Kolkata');
     expect((await request(`/events/${created.id}/finalize`,'POST',{start:event.windows[0].start},created.adminToken)).status).toBe(400);
     expect((await request(`/events/${created.id}/calendar`)).status).toBe(400);
   });

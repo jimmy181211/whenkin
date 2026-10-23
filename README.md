@@ -31,9 +31,9 @@ See the [participant privacy flow](docs/flowchart.md#participant-privacy) for or
 - Choose specific dates for a one-time event, or Monday–Sunday for a typical-week availability poll. Switch modes without losing your selections.
 - In Edit, start dragging on a blank block to mark availability, or on a marked block to clear it. Choose Done to lock the grid and scroll. The same controls work on computers and phones.
 - Zoom in, see exact times while selecting, and undo mistakes. The former fine-tune panel has been removed.
-- Date-based events show your device’s time zone, with a searchable selector. Typical-week polls use the organizer’s shared time zone for everyone because there is no date to determine daylight-saving offsets.
+- Date-based events show your device’s time zone, with a searchable selector. Typical-week polls also have the searchable selector. Their conversions use the time-zone offsets when the poll was created, with a visible reference date because daylight-saving changes can alter the difference.
 - Organizers see all responses and suggested meeting times. Participants see only their own response and the count.
-- Save changes automatically after entering your name.
+- Enter your name before editing availability. An edit attempt without a name focuses the name field and shows a notice directly under it. Changes save automatically after that.
 - Communicate the final arrangement outside Whenkin.
 - Use private links to manage an event or edit your own response from another device.
 
@@ -57,7 +57,7 @@ More diagrams: [How the website works](docs/flowchart.md).
 
 For date-based events, availability uses PostgreSQL’s `timestamptz` type for its start and end. PostgreSQL handles comparisons between different time zones. We do not store separate local-time copies.
 
-An event and a response each have one time-zone preference. For date-based events, changing the display zone changes the labels, not the actual availability. Dates and daylight saving changes are taken into account. Weekday polls use one shared zone, as explained below.
+An event and a response each have one time-zone preference. For date-based events, changing the display zone changes the labels, not the actual availability. Dates and daylight saving changes are taken into account. Weekday polls use a fixed reference for time-zone conversion, as explained below.
 
 ## Built With
 
@@ -97,6 +97,6 @@ Mobile time-label columns support scrolling in every grid mode. The shorter mobi
 
 ## Date and Weekday Modes
 
-**Specific dates** keeps the month calendar and automatic local-time conversion. **Days of the week** lets you select Monday through Sunday to ask when people are usually free. It collects a weekly pattern; it does not schedule repeating appointments. Everyone uses the shared time zone shown on the weekly event page.
+**Specific dates** keeps the month calendar and automatic local-time conversion. **Days of the week** lets you select Monday through Sunday to ask when people are usually free. It collects a weekly pattern; it does not schedule repeating appointments. Guests can use the searchable time-zone selector on both date and weekday event pages. Weekly conversions use the offsets at the poll’s creation time; the page shows that reference date and explains that daylight saving can change the difference.
 
-Apply `migrations/005_weekday_polls.sql` before deploying this feature. Existing events default to `dates`. Dated event ranges remain real instants in PostgreSQL `timestamptz`. Weekly ranges reuse the range and matching code with a fixed Monday–Sunday coordinate week starting January 3, 2000; these values encode shared wall-clock times, not real appointments in 2000. Weekly pages never show the coordinate dates or convert them as real instants. Calendar invitations are disabled for weekday polls.
+Apply `migrations/005_weekday_polls.sql` before deploying this feature. Existing events default to `dates`. Dated event ranges remain real instants in PostgreSQL `timestamptz`. Weekly ranges reuse the range and matching code with a fixed Monday–Sunday coordinate week starting January 3, 2000; these values encode shared wall-clock times, not real appointments in 2000. Weekly pages never show the coordinate dates as appointments. A reversible cyclic-week projection changes weekday/time labels for the selected zone; selections are mapped back to the original organizer-clock coordinates before saving. Changing the displayed zone preserves availability and Done mode. Calendar invitations are disabled for weekday polls.

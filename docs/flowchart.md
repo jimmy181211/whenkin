@@ -65,17 +65,17 @@ The website is public. Event access permissions are enforced by the server indep
 
 ```mermaid
 flowchart TD
-  A[Edit name, time zone, or availability] --> B[Keep local draft]
+  A[Enter name before editing availability] --> B[Keep local draft]
   B --> C{Valid name supplied?}
   C -->|Yes| D[Save automatically]
-  C -->|No| E[Save focuses name field and shows inline error]
+  C -->|No| E[Block editing and focus name field with notice]
   B --> F{Leaving with unsaved changes?}
   F -->|In-app navigation| G[Keep editing or leave without saving dialog]
   F -->|Browser close, reload, or navigation| H[Standard browser unsaved-changes warning]
   D --> I[Show saved status and clear dirty draft]
 ```
 
-English and Spanish interface titles use Title Case. English, Simplified Chinese, and Spanish share the same scheduling data. Time-zone changes only change clock labels; 30-minute display blocks retain the original 15-minute precision, including partial blocks and repeated daylight-saving hours.
+English and Spanish interface titles use Title Case. English, Simplified Chinese, and Spanish share the same scheduling data. Time-zone changes preserve the saved selection; 30-minute display blocks retain the original 15-minute precision, including partial blocks and repeated daylight-saving hours.
 
 ## Editing Availability
 
@@ -92,9 +92,11 @@ flowchart TD
   D --> C["Pick Dates on the Calendar"]
   W --> P["Pick Monday–Sunday"]
   C --> T["Convert Real Instants for Each Viewer"]
-  P --> Z["Use One Shared Time Zone"]
+  P --> Z["Choose Display Time Zone"]
   T --> A["Collect Availability and Rank Times"]
   Z --> A
 ```
 
-Date-based events retain UTC comparisons and local-time display. Weekday polls describe a typical week, not repeating calendar appointments. They use the named time zone selected by the organizer; without a date, automatic daylight-saving conversion would be ambiguous. Their stored ranges encode a fixed Monday–Sunday coordinate week rather than real appointment dates. Existing events stay date-based. The mode switch on the creation form preserves both date and weekday choices.
+Date-based events retain UTC comparisons and local-time display. Weekday polls describe a typical week, not repeating calendar appointments. They retain the organizer’s clock as their storage coordinates, but every viewer can change the displayed time zone. Conversions use the offsets at the poll’s creation time; the page shows that reference date because daylight-saving changes can alter the difference. Their stored ranges encode a fixed Monday–Sunday coordinate week rather than real appointment dates. Existing events stay date-based. The mode switch on the creation form preserves both date and weekday choices.
+
+The name hint sits directly below the participant input on both desktop and mobile. An empty or whitespace-only name locks grid editing, including mouse, touch, keyboard, and Undo. Attempting Edit or a cell focuses the name input and shows an accessible notice. The former late save-time name error is removed; the API still requires a valid participant name. Changing time zones remains available before entering a name.
