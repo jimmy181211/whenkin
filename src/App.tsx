@@ -138,9 +138,11 @@ function EventPage({id}:{id:string}){
     <div className={`event-layout ${organizer?'':'private-view'}`}><section className="schedule-card">
       <header className="event-summary"><div className="event-heading"><div><h1>{event.title}</h1></div><div className="event-actions"><PageLink className="button secondary compact event-new-event" href="/"><Plus size={16}/>{t('New event')}</PageLink><button className="button primary compact" onClick={()=>setShare(true)}><Link2 size={17}/> {t('Share Event')}</button></div></div><p className="event-meta"><span><Users size={16}/>{t(responseCount===1?'{count} response':'{count} responses',{count:responseCount})}</span><span className="mobile-save-status">{saveStatus}</span></p>{event.description&&<p className="event-description">{event.description}</p>}</header>
       {error&&<div className="error-message" role="alert">{t(error)}</div>}
-      <div className="schedule-toolbar"><TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime??Date.parse(event.windows[0].start)}/></div>{weeklyView&&<p className="weekly-zone-note">{t('Weekly conversions use time-zone offsets on {date}. Daylight saving can change the difference.',{date:new Intl.DateTimeFormat(getLocale(),{timeZone:zone,month:'short',day:'numeric',year:'numeric'}).format(weeklyView.referenceTime)})}</p>}
       {showRestore&&<div className="draft-banner"><span>{t("You have an unsaved draft on this device.")}</span><button className="text-button" onClick={restore}>{t("Restore draft")}</button><button className="icon-button" aria-label={t("Dismiss draft")} onClick={()=>setShowRestore(false)}><X size={15}/></button></div>}
+      <div className="participant-controls">
       <ParticipantName name={name} inputRef={nameInput} editNotice={editNotice} status={saveStatus} onChange={value=>{setName(value);setEditNotice(false);changeDraft({name:value});}}/>
+      <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime??Date.parse(event.windows[0].start)}/>
+      </div>
       <AvailabilityGrid key={event.id+':'+event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
       <div className="save-bar"><button className="button primary compact" disabled={!name.trim()||saveState==='saving'} onClick={()=>void save()}>{t(saveState==='saving'?'Saving…':'Save availability')}<Check size={16}/></button></div>
 

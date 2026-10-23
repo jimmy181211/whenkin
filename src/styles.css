@@ -79,19 +79,19 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 
 /* Keep the mobile creation flow focused on the form. */
 .calendar-foot.empty{display:none}
-.schedule-picker{margin-bottom:20px}.schedule-picker h3{font-size:12px;font-weight:600;margin:0 0 12px}
+.schedule-picker{margin-bottom:20px}
 .schedule-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--soft);border:1px solid var(--line);border-radius:12px}
 .schedule-mode-switch button{display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;border-radius:8px;min-height:44px;padding:9px 8px;font-size:12px;line-height:1.4;color:var(--muted)}
 .schedule-mode-switch button[aria-pressed=true]{background:var(--primary);color:white;box-shadow:0 2px 5px #123f3c12}
 .schedule-mode-switch button:hover:not([aria-pressed=true]){background:#fff9;color:var(--ink)}
-.schedule-mode-help{font-size:11px;color:var(--muted);line-height:1.6;margin:10px 0 16px}
+
 .weekday-options{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .weekday-options button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:68px;padding:10px 1px;border:1px solid var(--line);border-radius:10px;background:#fafbf8;font-size:11px;font-weight:550}
 .weekday-options button:hover{border-color:var(--teal)}.weekday-options button[aria-pressed=true]{background:var(--lime);border-color:var(--lime);color:var(--ink)}
 .weekday-indicator{font-size:15px;line-height:1}.weekly-picker .calendar-foot{margin-bottom:0}.schedule-picker .calendar-foot{margin-bottom:0}
 .weekly-context{display:flex;flex-direction:column;gap:8px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 20px}
 .weekly-context>span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.weekly-context>strong{font-size:14px}.weekly-context p{font-size:12px;line-height:1.6;margin:0;color:var(--muted)}
-@media(max-width:699px){.schedule-mode-switch button{font-size:12px;padding:10px 6px;gap:5px}.weekday-options{gap:4px}.weekday-options button{font-size:11px;min-height:68px}.schedule-mode-help{font-size:12px}}
+@media(max-width:699px){.schedule-mode-switch button{font-size:12px;padding:10px 6px;gap:5px}.weekday-options{gap:4px}.weekday-options button{font-size:11px;min-height:68px}}
 .mobile-guide-link{display:none}
 .guide-page{max-width:720px;margin:0 auto;padding:36px 24px 64px}
 .guide-page>.text-button{display:inline-flex;min-height:44px;align-items:center;margin-bottom:16px}
@@ -138,5 +138,22 @@ body:has(.event-page) .header-new-event{display:none}
 .time-grid-wrap.done-mode .time-cell:disabled{opacity:1;cursor:default}.time-grid-wrap.done-mode .time-cell:hover{box-shadow:none}
 .participant-name-field{min-width:0}.participant-name-field .field-help,.participant-name-field .name-error{margin:8px 0 0;font-size:11px;line-height:1.5}
 .participant-name>label{align-self:start;padding-top:13px}.participant-save-status{align-self:start;padding-top:13px}
-.weekly-zone-note{font-size:11px;color:var(--muted);line-height:1.6;margin:-8px 0 20px}
-@media(max-width:699px){.participant-name>label{padding-top:0}.participant-name-field .field-help,.participant-name-field .name-error,.weekly-zone-note{font-size:12px}}
+@media(max-width:699px){.participant-name>label{padding-top:0}.participant-name-field .field-help,.participant-name-field .name-error{font-size:12px}}
+
+/* Respond to the event card's width, including beside the organizer sidebar. */
+.schedule-card{container-type:inline-size;container-name:schedule-card}
+.participant-controls{display:flex;flex-direction:column;align-items:stretch;gap:18px;margin:0 0 22px}
+.participant-controls>.participant-line{padding:0;min-width:0;width:100%;display:block}
+.participant-controls>.timezone{order:-1;width:100%;min-width:0}
+.participant-controls .participant-name{grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:8px 12px}
+.participant-controls .participant-name>label{grid-column:1 / -1;padding-top:0}
+.participant-controls .participant-name-field{grid-column:1;grid-row:2}
+.participant-controls .participant-save-status{grid-column:2;grid-row:2}
+.participant-controls .zone-trigger{min-height:45px;padding:7px 12px}
+@container schedule-card (min-width:620px){
+  .participant-controls{flex-direction:row;gap:24px;align-items:flex-start}
+  .participant-controls>.participant-line{flex:1;width:auto}
+  .participant-controls>.timezone{order:0;flex:0 0 250px;width:250px;margin-top:24px}
+}
+
+.schedule-mode-switch{margin-bottom:18px}

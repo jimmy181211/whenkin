@@ -26,13 +26,11 @@ export function WeekdayPicker({value,onChange}:{value:number[];onChange:(days:nu
 }
 
 export default function SchedulePicker({mode,onModeChange,dates,onDatesChange,weekdays,onWeekdaysChange,timezone}:Props) {
-  return <section className="schedule-picker" aria-labelledby="schedule-picker-label">
-    <h3 id="schedule-picker-label">{t('When might work?')}</h3>
+  return <section className="schedule-picker">
     <div className="schedule-mode-switch" role="group" aria-label={t('Calendar mode')}>
       <button type="button" aria-pressed={mode==='dates'} onClick={()=>onModeChange('dates')}><CalendarDays size={16}/>{t('Specific dates')}</button>
       <button type="button" aria-pressed={mode==='weekdays'} onClick={()=>onModeChange('weekdays')}><Repeat2 size={16}/>{t('Days of the week')}</button>
     </div>
-    <p className="schedule-mode-help">{t(mode==='dates'?'Choose dates for a one-time event.':'Choose days that usually work. No specific dates.')}</p>
     {mode==='dates'?<Calendar value={dates} onChange={onDatesChange} timezone={timezone}/>:<WeekdayPicker value={weekdays} onChange={onWeekdaysChange}/>}
   </section>;
 }
