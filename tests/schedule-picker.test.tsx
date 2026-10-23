@@ -10,7 +10,7 @@ afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 describe('date and weekday scheduling modes',()=>{
   it('offers both modes and shows the date calendar by default',()=>{
     const html=renderToStaticMarkup(<SchedulePicker mode="dates" onModeChange={()=>{}} dates={[]} onDatesChange={()=>{}} weekdays={[1,7]} onWeekdaysChange={()=>{}} timezone="UTC"/>);
-    expect(html).toContain('Specific dates');expect(html).toContain('Days of the week');
+    expect(html).toContain('Specific Dates');expect(html).toContain('Days of the Week');
     expect(html).toContain('calendar-grid');expect(html).not.toContain('weekday-options');
   });
   it('shows seven localized weekday choices with no month or calendar dates',()=>{

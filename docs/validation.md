@@ -12,7 +12,7 @@ The grid instruction line is removed. The name hint is directly under the input.
 
 ## Automated Verification
 
-TypeScript passes, all 54 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
+TypeScript passes, all 59 tests pass, and the production build passes. Coverage includes date-based scheduling, weekday validation, localized weekday labels, shared weekly storage ranges, reversible time-zone projection, summer/winter offsets, fractional-hour zones, Sunday/Monday wrapping, name-gated editing, whole-meeting matching, private response access, response updates, rejection of the removed schedule-update route, mark/clear drag behavior, daylight-saving changes, all three languages, connection errors, and write limits.
 
 Tests use PGlite for the PostgreSQL-backed API lifecycle. Migration 005 was also applied and smoke-tested on the existing Neon development branch: the new mode persists, a Monday range retains its shared clock, and the optional organizer name remains supported. Temporary verification rows were removed from that development branch.
 
@@ -29,3 +29,11 @@ Apply `migrations/005_weekday_polls.sql` before deploying this version. Its defa
 The event-page weekly conversion note is removed. The searchable time-zone selector sits beside the name input on event cards with at least 620px of content width. On narrower cards it moves above the name input. The hint remains directly below the name input. These layout changes preserve name gating, saving, and all time-zone conversion behavior.
 
 The creation page also removes the “When might work?” heading and explanatory sentence beneath the date/weekday mode switch. The mode buttons and both pickers remain available in all three languages.
+
+## Availability Status and Top Five Matches
+
+Availability has three visible statuses: Not Started for a fresh response, Availability Unsaved for draft changes (including an in-progress or failed save), and Availability Saved only after a confirmed save. Your Common Ground omits its explanatory sentence and shows at most five ranked, non-repetitive matches on desktop and mobile. Pagination state and the Show more button are removed.
+
+## Private Edit Links and Title Case
+
+Every event page shows the private edit-link section. The copy button is disabled until the current participant has a saved response and an edit token. The helper text explains when the link becomes available. Organizer and other participant credentials are never substituted. Built-in English titles, field labels, and action buttons use Title Case, while descriptions and visitor-entered event names are preserved.

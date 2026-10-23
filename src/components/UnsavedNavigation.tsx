@@ -21,6 +21,6 @@ export function useUnsavedNavigation(unsaved:boolean,message="Your Availability 
   const close=()=>{dialog.current?.close();setDestination('');};
   return {allowNavigation:()=>{bypass.current=true;},dialog:<dialog ref={dialog} className="leave-dialog" aria-labelledby="leave-title" onCancel={close} onClose={()=>setDestination('')}>
     <h2 id="leave-title">{t(message)}</h2><p>{t('Leave without saving your changes?')}</p>
-    <div className="dialog-actions"><button autoFocus type="button" className="button secondary" onClick={close}>{t('Keep editing')}</button><button type="button" className="button primary" onClick={()=>{bypass.current=true;window.location.assign(destination);}}>{t('Leave without saving')}</button></div>
+    <div className="dialog-actions"><button autoFocus type="button" className="button secondary" onClick={close}>{t('Keep Editing')}</button><button type="button" className="button primary" onClick={()=>{bypass.current=true;window.location.assign(destination);}}>{t('Leave Without Saving')}</button></div>
   </dialog>};
 }
