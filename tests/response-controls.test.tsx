@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import AvailabilityStatus from '../src/components/AvailabilityStatus';
-import PrivateEditLink from '../src/components/PrivateEditLink';
 import { setLanguage, t } from '../src/lib/i18n';
 
 afterEach(()=>setLanguage('en'));
@@ -28,20 +27,5 @@ describe('participant response status',()=>{
       expect(html).toContain(t('Saved'));
       expect(html).toContain('lucide-check');
     }
-  });
-});
-describe('private edit link availability',()=>{
-  it('keeps the private copy action clickable before the first saved response',()=>{
-    const html=renderToStaticMarkup(<PrivateEditLink onUnavailable={()=>{}} copied={false} onCopy={()=>{}}/>);
-    expect(html).toContain('Copy My Private Edit Link');
-    expect(html).not.toContain('disabled=""');
-    expect(html).not.toContain('private-edit-help');
-    expect(html).not.toContain('Save your availability to get a private edit link.');
-  });
-  it('enables copying a saved response link without rendering its token into the page markup',()=>{
-    const html=renderToStaticMarkup(<PrivateEditLink onUnavailable={()=>{}} url="https://example.test/e/event#edit=participant.private-token" copied={false} onCopy={()=>{}}/>);
-    expect(html).not.toContain('disabled=""');
-    expect(html).not.toContain('private-token');
-    expect(html).toContain('Save this link to edit from another device.');
   });
 });

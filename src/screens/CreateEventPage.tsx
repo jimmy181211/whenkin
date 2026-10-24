@@ -155,7 +155,7 @@ export default function CreateEventPage() {
           <button disabled={busy || connection !== 'ready'} className="button primary create-submit" type="submit">
             {busy ? <><LoaderCircle className="spin" size={18}/> {t("Creating your event…")}</> : connection === 'checking' ? <><LoaderCircle className="spin" size={18}/> {t("Checking connection…")}</> : <>{t("Create Event & Get a Link")} <ArrowRight size={18}/></>}
           </button>
-          <p className="privacy-note mobile-hide"><Users size={12}/> {t("Everyone with the link can see group availability.")}</p>
+          <p className="privacy-note mobile-hide"><Users size={12}/> {t("Everyone with the link can view and edit all responses.")}</p>
         </form>
       </section>
     </main>;

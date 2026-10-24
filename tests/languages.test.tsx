@@ -43,7 +43,7 @@ describe('language changes across the website',()=>{
     expect(html).toContain('Los Participantes Marcan Cuándo Están Libres');
     expect(html).toContain('Fechas del evento');
     expect(page('/how-it-works')).toContain('guide-page');
-    expect(t('Use your private edit link to change this response.')).toContain('Usa tu enlace privado');
+    expect(t('Edit {name}',{name:'Sam'})).toBe('Editar a Sam');
     expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
   });
   it('does not expose a demo route',()=>{
@@ -71,7 +71,7 @@ describe('language changes across the website',()=>{
         expect(html).toContain(`<h1 id="legal-title">${titles[language][index]}</h1>`);
         expect(html).toContain('UCSD CSSA');
         expect(html).toContain('href="mailto:j4ouyang@ucsd.edu"');
-        expect(html).toMatch(/<time datetime="2026-10-23"/i);
+        expect(html).toMatch(/<time datetime="2026-10-24"/i);
         expect(html).not.toContain('create-submit');
         expect(html).not.toContain('That Page Is a Little Off-Grid.');
       }

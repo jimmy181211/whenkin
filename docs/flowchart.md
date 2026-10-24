@@ -1,35 +1,28 @@
 # How Whenkin Works
 
-Everyone uses the same event link and sees the same page. Each person keeps a private link for editing their own response.
+Everyone uses the same event link. Anyone with the link can view and edit all responses.
 
 ## Shared Event Flow
 
 ```mermaid
 flowchart TD
-  C["Choose Dates or Weekdays and Hours"] --> E["Create Event"]
-  E --> L["Share One Link"]
-  L --> F["Open a Fresh Response"]
-  F --> R["Enter Name and Mark Availability"]
-  R --> N["Save to Neon"]
-  N --> P["Primary: Everyone Free"]
-  N --> S["Secondary: All but One Free"]
-  P --> G["Everyone Sees Common Ground"]
-  S --> G
+  C["Create Event and Share Link"] --> V["Open Shared Event"]
+  V --> N["Start a New Response"]
+  V --> E["Click a Name in The Group"]
+  N --> S["Mark Availability and Save"]
+  E --> S
+  S --> P["Show Periods When Everyone Is Free"]
 ```
 
-There is no meeting-length setting and no participant limit. Only saved responses enter the calculation. An empty response counts as unavailable. Times are shown in the viewer’s selected time zone.
+There is no meeting-length setting or participant limit. Only saved responses enter the calculation. An empty response counts as unavailable. Common Ground includes only periods when every respondent is free for the whole period; gaps remain separate.
 
-## Finding Common Ground
+## Viewing and Editing
 
-The server sorts the start and end of availability ranges. At each boundary it updates who is free. It combines touching periods only if the available group stays the same.
+Your Availability shows the response being edited. Group Availability shows a high-contrast map of how many saved respondents are free at each time. Click a name in The Group to edit that response from any browser. Add Response starts a new blank form. Private edit links are no longer used.
 
-A primary result includes every respondent. A secondary result excludes exactly one fixed respondent for its entire duration. A result never joins two halves where different people are missing. Gaps remain separate. Primary results come first, then secondary results, without discarding later matching periods.
+Enter a name before marking a new response. A brief hint appears above the name field if needed. Changes save automatically, and switching members waits for the current save. The server rejects stale revisions so one visitor cannot accidentally overwrite a newer edit. Select that person again to reload after a conflict.
 
-## Saving and Editing
-
-The grid switches between Your Availability and Group Availability. The personal view is always editable after entering a name; a brief, nonblocking hint above the name field explains this when needed. The group view shows saved availability counts and cannot edit responses. Changes save automatically. Every ordinary event-link visit starts a blank personal response, including in the same browser. Only an explicit private edit URL restores that person. Copy it from Share Event or the bottom of the page. Before the first saved response, either copy button shows a brief reminder directly above that button to edit and save availability first. No response identity or draft is restored from browser storage. Only a valid private response token can update that response. Viewing the group does not grant permission to change anyone else’s selections.
-
-Date mode stores real instants in PostgreSQL `timestamptz`. Weekday mode retains its existing reference-week projection. Display-zone changes preserve availability. English, Chinese, and Spanish use the same scheduling data.
+Times remain UTC instants in PostgreSQL and display in the chosen time zone. Date and weekday modes, English, Chinese, and Spanish keep the same scheduling data.
 
 ## Expiry and Manual Cleanup
 

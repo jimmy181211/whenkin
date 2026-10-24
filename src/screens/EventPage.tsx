@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Link2, LoaderCircle, Users } from 'lucide-react';
 import ParticipantName from '../components/ParticipantName';
-import PrivateEditLink from '../components/PrivateEditLink';
 import AvailabilityStatus from '../components/AvailabilityStatus';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
 import PageLink from '../components/PageLink';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { projectWeekly } from '../lib/weekly';
-import { readEventAccess, type ResponseIdentity } from '../lib/event-access';
 import { loadEvent } from '../lib/load-event';
 import { api } from '../lib/api';
 import { allSlots, deviceTimezone, slotsToRanges } from '../lib/time';
@@ -20,13 +18,15 @@ import EventLimits from '../components/EventLimits';
 import Toast from '../components/Toast';
 import { ApiError } from '../lib/api';
 import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
-type Identity = ResponseIdentity;
 export default function EventPage({ id }: {
     id: string;
 }) {
     const [event, setEvent] = useState<MeetingEvent | null>(null);
     const [zone, setZone] = useState(deviceTimezone);
-    const [identity, setIdentity] = useState<Identity | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [switching, setSwitching] = useState(false);
+    const switchingRef = useRef(false);
+    const [responseSession, setResponseSession] = useState(0);
     const [name, setName] = useState('');
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
@@ -47,8 +47,11 @@ export default function EventPage({ id }: {
     const dirty = useRef(false);
     const saving = useRef(false);
     const generation = useRef(0);
-    const identityRef = useRef<Identity | null>(null);
+    const editingIdRef = useRef<string | null>(null);
+    const savingTask = useRef<Promise<boolean> | null>(null);
+    const conflict = useRef(false);
     const revisionRef = useRef(0);
+    const responseZoneRef = useRef<string | null>(null);
     const latest = useRef({ name, zone, selected });
     useEffect(() => {
         latest.current = { name, zone, selected };
@@ -59,7 +62,7 @@ export default function EventPage({ id }: {
         if (previous && previous.schedule_revision !== result.schedule_revision) {
             const value = latest.current;
             const allowed = new Set(allSlots(result.windows));
-            const person = result.responses.find(r => r.id === identityRef.current?.id);
+            const person = result.responses.find(r => r.id === editingIdRef.current);
             const next = dirty.current ? new Set([...value.selected].filter(stamp => allowed.has(stamp))) : new Set(allSlots(person?.ranges || []));
             setSelected(next);
             latest.current = { ...value, selected: next };
@@ -67,27 +70,27 @@ export default function EventPage({ id }: {
             generation.current++;
             setActive(null);
         }
+        const current = result.responses.find(response => response.id === editingIdRef.current);
+        if (current && !dirty.current && !saving.current && current.revision !== revisionRef.current) {
+            const next = new Set(allSlots(current.ranges));
+            revisionRef.current = current.revision;
+            responseZoneRef.current = current.timezone;
+            latest.current = { ...latest.current, name: current.name, selected: next };
+            setName(current.name);
+            setSelected(next);
+            setResponseSession(value => value + 1);
+        }
         eventRef.current = result;
         setEvent(result);
         setActive(current => current ? result.candidates?.find(candidate => candidate.start === current.start && candidate.end === current.end) ?? null : null);
     }, []);
-    const load = useCallback(() => loadEvent(id, identityRef.current), [id]);
+    const load = useCallback(() => loadEvent(id), [id]);
     useEffect(() => {
         let alive = true;
         (async () => {
             try {
-                const { response: person } = readEventAccess(location.hash);
-                const result = await loadEvent(id, person);
+                const result = await loadEvent(id);
                 if (!alive) return;
-                identityRef.current = person;
-                const mine = result.responses.find(r => r.id === person?.id);
-                if (mine) {
-                    setName(mine.name);
-                    setSelected(new Set(allSlots(mine.ranges)));
-                    revisionRef.current = mine.revision;
-                }
-                setIdentity(person);
-                identityRef.current = person;
                 applyEvent(result);
             }
             catch (e) {
@@ -100,11 +103,6 @@ export default function EventPage({ id }: {
             alive = false;
         };
     }, [id, load, applyEvent]);
-    useEffect(() => {
-        const reloadAccess = () => window.location.reload();
-        window.addEventListener('hashchange', reloadAccess);
-        return () => window.removeEventListener('hashchange', reloadAccess);
-    }, []);
     const hasEvent = event !== null && !unavailable;
     const expire = useCallback(() => {
         setUnavailable(true);
@@ -157,10 +155,8 @@ export default function EventPage({ id }: {
         nameInput.current?.focus();
         nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
-    function privateLinkUnavailable(anchor: HTMLElement) {
-        notify('Start editing and save your availability to get a private edit link.', anchor);
-    }
     function mark(next: Set<number>) {
+        if (switchingRef.current) return;
         if (!latest.current.name.trim()) {
             requestEditing();
             return;
@@ -175,24 +171,22 @@ export default function EventPage({ id }: {
         latest.current = { ...latest.current, ...change };
     }
     function changeZone(next: string) {
+        if (switchingRef.current) return;
         if (next === zone) {
             return;
         }
         setZone(next);
-        if (latest.current.name.trim()) {
-            changeDraft({ zone: next });
-        }
+        latest.current = { ...latest.current, zone: next };
+        if (!editingIdRef.current && latest.current.name.trim()) changeDraft({ zone: next });
     }
-    const save = useCallback(async () => {
-        if (saving.current || !eventRef.current || unavailable) {
-            return;
-        }
+    const persist = useCallback(async (): Promise<boolean> => {
+        if (!eventRef.current || unavailable) return false;
         const value = latest.current;
         if (!value.name.trim()) {
             setEditNotice(true);
             notify('Enter your name before editing availability.', nameInput.current);
             nameInput.current?.focus();
-            return;
+            return false;
         }
         saving.current = true;
         setIsSaving(true);
@@ -200,38 +194,88 @@ export default function EventPage({ id }: {
         setSaveState('saving');
         setError('');
         try {
-            const person = identityRef.current;
-            const payload = { name: value.name, timezone: value.zone, ranges: slotsToRanges(value.selected), revision: revisionRef.current, schedule_revision: eventRef.current.schedule_revision };
+            const responseId = editingIdRef.current;
+            const payload = { name: value.name, timezone: responseZoneRef.current ?? value.zone, ranges: slotsToRanges(value.selected), revision: revisionRef.current, schedule_revision: eventRef.current.schedule_revision };
             const result = await api<{
                 id: string;
-                editToken?: string;
                 revision: number;
-            }>(`/events/${id}/responses${person ? '/' + person.id : ''}`, { method: person ? 'PUT' : 'POST', headers: person ? { Authorization: `Bearer ${person.token}` } : {}, body: JSON.stringify(payload) });
-            if (!person) {
-                const next = { id: result.id, token: result.editToken! };
-                identityRef.current = next;
-                setIdentity(next);
+            }>(`/events/${id}/responses${responseId ? '/' + responseId : ''}`, { method: responseId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            if (!responseId) {
+                editingIdRef.current = result.id;
+                responseZoneRef.current = value.zone;
+                setEditingId(result.id);
             }
             revisionRef.current = result.revision;
             applyEvent(await load());
             if (version === generation.current) {
                 dirty.current = false;
                 setSaveState('saved');
+                return true;
             }
             else {
                 setSaveState('dirty');
+                return false;
             }
         }
         catch (e) {
-            if (e instanceof ApiError && e.status === 410) { expire(); return; }
+            if (e instanceof ApiError && e.status === 410) { expire(); return false; }
             setError(e instanceof Error ? e.message : 'Could not save. Please keep this page open and try again.');
+            if (e instanceof ApiError && e.status === 409) conflict.current = true;
             setSaveState('error');
+            return false;
         }
         finally {
             saving.current = false;
             setIsSaving(false);
         }
     }, [id, load, applyEvent, unavailable, expire, notify]);
+    const save = useCallback(() => {
+        if (savingTask.current) return savingTask.current;
+        const task = persist();
+        savingTask.current = task;
+        void task.then(() => { if (savingTask.current === task) savingTask.current = null; });
+        return task;
+    }, [persist]);
+    async function editResponse(responseId: string | null) {
+        if (switchingRef.current) return;
+        switchingRef.current = true;
+        setSwitching(true);
+        try {
+            // Finish the current response before loading another person's data.
+            const reloadConflict = conflict.current && responseId === editingIdRef.current;
+            if (!reloadConflict && (dirty.current || savingTask.current) && !(await save())) return;
+            const result = await load();
+            if (dirty.current && !reloadConflict) return;
+            const person = result.responses.find(response => response.id === responseId);
+            if (responseId && !person) throw new Error('This response could not be found. Refresh the group and try again.');
+            applyEvent(result);
+            const next = { name: person?.name ?? '', zone: latest.current.zone, selected: new Set(allSlots(person?.ranges ?? [])) };
+            editingIdRef.current = person?.id ?? null;
+            revisionRef.current = person?.revision ?? 0;
+            responseZoneRef.current = person?.timezone ?? null;
+            latest.current = next;
+            generation.current++;
+            dirty.current = false;
+            conflict.current = false;
+            setEditingId(person?.id ?? null);
+            setName(next.name);
+            setSelected(next.selected);
+            setSaveState('saved');
+            setView('personal');
+            setActive(null);
+            setError('');
+            setEditNotice(false);
+            dismissNotice();
+            setResponseSession(value => value + 1);
+            nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } catch (error) {
+            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire();
+            else setError(error instanceof Error ? error.message : 'Could not load this event.');
+        } finally {
+            switchingRef.current = false;
+            setSwitching(false);
+        }
+    }
     useEffect(() => {
         if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable) {
             return;
@@ -264,8 +308,7 @@ export default function EventPage({ id }: {
     }
     const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
-    const privateEditLink = identity ? eventLink + `#edit=${identity.id}.${identity.token}` : undefined;
-    const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
+    const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!editingId}/>;
     return <main className="event-page">
       {navigation.dialog}
       {notice && <Toast key={notice.id} message={notice.message} anchor={notice.anchor} onDismiss={dismissNotice}/>}
@@ -289,30 +332,28 @@ export default function EventPage({ id }: {
           </header>
           {error && <div className="error-message" role="alert">{t(error)}</div>}
           <div className="participant-controls">
-            <ParticipantName name={name} inputRef={nameInput} editNotice={editNotice} onChange={value => {
+            <ParticipantName name={name} disabled={switching} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
         setEditNotice(false);
         changeDraft({ name: value });
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} status={saveStatus} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
           <div className="save-bar">
             <button className="button primary compact" disabled={saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
               {t(saveState === 'saving' ? 'Saving…' : 'Save Availability')}
               <Check size={16}/>
             </button>
           </div>
-          <PrivateEditLink onUnavailable={privateLinkUnavailable} url={privateEditLink} copied={copied === 'edit'} onCopy={value => {
-        void copy(value, 'edit');
-    }}/>
+
         </section>
-        <EventResults event={event} zone={zone} identityId={identity?.id} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
+        <EventResults event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
         setActive(active?.start === candidate.start ? null : candidate);
     }} onRefresh={() => {
         load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
-      {share && <ShareEventDialog onPrivateLinkUnavailable={privateLinkUnavailable} eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}
+      {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}
     </main>;
 }
