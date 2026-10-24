@@ -1,4 +1,4 @@
-import { Check, Clock3, RefreshCw, Sparkles, Users, X } from 'lucide-react';
+import { Check, Clock3, Pencil, Plus, RefreshCw, Sparkles, Users } from 'lucide-react';
 import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import type { Candidate, MeetingEvent } from '../../lib/types';
@@ -6,7 +6,9 @@ import type { projectWeekly } from '../../lib/weekly';
 type Props = {
     event: MeetingEvent;
     zone: string;
-    identityId?: string;
+    editingId?: string | null;
+    onEditResponse: (id: string | null) => void;
+    switching?: boolean;
     active: Candidate | null;
     suggestions: Candidate[];
     weeklyView: ReturnType<typeof projectWeekly> | null;
@@ -14,11 +16,7 @@ type Props = {
     onSelect: (candidate: Candidate) => void;
     onRefresh: () => void;
 };
-export default function EventResults({ event, zone, identityId, active, suggestions, weeklyView, onZoneChange, onSelect, onRefresh }: Props) {
-    const groups = [
-      { title: 'Primary Selection', items: suggestions.filter(item => !item.missing.length) },
-      { title: 'Secondary Selection', items: suggestions.filter(item => item.missing.length === 1) },
-    ];
+export default function EventResults({ event, zone, editingId, onEditResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect, onRefresh }: Props) {
     const weekly = event.schedule_mode === 'weekdays';
     const viewZone = weekly ? 'UTC' : zone;
     return <aside className="results-sidebar">
@@ -37,52 +35,53 @@ export default function EventResults({ event, zone, identityId, active, suggesti
             {t(event.responses.length ? 'Add more availability to find a time that works.' : 'Mark your availability, then share the event with your group.')}
           </p>
         </div> : <div className="suggestions">
-          {groups.filter(group => group.items.length).map(group => <div className="selection-group" key={group.title}>
-          <h3 className="selection-heading">{t(group.title)}</h3>
-          {group.items.map(candidate => {
+          <div className="selection-group">
+          <h3 className="selection-heading">{t('Primary Selection')}</h3>
+          {suggestions.map(candidate => {
                 const shown = weeklyView ? weeklyView.range(candidate) : candidate;
                 return <button className={`suggestion ${active?.start === candidate.start ? 'active' : ''}`} key={candidate.start} onClick={() => onSelect(candidate)}>
             <div className="suggestion-top">
               <strong>{formatDay(shown.start, viewZone, false, weekly)}</strong>
-              <span className="best-badge">{t(candidate.missing.length ? "All but One" : "Everyone")}</span>
+              <span className="best-badge">{t('Everyone')}</span>
             </div>
             <span className="suggestion-time">{formatTime(shown.start, viewZone)} – {localDate(shown.start, viewZone) !== localDate(shown.end, viewZone) ? formatDay(shown.end, viewZone, false, weekly) + ' ' : ''}{formatTime(shown.end, viewZone)}</span>
             <span className="attendance">
               <span className="attendance-dots">
                 {Array.from({ length: Math.min(event.responses.length, 8) }, (_, j) => <i key={j} className={j < candidate.available.length ? 'filled' : ''}/>)}
               </span>
-              {candidate.available.length === event.responses.length ? t('Everyone available') : t('{count} of {total} available', { count: candidate.available.length, total: event.responses.length })}
+              {t('Everyone available')}
             </span>
           </button>;
-            })}</div>)}
+            })}</div>
         </div>}
         {active && <div className="candidate-detail">
           <strong>{t("Who Can Make It?")}</strong>
           {event.responses.map(r => <p key={r.id}>
-            <span className={`presence ${active.available.includes(r.id) ? 'yes' : ''}`}>
-              {active.available.includes(r.id) ? <Check size={12}/> : <X size={12}/>}
+            <span className="presence yes">
+              <Check size={12}/>
             </span>
             {r.name}
-            <small>{t(active.available.includes(r.id) ? 'Available' : 'Unavailable')}</small>
+            <small>{t('Available')}</small>
           </p>)}
         </div>}
       </section>
-      <section className="people-card">
+      <section className="people-card" aria-busy={switching}>
         <div className="sidebar-title">
           <Users size={17}/>
           <h3>{t("The Group")} <span>{event.responses.length}</span></h3>
+          <button className="icon-button" aria-label={t('Add Response')} title={t('Add Response')} disabled={switching} onClick={() => onEditResponse(null)}><Plus size={15}/></button>
           <button className="icon-button" aria-label={t("Refresh responses")} onClick={onRefresh}>
             <RefreshCw size={14}/>
           </button>
         </div>
-        {event.responses.length ? event.responses.map((r, i) => <div className="person" key={r.id}>
+        {event.responses.length ? event.responses.map((r, i) => <button type="button" className="person" key={r.id} aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
           <span className={`avatar avatar-${i % 3}`}>{r.name.slice(0, 1).toUpperCase()}</span>
           <span>
-            <strong>{r.name}{r.id === identityId && <small> {t("(you)")}</small>}</strong>
+            <strong>{r.name}</strong>
             <small>{zoneLabel(r.timezone)}</small>
           </span>
-          <Check size={14}/>
-        </div>) : <p className="field-help">
+          <Pencil size={14}/>
+        </button>) : <p className="field-help">
           {t("Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.")}
         </p>}
       </section>

@@ -1,10 +1,8 @@
 import type { Candidate, ResponseData, TimeRange } from '../../src/lib/types';
 
 type Edge = { windows: number; people: Map<string, number> };
-type Match = { start: number; end: number; missing: string | null };
 
-// Sweep range boundaries once. A secondary match keeps the same person absent
-// from start to finish; adjacent matches with different people never merge.
+// Sweep range boundaries and return only periods when every respondent is free.
 export function commonGround(windows: TimeRange[], responses: ResponseData[]): Candidate[] {
   if (!responses.length) return [];
   const edges = new Map<number, Edge>();
@@ -20,28 +18,26 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
       change.set(person.id, (change.get(person.id) ?? 0) + delta);
     }
   }
-  const ids = responses.map(person => person.id);
-  const missing = new Set(ids), counts = new Map<string, number>();
-  const stamps = [...edges.keys()].sort((a, b) => a - b), matches: Match[] = [];
-  let inside = 0;
+  const counts = new Map<string, number>();
+  const stamps = [...edges.keys()].sort((a, b) => a - b);
+  const matches: { start: number; end: number }[] = [];
+  let inside = 0, available = 0;
   for (let i = 0; i < stamps.length - 1; i++) {
     const start = stamps[i], end = stamps[i + 1], change = edges.get(start)!;
     inside += change.windows;
     for (const [id, delta] of change.people) {
-      const count = (counts.get(id) ?? 0) + delta;
-      counts.set(id, count);
-      if (count > 0) missing.delete(id); else missing.add(id);
+      const previous = counts.get(id) ?? 0, next = previous + delta;
+      counts.set(id, next);
+      if (previous <= 0 && next > 0) available++;
+      else if (previous > 0 && next <= 0) available--;
     }
-    if (!inside || missing.size > 1 || missing.size === responses.length) continue;
-    const absent = missing.size ? missing.values().next().value! : null;
+    if (!inside || available !== responses.length) continue;
     const previous = matches.at(-1);
-    if (previous && previous.end === start && previous.missing === absent) previous.end = end;
-    else matches.push({ start, end, missing: absent });
+    if (previous?.end === start) previous.end = end;
+    else matches.push({ start, end });
   }
-  // Return every overlap; a result cap can hide an entire match category.
-  return matches.sort((a, b) => Number(a.missing !== null) - Number(b.missing !== null) || a.start - b.start)
-    .map(match => ({
-      start: new Date(match.start).toISOString(), end: new Date(match.end).toISOString(),
-      available: ids.filter(id => id !== match.missing), missing: match.missing ? [match.missing] : [],
-    }));
+  const ids = responses.map(person => person.id);
+  return matches.map(match => ({
+    start: new Date(match.start).toISOString(), end: new Date(match.end).toISOString(), available: ids,
+  }));
 }

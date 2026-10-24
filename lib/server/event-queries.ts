@@ -1,22 +1,12 @@
 import type { MeetingEvent } from '../../src/lib/types';
 import { Problem, checkId } from './validation';
-import { hash } from './tokens';
 import { commonGround } from './common-ground';
 import { EVENT_EXPIRED_MESSAGE } from '../../src/lib/event-limits';
 export type Database = {
     query: <T = Record<string, unknown>>(query: string, params?: unknown[]) => Promise<T[]>;
 };
-export async function readEvent(database: Database, id: string, viewer?: {
-    secret: string;
-    responseId?: string;
-}) {
+export async function readEvent(database: Database, id: string, includeResponses = false) {
     checkId(id);
-    const includeResponses = !!viewer;
-    if (viewer?.responseId) {
-        checkId(viewer.responseId);
-        const owned = await database.query('SELECT id FROM responses WHERE id=$1 AND event_id=$2 AND edit_hash=$3', [viewer.responseId, id, await hash(viewer.secret)]);
-        if (!owned.length) throw new Problem(403, 'Use your private edit link to change this response.');
-    }
     const rows = await database.query<MeetingEvent>(`SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.created_at,e.expires_at,e.expires_at<=clock_timestamp() AS expired,e.schedule_revision,e.schedule_mode,
       (SELECT count(*)::int FROM responses r WHERE r.event_id=e.id) AS response_count,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('start',w.starts_at,'end',w.ends_at) ORDER BY w.starts_at) FROM event_windows w WHERE w.event_id=e.id),'[]'::jsonb) AS windows,
@@ -26,6 +16,7 @@ export async function readEvent(database: Database, id: string, viewer?: {
     if (!rows.length) throw new Problem(404, 'This event could not be found. It may have expired.');
     const { expired, ...event } = rows[0] as MeetingEvent & { expired: boolean };
     if (expired) throw new Problem(410, EVENT_EXPIRED_MESSAGE);
-    event.candidates = includeResponses ? commonGround(event.windows, event.responses) : [];
+    // Existing open tabs read this field; it is always empty now, with no secondary calculation.
+    event.candidates = includeResponses ? commonGround(event.windows, event.responses).map(candidate => ({ ...candidate, missing: [] })) : [];
     return event;
 }

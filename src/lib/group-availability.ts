@@ -13,6 +13,7 @@ export function groupAvailability(responses: ResponseData[]) {
 }
 
 export function availabilityColor(count: number, total: number) {
-  const percent = total ? Math.round(100 * count / total) : 0;
-  return `color-mix(in srgb, var(--lime) ${percent}%, #fafbf8)`;
+  if (!total || !count) return '#fafbf8';
+  const percent = Math.round(100 * Math.min(count, total) / total);
+  return `color-mix(in srgb, var(--primary) ${percent}%, var(--lime))`;
 }

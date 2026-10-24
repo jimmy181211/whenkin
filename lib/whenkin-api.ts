@@ -3,11 +3,9 @@ import { neon } from '@neondatabase/serverless';
 import { isTimezone } from '../src/lib/time';
 import type { CreateInput } from '../src/lib/types';
 import { Problem, checkId, text, validateEvent, validateRanges } from './server/validation';
-import { hash, token } from './server/tokens';
 import { readEvent, type Database } from './server/event-queries';
 import { EVENT_EXPIRED_MESSAGE } from '../src/lib/event-limits';
 // Keep these imports stable for the Worker entry point and existing tests.
-export { hash } from './server/tokens';
 export { validateEvent, validateRanges } from './server/validation';
 export type { Database } from './server/event-queries';
 type Env = {
@@ -116,7 +114,7 @@ export function createApp(factory?: (env: Env) => Database) {
       SELECT event.id,w.start::timestamptz,w.end::timestamptz FROM event CROSS JOIN jsonb_to_recordset($6::jsonb) AS w(start text,"end" text)`, [id, valid.title, valid.description, valid.organizer, input.timezone, JSON.stringify(valid.windows), valid.mode]);
         return c.json({ id }, 201);
     });
-    app.get('/api/events/:id', async (c) => c.json(await readEvent(db(c.env), c.req.param('id'), { secret: c.req.header('Authorization')?.replace(/^Bearer /, '') || '', responseId: c.req.query('response_id') })));
+    app.get('/api/events/:id', async (c) => c.json(await readEvent(db(c.env), c.req.param('id'), true)));
     app.post('/api/events/:id/responses', async (c) => {
         const database = db(c.env);
         const event = await readEvent(database, c.req.param('id'));
@@ -131,29 +129,26 @@ export function createApp(factory?: (env: Env) => Database) {
         }
         const ranges = validateRanges(input.ranges, event.windows);
         const id = crypto.randomUUID();
-        const secret = token();
         const created = await database.query(`WITH gate AS (
-      UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$7 AND expires_at>clock_timestamp() RETURNING id
+      UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$6 AND expires_at>clock_timestamp() RETURNING id
     ), response AS (
-      INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT $1,gate.id,$3,$4,$5 FROM gate RETURNING id
+      INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT $1,gate.id,$3,$4,'' FROM gate RETURNING id
     ), inserted AS (INSERT INTO availability(response_id,starts_at,ends_at)
-      SELECT response.id,a.start::timestamptz,a.end::timestamptz FROM response CROSS JOIN jsonb_to_recordset($6::jsonb) AS a(start text,"end" text) RETURNING id) SELECT id FROM response`, [id, event.id, name, input.timezone, await hash(secret), JSON.stringify(ranges), expectedSchedule]);
+      SELECT response.id,a.start::timestamptz,a.end::timestamptz FROM response CROSS JOIN jsonb_to_recordset($5::jsonb) AS a(start text,"end" text) RETURNING id) SELECT id FROM response`, [id, event.id, name, input.timezone, JSON.stringify(ranges), expectedSchedule]);
         if (!created.length) {
             await readEvent(database, event.id);
             throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
         }
-        return c.json({ id, editToken: secret, revision: 1 }, 201);
+        return c.json({ id, revision: 1 }, 201);
     });
     app.put('/api/events/:id/responses/:responseId', async (c) => {
         const database = db(c.env);
         const event = await readEvent(database, c.req.param('id'));
         const id = c.req.param('responseId');
         checkId(id);
-        const secret = c.req.header('Authorization')?.replace(/^Bearer /, '') || '';
-        const digest = await hash(secret);
-        const owned = await database.query('SELECT id FROM responses WHERE id=$1 AND event_id=$2 AND edit_hash=$3', [id, event.id, digest]);
-        if (!owned.length) {
-            throw new Problem(403, 'Use your private edit link to change this response.');
+        const existing = await database.query('SELECT id FROM responses WHERE id=$1 AND event_id=$2', [id, event.id]);
+        if (!existing.length) {
+            throw new Problem(404, 'This response could not be found. Refresh the group and try again.');
         }
         const input = await body(c.req.raw);
         const name = text(input.name, 'your name', 60);
@@ -169,19 +164,19 @@ export function createApp(factory?: (env: Env) => Database) {
             id: string;
             revision: number;
         }>(`WITH gate AS (
-      UPDATE events SET write_revision=write_revision+1 WHERE id=$7 AND schedule_revision=$8 AND expires_at>clock_timestamp() RETURNING id
+      UPDATE events SET write_revision=write_revision+1 WHERE id=$6 AND schedule_revision=$7 AND expires_at>clock_timestamp() RETURNING id
     ), target AS (
-      UPDATE responses SET name=$1,timezone=$2,revision=revision+1,updated_at=now() WHERE id=$3 AND edit_hash=$4 AND revision=$5 AND EXISTS (SELECT 1 FROM gate) RETURNING id,revision
+      UPDATE responses SET name=$1,timezone=$2,revision=revision+1,updated_at=now() WHERE id=$3 AND event_id=$6 AND revision=$4 AND EXISTS (SELECT 1 FROM gate) RETURNING id,revision
     ), removed AS (
       DELETE FROM availability WHERE response_id IN (SELECT id FROM target) RETURNING id
     ), inserted AS (
       INSERT INTO availability(response_id,starts_at,ends_at)
-      SELECT target.id,a.start::timestamptz,a.end::timestamptz FROM target CROSS JOIN jsonb_to_recordset($6::jsonb) AS a(start text,"end" text)
+      SELECT target.id,a.start::timestamptz,a.end::timestamptz FROM target CROSS JOIN jsonb_to_recordset($5::jsonb) AS a(start text,"end" text)
       WHERE (SELECT count(*) FROM removed)>=0 RETURNING id
-    ) SELECT id,revision FROM target`, [name, input.timezone, id, digest, input.revision, JSON.stringify(ranges), event.id, expectedSchedule]);
+    ) SELECT id,revision FROM target`, [name, input.timezone, id, input.revision, JSON.stringify(ranges), event.id, expectedSchedule]);
         if (!updated.length) {
             await readEvent(database, event.id);
-            throw new Problem(409, 'This response changed in another tab. Your draft is kept here. Reload before saving again.');
+            throw new Problem(409, 'This response changed. Select the person again to load the latest version before saving.');
         }
         return c.json(updated[0]);
     });

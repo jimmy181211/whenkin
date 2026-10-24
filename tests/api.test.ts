@@ -24,7 +24,7 @@ async function get(id: string) { return (await (await request('/events/' + id)).
 async function respond(id: string, ranges: TimeRange[], name = 'Sam') {
   const result = await request(`/events/${id}/responses`, 'POST', { name, timezone: 'UTC', ranges });
   expect(result.status).toBe(201);
-  return await result.json() as { id: string; editToken: string; revision: number };
+  return await result.json() as { id: string; revision: number };
 }
 beforeAll(async () => {
   for (const name of (await readdir(new URL('../migrations/', import.meta.url))).filter(n => n.endsWith('.sql')).sort()) {
@@ -54,23 +54,19 @@ describe('shared events and common ground', () => {
     const shared = await get(created.id);
     const legacy = await (await request(`/events/${created.id}`, 'GET', undefined, 'old-organizer-token')).json();
     expect(legacy).toEqual(shared); expect(shared.responses.map(r => r.name)).toEqual(['Alice', 'Bob']);
-    expect(shared.candidates).toHaveLength(1); expect(shared.candidates![0]).toMatchObject({ start: new Date(event.windows[0].start).toISOString(), end: new Date(event.windows[0].end).toISOString(), missing: [] });
-    expect(JSON.stringify(shared)).not.toContain(alice.editToken); expect(JSON.stringify(shared)).not.toContain('edit_hash');
-    const own = await (await request(`/events/${created.id}?response_id=${alice.id}`, 'GET', undefined, alice.editToken)).json();
+    expect(shared.candidates).toHaveLength(1); expect(shared.candidates![0]).toMatchObject({ start: new Date(event.windows[0].start).toISOString(), end: new Date(event.windows[0].end).toISOString(), available: shared.responses.map(r=>r.id), missing: [] });
+    expect(alice).not.toHaveProperty('editToken'); expect(JSON.stringify(shared)).not.toContain('edit_hash');
+    const own = await (await request(`/events/${created.id}?response_id=${alice.id}`, 'GET', undefined)).json();
     expect(own).toEqual(shared);
   });
-  it('returns full variable-length primary intersections and fixed-person secondary intersections', async () => {
+  it('returns only everyone-free intersections, with no secondary periods', async () => {
     const created = await create(), event = await get(created.id), start = Date.parse(event.windows[0].start);
     const range = (a: number, b: number) => ({ start: new Date(start + a * 60000).toISOString(), end: new Date(start + b * 60000).toISOString() });
     await respond(created.id, [range(0, 180)], 'Alice');
     await respond(created.id, [range(0, 180)], 'Bob');
-    const charlie = await respond(created.id, [range(30, 45)], 'Charlie');
+    await respond(created.id, [range(30, 45)], 'Charlie');
     const result = await get(created.id);
-    expect(result.candidates).toHaveLength(3);
-    expect(result.candidates![0]).toMatchObject({ ...range(30, 45), missing: [] });
-    expect(result.candidates!.slice(1).map(c => ({ start: c.start, end: c.end, missing: c.missing }))).toEqual([
-      { ...range(0, 30), missing: [charlie.id] }, { ...range(45, 180), missing: [charlie.id] },
-    ]);
+    expect(result.candidates).toEqual([{...range(30,45),available:result.responses.map(r=>r.id),missing:[]}]);
   });
   it('counts empty saved responses and does not show a match when nobody or too few people are free', async () => {
     const created = await create(), event = await get(created.id);
@@ -99,14 +95,24 @@ describe('shared events and common ground', () => {
 });
 
 describe('response editing and validation', () => {
-  it('lets everyone view responses but only the private token can change a response', async () => {
+  it('lets anyone edit an existing response without a private token and rejects stale writes', async () => {
     const created = await create(), event = await get(created.id), person = await respond(created.id, event.windows);
-    const path = `/events/${created.id}/responses/${person.id}`, payload = { name: 'Sam', timezone: 'Europe/London', ranges: [], revision: 1 };
-    expect((await request(path, 'PUT', payload, 'wrong')).status).toBe(403);
-    expect((await request(`/events/${created.id}?response_id=${person.id}`, 'GET', undefined, 'wrong')).status).toBe(403);
-    expect((await request(path, 'PUT', payload, person.editToken)).status).toBe(200);
-    expect((await request(path, 'PUT', { ...payload, ranges: event.windows }, person.editToken)).status).toBe(409);
-    expect((await get(created.id)).responses[0]).toMatchObject({ revision: 2, timezone: 'Europe/London', ranges: [] });
+    await query("UPDATE responses SET edit_hash='legacy-unused-hash' WHERE id=$1",[person.id]);
+    const path = `/events/${created.id}/responses/${person.id}`, payload = { name: 'Updated Sam', timezone: 'Europe/London', ranges: [], revision: 1 };
+    expect((await request(path, 'PUT', payload)).status).toBe(200);
+    expect((await request(path, 'PUT', { ...payload, ranges: event.windows })).status).toBe(409);
+    expect((await get(created.id)).responses[0]).toMatchObject({ name:'Updated Sam',revision: 2, timezone: 'Europe/London', ranges: [] });
+    const latest = await get(created.id);
+    expect((await request(path,'PUT',{...payload,revision:latest.responses[0].revision,ranges:event.windows})).status).toBe(200);
+    expect((await get(created.id)).responses[0].ranges).toHaveLength(1);
+  });
+  it('never edits a response through a different event or creates one for an unknown ID', async () => {
+    const first=await create(),second=await create(),person=await respond(first.id,[]);
+    const payload={name:'Wrong event',timezone:'UTC',ranges:[],revision:1};
+    expect((await request(`/events/${second.id}/responses/${person.id}`,'PUT',payload)).status).toBe(404);
+    expect((await request(`/events/${second.id}/responses/${crypto.randomUUID()}`,'PUT',payload)).status).toBe(404);
+    expect((await get(first.id)).responses[0]).toMatchObject({name:'Sam',revision:1});
+    expect((await get(second.id)).responses).toEqual([]);
   });
   it('checks schedule revisions and rejects forged ranges without destroying saved data', async () => {
     const created = await create(), event = await get(created.id);
@@ -132,13 +138,13 @@ describe('one-year expiry and manual cleanup', () => {
     await respond(created.id, []); expect((await get(created.id)).expires_at).toBe(before.expires_at);
     expect((await query<{ day: string }>(`SELECT to_char(TIMESTAMP '2028-02-29 12:00'+interval '1 year','YYYY-MM-DD') AS day`))[0].day).toBe('2029-02-28');
   });
-  it('blocks expired shared and private links and writes before any manual cleanup is run', async () => {
+  it('blocks expired event reads and shared writes before any manual cleanup is run', async () => {
     const created = await create(), person = await respond(created.id, []); await expire(created.id);
     for (const [path, method, data, token] of [
       [`/events/${created.id}`, 'GET', undefined, undefined],
-      [`/events/${created.id}?response_id=${person.id}`, 'GET', undefined, person.editToken],
+      [`/events/${created.id}?response_id=${person.id}`, 'GET', undefined, undefined],
       [`/events/${created.id}/responses`, 'POST', { name: 'New', timezone: 'UTC', ranges: [] }, undefined],
-      [`/events/${created.id}/responses/${person.id}`, 'PUT', { name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] }, person.editToken],
+      [`/events/${created.id}/responses/${person.id}`, 'PUT', { name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] }, undefined],
     ] as const) expect((await request(path, method, data, token)).status).toBe(410);
     expect((await query('SELECT id FROM responses WHERE event_id=$1', [created.id]))).toHaveLength(1);
     await expect(query(`INSERT INTO responses(id,event_id,name,timezone,edit_hash) VALUES(gen_random_uuid(),$1,'Late','UTC','test')`, [created.id])).rejects.toMatchObject({ code: 'WK001' });
@@ -146,7 +152,7 @@ describe('one-year expiry and manual cleanup', () => {
   it('catches an event expiring after validation and before the write', async () => {
     const created = await create(), person = await respond(created.id, []);
     const racing = createApp(() => ({ query: async <T,>(sql: string, params: unknown[] = []) => { if (sql.includes('WITH gate AS')) await expire(created.id); return query<T>(sql, params); } }));
-    const result = await racing.request(`http://localhost/api/events/${created.id}/responses/${person.id}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + person.editToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] }) }, {});
+    const result = await racing.request(`http://localhost/api/events/${created.id}/responses/${person.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] }) }, {});
     expect(result.status).toBe(410);
     expect((await query<{ revision: number }>('SELECT revision FROM responses WHERE id=$1', [person.id]))[0].revision).toBe(1);
   });

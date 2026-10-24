@@ -4,22 +4,22 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
-  'Start editing and save your availability to get a private edit link.': ['编辑并保存你的空闲时间后，即可获取私人编辑链接。', 'Edita y guarda tu disponibilidad para obtener un enlace privado de edición.'],
+  'Add Response': ['添加回复', 'Añadir Respuesta'],
+  'Edit {name}': ['编辑 {name}', 'Editar a {name}'],
+  'Everyone with the link can view and edit all responses.': ['持有链接的所有人都能查看和编辑全部回复。', 'Todos los que tengan el enlace pueden ver y editar todas las respuestas.'],
+  'This response could not be found. Refresh the group and try again.': ['找不到这份回复，请刷新参与者列表后重试。', 'No se encontró esta respuesta. Actualiza el grupo e inténtalo de nuevo.'],
+  'This response changed. Select the person again to load the latest version before saving.': ['这份回复已被修改。请再次点击该成员，载入最新版本后再保存。', 'Esta respuesta cambió. Selecciona de nuevo a la persona para cargar la versión más reciente antes de guardar.'],
   'Dismiss notification': ['关闭提示', 'Cerrar aviso'],
   'Your Availability': ['你的空闲时间', 'Tu Disponibilidad'],
   'Group Availability': ['群组空闲时间', 'Disponibilidad del Grupo'],
   'Availability View': ['空闲时间视图', 'Vista de disponibilidad'],
   'People Available': ['空闲人数', 'Personas disponibles'],
-  'My Private Edit Link': ['我的私人编辑链接', 'Mi Enlace Privado de Edición'],
   'Could not save. Please keep this page open and try again.': ['无法保存，请保持此页面打开并重试。', 'No se pudo guardar. Mantén esta página abierta e inténtalo de nuevo.'],
   'Links expire in 1 year': ['链接将在 1 年后失效', 'Los enlaces caducan en 1 año'],
   'Event Link': ['活动链接', 'Enlace del evento'],
   'Primary Selection': ['首选时间', 'Selección principal'],
-  'Secondary Selection': ['备选时间', 'Selección secundaria'],
   'Everyone': ['所有人', 'Todos'],
-  'All but One': ['除一人外', 'Todos menos uno'],
   'Use Event’s Zone': ['使用活动时区', 'Usar la zona del evento'],
-  'Everyone with the link can see group availability.': ['持有链接的所有人都能查看群组空闲时间。', 'Todos los que tengan el enlace pueden ver la disponibilidad del grupo.'],
 
 
 
@@ -205,18 +205,6 @@ export const messages: Record<string, [string, string]> = {
   "Save Availability": [
     "保存空闲时间",
     "Guardar disponibilidad"
-  ],
-  "Copied Private Edit Link": [
-    "已复制私人编辑链接",
-    "Enlace privado copiado"
-  ],
-  "Copy My Private Edit Link": [
-    "复制我的私人编辑链接",
-    "Copiar mi enlace privado"
-  ],
-  "Save this link to edit from another device.": [
-    "保留此链接，以便在其他设备上编辑。",
-    "Guarda este enlace para editar desde otro dispositivo."
   ],
   "Times shown in {zone}": [
     "时间显示为：{zone}",
@@ -542,17 +530,9 @@ export const messages: Record<string, [string, string]> = {
     "找不到此活动。请向组织者确认链接。",
     "No encontramos este evento. Comprueba el enlace con quien lo organiza."
   ],
-  "Use your private edit link to change this response.": [
-    "请使用你的私人编辑链接修改回复。",
-    "Usa tu enlace privado para editar esta respuesta."
-  ],
   "Please reload this response and choose a valid time zone.": [
     "请刷新回复并选择有效的时区。",
     "Recarga esta respuesta y elige una zona horaria válida."
-  ],
-  "This response changed in another tab. Your draft is kept here. Reload before saving again.": [
-    "此回复已在另一个标签页中更改。草稿仍保存在这里，请刷新后再保存。",
-    "Esta respuesta cambió en otra pestaña. Tu borrador sigue aquí. Recarga antes de guardar de nuevo."
   ],
 
   "Choose a meeting time within the event dates.": [

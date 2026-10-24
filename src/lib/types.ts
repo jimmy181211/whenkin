@@ -8,4 +8,4 @@ export type MeetingEvent = {
   created_at?: string; expires_at?: string; candidates?: Candidate[];
 };
 export type CreateInput = { title: string; description: string; organizer_name?: string; timezone: string; dates: string[]; schedule_mode?: 'dates' | 'weekdays'; weekdays?: number[]; startTime: string; endTime: string };
-export type Candidate = TimeRange & { available: string[]; missing: string[] };
+export type Candidate = TimeRange & { available: string[] };
