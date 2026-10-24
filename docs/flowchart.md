@@ -8,7 +8,8 @@ Everyone uses the same event link and sees the same page. Each person keeps a pr
 flowchart TD
   C["Choose Dates or Weekdays and Hours"] --> E["Create Event"]
   E --> L["Share One Link"]
-  L --> R["Enter Name and Mark Availability"]
+  L --> F["Open a Fresh Response"]
+  F --> R["Enter Name and Mark Availability"]
   R --> N["Save to Neon"]
   N --> P["Primary: Everyone Free"]
   N --> S["Secondary: All but One Free"]
@@ -26,7 +27,7 @@ A primary result includes every respondent. A secondary result excludes exactly 
 
 ## Saving and Editing
 
-The same Edit/Done control works with a mouse or touch. Enter a name before editing; changes save automatically. Only a valid private response token can update that response. Viewing the group does not grant permission to change anyone else’s selections.
+The grid switches between Your Availability and Group Availability. The personal view is always editable after entering a name; a small popup explains this when needed. The group view shows saved availability counts and cannot edit responses. Changes save automatically. Every ordinary event-link visit starts a blank personal response, including in the same browser. Only an explicit private edit URL restores that person. Copy it from Share Event or the bottom of the page. No response identity or draft is restored from browser storage. Only a valid private response token can update that response. Viewing the group does not grant permission to change anyone else’s selections.
 
 Date mode stores real instants in PostgreSQL `timestamptz`. Weekday mode retains its existing reference-week projection. Display-zone changes preserve availability. English, Chinese, and Spanish use the same scheduling data.
 

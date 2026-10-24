@@ -15,8 +15,8 @@ describe('name before availability editing',()=>{
       expect(html).not.toContain('name-help');
       expect(html).not.toContain('aria-describedby');
       const noticed=renderToStaticMarkup(<ParticipantName name="  " onChange={()=>{}} editNotice/>);
-      expect(noticed).toMatch(/<input[^>]*aria-describedby="name-help"[^>]*\/><p id="name-help"/);
-      expect(noticed).toContain('role="alert"');expect(noticed).toContain(t('Enter your name before editing availability.'));
+      expect(noticed).toContain('aria-invalid="true"');
+      expect(noticed).not.toContain(t('Enter your name before editing availability.'));
     }
   });
   it('does not show the blank-name hint once a name is supplied',()=>{
@@ -28,9 +28,11 @@ describe('name before availability editing',()=>{
     for(const width of [390,1280]){
       vi.stubGlobal('window',{innerWidth:width});
       const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="UTC" selected={new Set()} status={<AvailabilityStatus state="saved" hasSavedResponse={false}/>} canEdit={false} onChange={()=>{}} onEditBlocked={()=>{}}/>);
-      expect(html).toContain('done-mode');
-      expect(html).toMatch(/class="grid-edit-controls">[\s\S]*?Done<\/button><\/div><span class="save-status not-started"[^>]*>[\s\S]*?Not Started<\/span><\/div><div class="grid-tool-actions"/);
-      expect(html).toMatch(/aria-pressed="false"[^>]*>.*? Edit<\/button>/);
+      expect(html).not.toContain('done-mode');
+      expect(html).toContain('Your Availability');
+      expect(html).toContain('Group Availability');
+      expect(html).toContain('Not Started');
+      expect(html).not.toMatch(/>.*? Done<\/button>|>.*? Edit<\/button>/);
       expect(html).toMatch(/aria-disabled="true" data-stamp/);
       expect(html).not.toContain('Start on a blank time');
       expect(html).not.toMatch(/disabled="" aria-disabled="true" data-stamp/);

@@ -33,14 +33,13 @@ export default function CreateEventPage() {
     const [zone, setZone] = useState(deviceTimezone);
     const [dates, setDates] = useState<string[]>([]);
     const [title, setTitle] = useState('');
-    const [organizer, setOrganizer] = useState('');
     const [description, setDescription] = useState('');
     const [notes, setNotes] = useState(false);
     const [start, setStart] = useState('09:00');
     const [end, setEnd] = useState('18:00');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const createSnapshot = JSON.stringify({ zone, dates, scheduleMode, weekdays, title, organizer, description, start, end });
+    const createSnapshot = JSON.stringify({ zone, dates, scheduleMode, weekdays, title, description, start, end });
     const [initialSnapshot] = useState(createSnapshot);
     const navigation = useUnsavedNavigation(createSnapshot !== initialSnapshot, "Your Event Has Not Been Saved.");
     const [connection, setConnection] = useState<'checking' | 'ready' | 'setup' | 'unreachable'>('checking');
@@ -77,7 +76,7 @@ export default function CreateEventPage() {
         try {
             const result = await api<{
                 id: string;
-            }>('/events', { method: 'POST', body: JSON.stringify({ title, organizer_name: organizer, description, timezone: zone, dates, schedule_mode: scheduleMode, weekdays, startTime: start, endTime: end }) });
+            }>('/events', { method: 'POST', body: JSON.stringify({ title, description, timezone: zone, dates, schedule_mode: scheduleMode, weekdays, startTime: start, endTime: end }) });
             navigation.allowNavigation();
             window.location.assign(new URL(`/e/${result.id}`, location.href).href);
         }
@@ -111,10 +110,6 @@ export default function CreateEventPage() {
           <label className="field">
             {t("Event Name")}
             <input autoComplete="off" required maxLength={100} value={title} onChange={e => setTitle(e.target.value)}/>
-          </label>
-          <label className="field">
-            <span>{t("Your Name")} <span className="optional">{t("optional")}</span></span>
-            <input autoComplete="given-name" maxLength={60} value={organizer} onChange={e => setOrganizer(e.target.value)}/>
           </label>
           {notes ? <label className="field">
             <span>{t("Note")} <span className="optional">{t("optional")}</span></span>

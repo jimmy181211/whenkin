@@ -19,8 +19,8 @@ export default function App() {
         document.documentElement.lang = language === 'zh' ? 'zh-CN' : language;
         document.title = legalKind ? `${legalDocuments[language][legalKind].title} — Whenkin` : `Whenkin — ${t("Find Your Shared Time.")}`;
     }, [language, legalKind]);
-    return <SiteLayout>
-      {match ? <EventPage id={match[1]}/> : path === '/' ? <CreateEventPage /> : path === '/how-it-works' ? <HowItWorksPage /> : legalKind ? <LegalPage kind={legalKind}/> : <main className="error-page">
+    return <SiteLayout showNewEvent={!!match}>
+      {match ? <EventPage key={match[1]} id={match[1]}/> : path === '/' ? <CreateEventPage /> : path === '/how-it-works' ? <HowItWorksPage /> : legalKind ? <LegalPage kind={legalKind}/> : <main className="error-page">
         <h1>{t("That Page Is a Little Off-Grid.")}</h1>
         <PageLink className="button primary" href="/">{t("Create an Event")} <ArrowRight size={17}/></PageLink>
       </main>}

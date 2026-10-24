@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Link2, LoaderCircle, Plus, Users, X } from 'lucide-react';
+import { Check, Link2, LoaderCircle, Users } from 'lucide-react';
 import ParticipantName from '../components/ParticipantName';
 import PrivateEditLink from '../components/PrivateEditLink';
 import AvailabilityStatus from '../components/AvailabilityStatus';
@@ -9,14 +9,15 @@ import PageLink from '../components/PageLink';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { projectWeekly } from '../lib/weekly';
 import { readEventAccess, type ResponseIdentity } from '../lib/event-access';
-import { loadEvent, restoreEvent } from '../lib/load-event';
-import { api, loadSecret, saveSecret } from '../lib/api';
+import { loadEvent } from '../lib/load-event';
+import { api } from '../lib/api';
 import { allSlots, deviceTimezone, slotsToRanges } from '../lib/time';
 import { t } from '../lib/i18n';
 import type { Candidate, MeetingEvent } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
+import NameRequiredDialog from '../components/NameRequiredDialog';
 import { ApiError } from '../lib/api';
 import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
 type Identity = ResponseIdentity;
@@ -34,10 +35,10 @@ export default function EventPage({ id }: {
     const [error, setError] = useState('');
     const [unavailable, setUnavailable] = useState(false);
     const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
+    const [view, setView] = useState<'personal' | 'group'>('personal');
     const [share, setShare] = useState(false);
     const [copied, setCopied] = useState('');
     const [active, setActive] = useState<Candidate | null>(null);
-    const [showRestore, setShowRestore] = useState(false);
     const eventRef = useRef<MeetingEvent | null>(null);
     const dirty = useRef(false);
     const saving = useRef(false);
@@ -61,9 +62,6 @@ export default function EventPage({ id }: {
             revisionRef.current = person?.revision ?? 0;
             generation.current++;
             setActive(null);
-            if (dirty.current) {
-                saveSecret(`meetgrid:draft:${result.id}`, JSON.stringify({ name: value.name, zone: value.zone, slots: [...next] }));
-            }
         }
         eventRef.current = result;
         setEvent(result);
@@ -74,14 +72,9 @@ export default function EventPage({ id }: {
         let alive = true;
         (async () => {
             try {
-                const { response: restored } = readEventAccess(location.hash, loadSecret(`meetgrid:response:${id}`));
-                const explicitEdit = new URLSearchParams(location.hash.replace(/^#/, '')).has('edit');
-                const { event: result, response: person } = await restoreEvent(id, restored, explicitEdit);
+                const { response: person } = readEventAccess(location.hash);
+                const result = await loadEvent(id, person);
                 if (!alive) return;
-                if (person) saveSecret(`meetgrid:response:${id}`, JSON.stringify(person));
-                else if (restored) {
-                    try { localStorage.removeItem(`meetgrid:response:${id}`); } catch { /* Storage is optional. */ }
-                }
                 identityRef.current = person;
                 const mine = result.responses.find(r => r.id === person?.id);
                 if (mine) {
@@ -92,10 +85,6 @@ export default function EventPage({ id }: {
                 setIdentity(person);
                 identityRef.current = person;
                 applyEvent(result);
-                const draft = loadSecret(`meetgrid:draft:${id}`);
-                if (draft) {
-                    setShowRestore(true);
-                }
             }
             catch (e) {
                 if (alive) {
@@ -160,8 +149,6 @@ export default function EventPage({ id }: {
     const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
         setEditNotice(true);
-        nameInput.current?.focus();
-        nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
     function mark(next: Set<number>) {
         if (!latest.current.name.trim()) {
@@ -175,8 +162,7 @@ export default function EventPage({ id }: {
         dirty.current = true;
         generation.current++;
         setSaveState('dirty');
-        const value = { ...latest.current, ...change };
-        saveSecret(`meetgrid:draft:${id}`, JSON.stringify({ name: value.name, zone: value.zone, slots: [...value.selected] }));
+        latest.current = { ...latest.current, ...change };
     }
     function changeZone(next: string) {
         if (next === zone) {
@@ -192,6 +178,10 @@ export default function EventPage({ id }: {
             return;
         }
         const value = latest.current;
+        if (!value.name.trim()) {
+            setEditNotice(true);
+            return;
+        }
         saving.current = true;
         setIsSaving(true);
         const version = generation.current;
@@ -209,18 +199,12 @@ export default function EventPage({ id }: {
                 const next = { id: result.id, token: result.editToken! };
                 identityRef.current = next;
                 setIdentity(next);
-                saveSecret(`meetgrid:response:${id}`, JSON.stringify(next));
             }
             revisionRef.current = result.revision;
             applyEvent(await load());
             if (version === generation.current) {
                 dirty.current = false;
                 setSaveState('saved');
-                try {
-                    localStorage.removeItem(`meetgrid:draft:${id}`);
-                }
-                catch {
-                }
             }
             else {
                 setSaveState('dirty');
@@ -228,7 +212,7 @@ export default function EventPage({ id }: {
         }
         catch (e) {
             if (e instanceof ApiError && e.status === 410) { expire(); return; }
-            setError(e instanceof Error ? e.message : 'Could not save. Your draft stays on this device.');
+            setError(e instanceof Error ? e.message : 'Could not save. Please keep this page open and try again.');
             setSaveState('error');
         }
         finally {
@@ -256,22 +240,6 @@ export default function EventPage({ id }: {
             setError('Copy did not work. Select the link in the sharing panel and copy it manually.');
         }
     }
-    function restore() {
-        try {
-            const draft = JSON.parse(loadSecret(`meetgrid:draft:${id}`) || 'null');
-            if (draft && event) {
-                const allowed = new Set(allSlots(event.windows));
-                const restored = { name: draft.name || '', zone: draft.zone || zone, selected: new Set<number>((draft.slots || []).filter((s: number) => allowed.has(s))) };
-                setName(restored.name);
-                setZone(restored.zone);
-                setSelected(restored.selected);
-                changeDraft(restored);
-            }
-        }
-        catch {
-        }
-        setShowRestore(false);
-    }
     const weeklyView = useMemo(() => event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null, [event, zone]);
     if (!event || unavailable) {
         return <main className="loading-page">
@@ -284,39 +252,34 @@ export default function EventPage({ id }: {
     }
     const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
+    const privateEditLink = identity ? eventLink + `#edit=${identity.id}.${identity.token}` : undefined;
     const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
     return <main className="event-page">
       {navigation.dialog}
+      <NameRequiredDialog open={editNotice} onClose={() => {
+          setEditNotice(false);
+          nameInput.current?.focus();
+          nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }}/>
       <div className="event-layout">
         <section className="schedule-card">
           <header className="event-summary">
             <div className="event-heading">
               <div><h1>{event.title}</h1></div>
               <div className="event-actions">
-                <PageLink className="button secondary compact event-new-event" href="/">
-                  <Plus size={16}/>
-                  {t('New Event')}
-                </PageLink>
                 <button className="button primary compact" onClick={() => setShare(true)}><Link2 size={17}/> {t('Share Event')}</button>
               </div>
             </div>
-            <p className="event-meta">
+            <div className="event-summary-details"><p className="event-meta">
               <span>
                 <Users size={16}/>
                 {t(responseCount === 1 ? '{count} response' : '{count} responses', { count: responseCount })}
               </span>
             </p>
-            <EventLimits/>
+            <EventLimits/></div>
             {event.description && <p className="event-description">{event.description}</p>}
           </header>
           {error && <div className="error-message" role="alert">{t(error)}</div>}
-          {showRestore && <div className="draft-banner">
-            <span>{t("You have an unsaved draft on this device.")}</span>
-            <button className="text-button" onClick={restore}>{t("Restore Draft")}</button>
-            <button className="icon-button" aria-label={t("Dismiss draft")} onClick={() => setShowRestore(false)}>
-              <X size={15}/>
-            </button>
-          </div>}
           <div className="participant-controls">
             <ParticipantName name={name} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
@@ -325,14 +288,14 @@ export default function EventPage({ id }: {
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} status={saveStatus} canEdit={!!name.trim()} onEditBlocked={requestEditing}/>
           <div className="save-bar">
             <button className="button primary compact" disabled={saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
               {t(saveState === 'saving' ? 'Saving…' : 'Save Availability')}
               <Check size={16}/>
             </button>
           </div>
-          <PrivateEditLink url={identity ? eventLink + `#edit=${identity.id}.${identity.token}` : undefined} copied={copied === 'edit'} onCopy={value => {
+          <PrivateEditLink url={privateEditLink} copied={copied === 'edit'} onCopy={value => {
         void copy(value, 'edit');
     }}/>
         </section>
@@ -342,6 +305,6 @@ export default function EventPage({ id }: {
         load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
-      {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
+      {share && <ShareEventDialog eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
     </main>;
 }

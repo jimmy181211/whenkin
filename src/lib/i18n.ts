@@ -4,6 +4,13 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Your Availability': ['你的空闲时间', 'Tu Disponibilidad'],
+  'Group Availability': ['群组空闲时间', 'Disponibilidad del Grupo'],
+  'Availability View': ['空闲时间视图', 'Vista de disponibilidad'],
+  'People Available': ['空闲人数', 'Personas disponibles'],
+  'Enter Your Name': ['输入姓名', 'Escribe tu Nombre'],
+  'My Private Edit Link': ['我的私人编辑链接', 'Mi Enlace Privado de Edición'],
+  'Could not save. Please keep this page open and try again.': ['无法保存，请保持此页面打开并重试。', 'No se pudo guardar. Mantén esta página abierta e inténtalo de nuevo.'],
   'Links expire in 1 year': ['链接将在 1 年后失效', 'Los enlaces caducan en 1 año'],
   'Event Link': ['活动链接', 'Enlace del evento'],
   'Primary Selection': ['首选时间', 'Selección principal'],
@@ -24,9 +31,6 @@ export const messages: Record<string, [string, string]> = {
   'Unsaved': ['未保存', 'Sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
-  'Edit': ['编辑', 'Editar'],
-  'Done': ['完成', 'Listo'],
-  'Availability editing': ['编辑空闲时间', 'Edición de disponibilidad'],
   'Event Name': ['活动名称', 'Nombre del evento'],
   'Calendar mode': ['日历模式', 'Modo de calendario'],
   'Specific Dates': ['具体日期', 'Fechas específicas'],
@@ -193,18 +197,6 @@ export const messages: Record<string, [string, string]> = {
     "正在保存……",
     "Guardando…"
   ],
-  "You have an unsaved draft on this device.": [
-    "此设备上有一份未保存的草稿。",
-    "Tienes un borrador sin guardar en este dispositivo."
-  ],
-  "Restore Draft": [
-    "恢复草稿",
-    "Recuperar borrador"
-  ],
-  "Dismiss draft": [
-    "关闭草稿提示",
-    "Cerrar aviso del borrador"
-  ],
   "Enter your name": [
     "输入你的姓名",
     "Escribe tu nombre"
@@ -318,10 +310,6 @@ export const messages: Record<string, [string, string]> = {
   "Could not load this event.": [
     "无法加载此活动。",
     "No se pudo cargar este evento."
-  ],
-  "Could not save. Your draft stays on this device.": [
-    "无法保存。草稿仍保留在此设备上。",
-    "No se pudo guardar. Tu borrador sigue en este dispositivo."
   ],
   "Copy did not work. Select the link in the sharing panel and copy it manually.": [
     "复制失败。请在分享窗口中选中链接并手动复制。",
