@@ -1,21 +1,10 @@
 export type ResponseIdentity = { id: string; token: string };
 
-function responseIdentity(value: unknown): ResponseIdentity | null {
-  if (!value || typeof value !== 'object') return null;
-  const { id, token } = value as Record<string, unknown>;
-  return typeof id === 'string' && id.length > 0 && typeof token === 'string' && token.length > 0 ? { id, token } : null;
-}
-
-// Shared links restore only this person's response-edit identity.
-export function readEventAccess(fragment: string, storedResponse: string | null) {
-  const params = new URLSearchParams(fragment.replace(/^#/, ''));
-  let response: ResponseIdentity | null = null;
-  const edit = params.get('edit');
-  if (edit) {
-    const [id, token] = edit.split('.');
-    response = responseIdentity({ id, token });
-  } else {
-    try { response = responseIdentity(JSON.parse(storedResponse || 'null')); } catch { /* Ignore invalid saved credentials. */ }
-  }
+// Only an explicit private URL restores a person. Shared URLs always start blank.
+export function readEventAccess(fragment: string): { response: ResponseIdentity | null } {
+  const edit = new URLSearchParams(fragment.replace(/^#/, '')).get('edit');
+  const parts = edit?.split('.');
+  const response = parts?.length === 2 && parts[0] && parts[1]
+    ? { id: parts[0], token: parts[1] } : null;
   return { response };
 }

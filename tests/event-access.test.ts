@@ -1,22 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readEventAccess } from '../src/lib/event-access';
 
-describe('shared links and private response editing',()=>{
-  const ownResponse=JSON.stringify({id:'participant',token:'private-response-token'});
-  it('restores only the current response on a returning browser',()=>{
-    expect(readEventAccess('',ownResponse)).toEqual({response:{id:'participant',token:'private-response-token'}});
-    expect(readEventAccess('',null)).toEqual({response:null});
+describe('URL-only response identity', () => {
+  it('starts blank even when the browser holds a previous response and draft', () => {
+    const getItem = vi.fn(() => JSON.stringify({id:'old-person',token:'old-token'}));
+    vi.stubGlobal('localStorage', {getItem});
+    for (const fragment of ['', '#organizer=old-token', '#view=organizer']) {
+      expect(readEventAccess(fragment)).toEqual({response:null});
+    }
+    expect(getItem).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
-  it('ignores obsolete organizer fragments while preserving response editing',()=>{
-    expect(readEventAccess('#organizer=private-organizer-token',ownResponse)).toEqual({response:{id:'participant',token:'private-response-token'}});
-    expect(readEventAccess('#view=organizer',null)).toEqual({response:null});
+  it('restores a response only from its private edit URL, without browser storage', () => {
+    expect(readEventAccess('#edit=person.private-token')).toEqual({response:{id:'person',token:'private-token'}});
   });
-  it('restores the explicitly linked response',()=>{
-    expect(readEventAccess('#edit=another-person.edit-token',ownResponse)).toEqual({response:{id:'another-person',token:'edit-token'}});
-  });
-  it('ignores corrupt or incomplete saved response identities',()=>{
-    for(const stored of ['invalid','null','42','{}','{"id":"participant"}','{"id":42,"token":"secret"}']){
-      expect(readEventAccess('',stored)).toEqual({response:null});
+  it('does not turn malformed private URLs into someone else’s reply', () => {
+    for (const hash of ['#edit=', '#edit=person', '#edit=.token', '#edit=person.', '#edit=person.token.extra']) {
+      expect(readEventAccess(hash)).toEqual({response:null});
     }
   });
 });

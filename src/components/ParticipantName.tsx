@@ -7,8 +7,7 @@ export default function ParticipantName({name,onChange,inputRef,editNotice}:Prop
   return <div className="participant-line"><div className="participant-name">
     <label htmlFor="participant-name">{t('Your Name')}</label>
     <div className="participant-name-field">
-      <input id="participant-name" ref={inputRef} maxLength={60} placeholder={t('Enter your name')} value={name} aria-invalid={showNotice} aria-describedby={showNotice?'name-help':undefined} onChange={e=>onChange(e.target.value)}/>
-      {showNotice&&<p id="name-help" className="name-error" role="alert">{t('Enter your name before editing availability.')}</p>}
+      <input id="participant-name" ref={inputRef} maxLength={60} placeholder={t('Enter your name')} value={name} aria-invalid={showNotice} onChange={e=>onChange(e.target.value)}/>
     </div>
   </div></div>;
 }

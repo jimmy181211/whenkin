@@ -41,7 +41,7 @@ React and TypeScript provide the interface. ChatGPT Sites hosts the website and 
 
 Weekday polls describe a typical week, not recurring appointments. Their shared-clock coordinate week and time-zone conversion remain unchanged. All range comparisons use numeric timestamps. The server calculates Common Ground once; the browser displays it.
 
-Everyone with an event link can see all saved names, time zones, availability, and results. A private response token is still required to change a response. Old organizer fragments no longer grant a different view. No account is needed.
+Everyone with an event link can see all saved names, time zones, availability, and results. Each visit to the ordinary event link starts a blank personal response, even in the same browser. Use Your Availability to mark your own times, or Group Availability to see everyone’s saved times together. Keep your private edit link to return to your response on any browser. Copy it from Share Event or the bottom of the page. A private response token is still required to change a response. Old organizer fragments no longer grant a different view. No account is needed.
 
 ## Manual Cleanup
 

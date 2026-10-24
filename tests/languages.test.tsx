@@ -23,7 +23,9 @@ describe('language changes across the website',()=>{
     expect(html).toContain('href="/how-it-works"');
     expect(page('/how-it-works')).toContain('The Organizer Creates an Event');
     expect(html).toMatch(/autoComplete="off" required=""/);
-    expect(html).toMatch(/autoComplete="given-name" maxLength="60"/);
+    expect(html).not.toContain('autoComplete="given-name"');
+    expect(html).not.toContain('Your Name');
+    expect(page('/e/855e5518-3b5a-49cb-b906-69bbd7bac603')).toMatch(/<nav[^>]*>[\s\S]*?New Event[\s\S]*?English/);
   });
   it('renders Chinese forms, instructions, and the selected language',()=>{
     setLanguage('zh');const html=page();

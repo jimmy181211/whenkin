@@ -17,5 +17,3 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (!response.ok) throw new ApiError('error' in body && typeof body.error === 'string' ? body.error : 'Something went wrong. Please try again.', response.status);
   return body as T;
 }
-export function loadSecret(key: string) { try { return localStorage.getItem(key); } catch { return null; } }
-export function saveSecret(key: string, value: string) { try { localStorage.setItem(key, value); return true; } catch { return false; } }
