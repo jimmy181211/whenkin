@@ -31,10 +31,10 @@ export default function EventPage({ id }: {
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [editNotice, setEditNotice] = useState(false);
-    const [notice, setNotice] = useState<{ message: string; id: number } | null>(null);
+    const [notice, setNotice] = useState<{ message: string; id: number; anchor: HTMLElement | null } | null>(null);
     const noticeId = useRef(0);
     const dismissNotice = useCallback(() => setNotice(null), []);
-    const notify = useCallback((message: string) => setNotice({ message, id: ++noticeId.current }), []);
+    const notify = useCallback((message: string, anchor: HTMLElement | null) => setNotice({ message, anchor, id: ++noticeId.current }), []);
     const nameInput = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
     const [unavailable, setUnavailable] = useState(false);
@@ -153,12 +153,12 @@ export default function EventPage({ id }: {
     const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
         setEditNotice(true);
-        notify('Enter your name before editing availability.');
+        notify('Enter your name before editing availability.', nameInput.current);
         nameInput.current?.focus();
         nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
-    function privateLinkUnavailable() {
-        notify('Start editing and save your availability to get a private edit link.');
+    function privateLinkUnavailable(anchor: HTMLElement) {
+        notify('Start editing and save your availability to get a private edit link.', anchor);
     }
     function mark(next: Set<number>) {
         if (!latest.current.name.trim()) {
@@ -190,7 +190,7 @@ export default function EventPage({ id }: {
         const value = latest.current;
         if (!value.name.trim()) {
             setEditNotice(true);
-            notify('Enter your name before editing availability.');
+            notify('Enter your name before editing availability.', nameInput.current);
             nameInput.current?.focus();
             return;
         }
@@ -268,7 +268,7 @@ export default function EventPage({ id }: {
     const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
     return <main className="event-page">
       {navigation.dialog}
-      {notice && <Toast key={notice.id} message={notice.message} onDismiss={dismissNotice}/>}
+      {notice && <Toast key={notice.id} message={notice.message} anchor={notice.anchor} onDismiss={dismissNotice}/>}
       <div className="event-layout">
         <section className="schedule-card">
           <header className="event-summary">
@@ -313,6 +313,6 @@ export default function EventPage({ id }: {
         load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
-      {share && <ShareEventDialog onPrivateLinkUnavailable={privateLinkUnavailable} eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
+      {share && <ShareEventDialog onPrivateLinkUnavailable={privateLinkUnavailable} eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}
     </main>;
 }

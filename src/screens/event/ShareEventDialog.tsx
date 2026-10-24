@@ -7,7 +7,7 @@ type Props = {
   privateEditLink?: string;
   copied: string;
   onClose: () => void;
-  onPrivateLinkUnavailable: () => void;
+  onPrivateLinkUnavailable: (anchor: HTMLElement) => void;
   onCopy: (value: string, label: string) => Promise<void>;
 };
 export default function ShareEventDialog({ eventLink, privateEditLink, copied, onClose, onCopy, onPrivateLinkUnavailable }: Props) {
@@ -25,7 +25,7 @@ export default function ShareEventDialog({ eventLink, privateEditLink, copied, o
           <label htmlFor={`${id}-${link.key}`}>{t(link.label)}</label>
         </div>
         <input id={`${id}-${link.key}`} className="share-link-input" readOnly disabled={!link.url} value={link.url ?? ''} onFocus={e => e.target.select()}/>
-        <button type="button" className="button primary" onClick={() => { if (link.url) void onCopy(link.url, link.key); else onPrivateLinkUnavailable(); }}>
+        <button type="button" className="button primary" onClick={e => { if (link.url) void onCopy(link.url, link.key); else onPrivateLinkUnavailable(e.currentTarget); }}>
           {copied === link.key ? <><Check size={17}/>{t('Link Copied')}</> : <><Copy size={17}/>{t(link.button)}</>}
         </button>
       </div>)}
