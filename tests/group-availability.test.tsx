@@ -42,7 +42,7 @@ describe('private edit entry points and name notice',()=>{
   it('uses a compact, nonblocking live notification in every language',()=>{
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
-      const html=renderToStaticMarkup(<Toast message="Enter your name before editing availability." onDismiss={()=>{}}/>);
+      const html=renderToStaticMarkup(<Toast anchor={null} message="Enter your name before editing availability." onDismiss={()=>{}}/>);
       expect(html).not.toContain('<dialog');expect(html).toContain('role="status"');expect(html).toContain('aria-live="polite"');
       expect(html).toContain(t('Enter your name before editing availability.'));
     }
