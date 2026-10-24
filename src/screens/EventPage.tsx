@@ -17,7 +17,7 @@ import type { Candidate, MeetingEvent } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
-import NameRequiredDialog from '../components/NameRequiredDialog';
+import Toast from '../components/Toast';
 import { ApiError } from '../lib/api';
 import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
 type Identity = ResponseIdentity;
@@ -31,6 +31,10 @@ export default function EventPage({ id }: {
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [editNotice, setEditNotice] = useState(false);
+    const [notice, setNotice] = useState<{ message: string; id: number } | null>(null);
+    const noticeId = useRef(0);
+    const dismissNotice = useCallback(() => setNotice(null), []);
+    const notify = useCallback((message: string) => setNotice({ message, id: ++noticeId.current }), []);
     const nameInput = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
     const [unavailable, setUnavailable] = useState(false);
@@ -149,6 +153,12 @@ export default function EventPage({ id }: {
     const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
         setEditNotice(true);
+        notify('Enter your name before editing availability.');
+        nameInput.current?.focus();
+        nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    function privateLinkUnavailable() {
+        notify('Start editing and save your availability to get a private edit link.');
     }
     function mark(next: Set<number>) {
         if (!latest.current.name.trim()) {
@@ -180,6 +190,8 @@ export default function EventPage({ id }: {
         const value = latest.current;
         if (!value.name.trim()) {
             setEditNotice(true);
+            notify('Enter your name before editing availability.');
+            nameInput.current?.focus();
             return;
         }
         saving.current = true;
@@ -219,7 +231,7 @@ export default function EventPage({ id }: {
             saving.current = false;
             setIsSaving(false);
         }
-    }, [id, load, applyEvent, unavailable, expire]);
+    }, [id, load, applyEvent, unavailable, expire, notify]);
     useEffect(() => {
         if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable) {
             return;
@@ -256,11 +268,7 @@ export default function EventPage({ id }: {
     const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!identity}/>;
     return <main className="event-page">
       {navigation.dialog}
-      <NameRequiredDialog open={editNotice} onClose={() => {
-          setEditNotice(false);
-          nameInput.current?.focus();
-          nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      }}/>
+      {notice && <Toast key={notice.id} message={notice.message} onDismiss={dismissNotice}/>}
       <div className="event-layout">
         <section className="schedule-card">
           <header className="event-summary">
@@ -295,7 +303,7 @@ export default function EventPage({ id }: {
               <Check size={16}/>
             </button>
           </div>
-          <PrivateEditLink url={privateEditLink} copied={copied === 'edit'} onCopy={value => {
+          <PrivateEditLink onUnavailable={privateLinkUnavailable} url={privateEditLink} copied={copied === 'edit'} onCopy={value => {
         void copy(value, 'edit');
     }}/>
         </section>
@@ -305,6 +313,6 @@ export default function EventPage({ id }: {
         load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
-      {share && <ShareEventDialog eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
+      {share && <ShareEventDialog onPrivateLinkUnavailable={privateLinkUnavailable} eventLink={eventLink} privateEditLink={privateEditLink} copied={copied} onClose={() => setShare(false)} onCopy={copy}/>}
     </main>;
 }

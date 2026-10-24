@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import AvailabilityGrid from '../src/components/AvailabilityGrid';
 import ShareEventDialog from '../src/screens/event/ShareEventDialog';
-import NameRequiredDialog from '../src/components/NameRequiredDialog';
+import Toast from '../src/components/Toast';
 import { groupAvailability } from '../src/lib/group-availability';
 import { setLanguage, t } from '../src/lib/i18n';
 import type { MeetingEvent } from '../src/lib/types';
@@ -30,20 +30,20 @@ describe('group availability',()=>{
 });
 describe('private edit entry points and name notice',()=>{
   it('renders two identically styled links and different copy controls',()=>{
-    const html=renderToStaticMarkup(<ShareEventDialog eventLink="https://whenkin.example/e/test" privateEditLink="https://whenkin.example/e/test#edit=A.secret" copied="" onClose={()=>{}} onCopy={async()=>{}}/>);
+    const html=renderToStaticMarkup(<ShareEventDialog onPrivateLinkUnavailable={()=>{}} eventLink="https://whenkin.example/e/test" privateEditLink="https://whenkin.example/e/test#edit=A.secret" copied="" onClose={()=>{}} onCopy={async()=>{}}/>);
     expect((html.match(/class="share-link-input"/g)||[]).length).toBe(2);
     expect(html).toContain('Copy Event Link');expect(html).toContain('Copy My Private Edit Link');
     expect(html).toContain('#edit=A.secret');
   });
-  it('keeps the private action disabled until a response exists',()=>{
-    const html=renderToStaticMarkup(<ShareEventDialog eventLink="https://whenkin.example/e/test" copied="" onClose={()=>{}} onCopy={async()=>{}}/>);
-    expect(html).toMatch(/disabled=""[^>]*>[\s\S]*?Copy My Private Edit Link/);
+  it('keeps the private copy action enabled so it can explain the missing link',()=>{
+    const html=renderToStaticMarkup(<ShareEventDialog onPrivateLinkUnavailable={()=>{}} eventLink="https://whenkin.example/e/test" copied="" onClose={()=>{}} onCopy={async()=>{}}/>);
+    expect(html).not.toMatch(/<button[^>]*disabled/);
   });
-  it('uses a native modal dialog with a clear name prompt in every language',()=>{
+  it('uses a compact, nonblocking live notification in every language',()=>{
     for(const language of ['en','zh','es'] as const){
       setLanguage(language);
-      const html=renderToStaticMarkup(<NameRequiredDialog open onClose={()=>{}}/>);
-      expect(html).toContain('<dialog');expect(html).toContain('aria-labelledby="name-required-title"');
+      const html=renderToStaticMarkup(<Toast message="Enter your name before editing availability." onDismiss={()=>{}}/>);
+      expect(html).not.toContain('<dialog');expect(html).toContain('role="status"');expect(html).toContain('aria-live="polite"');
       expect(html).toContain(t('Enter your name before editing availability.'));
     }
   });

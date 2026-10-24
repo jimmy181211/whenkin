@@ -4,11 +4,12 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Start editing and save your availability to get a private edit link.': ['编辑并保存你的空闲时间后，即可获取私人编辑链接。', 'Edita y guarda tu disponibilidad para obtener un enlace privado de edición.'],
+  'Dismiss notification': ['关闭提示', 'Cerrar aviso'],
   'Your Availability': ['你的空闲时间', 'Tu Disponibilidad'],
   'Group Availability': ['群组空闲时间', 'Disponibilidad del Grupo'],
   'Availability View': ['空闲时间视图', 'Vista de disponibilidad'],
   'People Available': ['空闲人数', 'Personas disponibles'],
-  'Enter Your Name': ['输入姓名', 'Escribe tu Nombre'],
   'My Private Edit Link': ['我的私人编辑链接', 'Mi Enlace Privado de Edición'],
   'Could not save. Please keep this page open and try again.': ['无法保存，请保持此页面打开并重试。', 'No se pudo guardar. Mantén esta página abierta e inténtalo de nuevo.'],
   'Links expire in 1 year': ['链接将在 1 年后失效', 'Los enlaces caducan en 1 año'],

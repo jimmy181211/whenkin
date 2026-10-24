@@ -80,7 +80,7 @@ describe('shared results and sharing UI', () => {
     }
   });
   it('shares only the common event link', () => {
-    const html = renderToStaticMarkup(<ShareEventDialog eventLink="https://whenkin.example/e/shared" copied="" onClose={() => {}} onCopy={async () => {}}/>);
+    const html = renderToStaticMarkup(<ShareEventDialog onPrivateLinkUnavailable={()=>{}} eventLink="https://whenkin.example/e/shared" copied="" onClose={() => {}} onCopy={async () => {}}/>);
     expect(html).toContain('Event Link'); expect(html).toContain('https://whenkin.example/e/shared');
     expect(html).not.toMatch(/organizer=|Organizer Link|Participant Link|Just for You/);
   });
