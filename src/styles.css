@@ -260,3 +260,13 @@ button.person>svg{color:var(--primary)}
 /* Give the full-group shared times a clear heading and room before the cards. */
 .suggestions-card>.sidebar-title{margin-bottom:18px}
 .suggestions-card>.sidebar-title h2{font-size:18px;line-height:1.45;font-weight:750;letter-spacing:-.2px;color:var(--primary)}
+
+/* One date card contains independently selectable shared-time rows. */
+.suggestion>.suggestion-top strong{font-size:13px}
+.suggestion-times{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.suggestion-times>.suggestion-select{min-height:44px;border:1px solid transparent;border-radius:8px;padding:9px 10px}
+.suggestion-times>.suggestion-select+.suggestion-select{border-top-color:var(--line)}
+.suggestion-times .suggestion-time{margin:0;font-size:15px;line-height:1.5}
+@media(hover:hover){.suggestion-times>.suggestion-select:hover{background:var(--soft);border-color:#b5cdbd}}
+.suggestion-times>.suggestion-select[aria-pressed=true]{background:#e2f0df;border-color:var(--primary);font-weight:650}
+@media(max-width:699px){.suggestion-times .suggestion-time{font-size:16px}}

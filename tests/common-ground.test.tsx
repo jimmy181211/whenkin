@@ -57,11 +57,30 @@ describe('shared result and editing UI', () => {
       expect(html).toContain(t('When Everyone Is Free')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
       expect(html).not.toContain('best-badge'); expect(html).not.toContain('attendance-dots');
-      expect(html).toMatch(/<article class="suggestion[^"]*">[\s\S]*?class="suggestion-zone"[\s\S]*?<\/article>/);
+      expect(html).toMatch(/<article class="suggestion[^"]*"[^>]*>[\s\S]*?class="suggestion-zone"[\s\S]*?<\/article>/);
       expect(html).toContain(t('Edit {name}',{name:'A'}));expect(html).toContain(t('Edit {name}',{name:'B'}));
       expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
       expect(html).toContain(t('Add Response'));expect(html).not.toContain('(you)');
     }
+  });
+  it('shows each date and timezone once while retaining a button for every disjoint time',()=>{
+    const suggestions = [
+      {start:'2027-01-15T19:00:00Z',end:'2027-01-15T21:00:00Z',available:['A','B']},
+      {start:'2027-01-15T22:00:00Z',end:'2027-01-15T23:00:00Z',available:['A','B']},
+      {start:'2027-01-16T19:00:00Z',end:'2027-01-16T20:00:00Z',available:['A','B']},
+    ];
+    const html=renderToStaticMarkup(<EventResults event={event} zone="America/Los_Angeles" active={suggestions[1]} suggestions={suggestions} weeklyView={null} onEditResponse={()=>{}} onSelect={()=>{}} onZoneChange={()=>{}}/>);
+    expect(html.match(/<article /g)).toHaveLength(2);
+    expect(html.match(/class="suggestion-zone"/g)).toHaveLength(2);
+    expect(html.match(/class="suggestion-select"/g)).toHaveLength(3);
+    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    expect(html).toContain('11:00 AM – 1:00 PM');expect(html).toContain('2:00 PM – 3:00 PM');
+    let depth=0;
+    for(const tag of html.match(/<\/?button\b[^>]*>/g)??[]){
+      depth+=tag.startsWith('</')?-1:1;
+      expect(depth).toBeLessThanOrEqual(1);
+    }
+    expect(depth).toBe(0);
   });
   it('shares one event link and has no private link controls', () => {
     const html = renderToStaticMarkup(<ShareEventDialog eventLink="https://whenkin.example/e/shared" copied="" onClose={() => {}} onCopy={async () => {}}/>);
