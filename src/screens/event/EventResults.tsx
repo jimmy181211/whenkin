@@ -1,5 +1,5 @@
 import SlotDetails, { type SlotInspection } from '../../components/SlotDetails';
-import { Check, Clock3, Pencil, Plus, Sparkles, Users } from 'lucide-react';
+import { Clock3, Pencil, Plus, Sparkles, Users } from 'lucide-react';
 import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import type { Candidate, MeetingEvent } from '../../lib/types';
@@ -54,16 +54,6 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
             </span>
           </button>;
             })}</div>
-        </div>}
-        {active && <div className="candidate-detail">
-          <strong>{t("Who Can Make It?")}</strong>
-          {event.responses.map(r => <p key={r.id}>
-            <span className="presence yes">
-              <Check size={12}/>
-            </span>
-            {r.name}
-            <small>{t('Available')}</small>
-          </p>)}
         </div>}
       </section>
       <section className="people-card" aria-busy={switching}>
