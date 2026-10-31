@@ -216,7 +216,7 @@ button.person>svg{color:var(--primary)}
 .slot-detail-time{font-size:14px;font-weight:600;margin-bottom:10px}
 .slot-detail-count{font-size:16px;font-weight:700;color:var(--primary)}
 .time-grid-wrap.group-mode .time-cell{cursor:pointer}
-.time-grid-wrap.group-mode .time-cell:hover,.time-grid-wrap.group-mode .time-cell:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
+.time-grid-wrap.group-mode .time-cell:hover,.time-grid-wrap.group-mode .time-cell:focus-visible{outline:0;box-shadow:inset 0 0 0 1px #fff,inset 0 0 0 3px var(--primary);z-index:1}
 @media(max-width:699px){
   .event-page{padding-inline:18px}
   .schedule-card{padding-inline:18px}
@@ -227,7 +227,7 @@ button.person>svg{color:var(--primary)}
   .calendar-day{min-height:38px}
 }
 
-.time-grid-wrap.group-mode .time-cell.inspected{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
+.time-grid-wrap.group-mode .time-cell.inspected{outline:0;box-shadow:inset 0 0 0 1px #fff,inset 0 0 0 3px var(--primary);z-index:1}
 
 /* Use the mobile guide entry on desktop too, keeping the form as the main task. */
 .create-page{grid-template-columns:minmax(0,1fr);max-width:560px;gap:18px;padding-top:32px}
@@ -249,3 +249,10 @@ button.person>svg{color:var(--primary)}
 .slot-presence.unavailable{color:#87553e}
 
 .results-sidebar .suggestion.active{border-color:var(--primary);background:#edf5e9}
+
+/* Keep the grid divider outside the inspection ring, even over the darkest fill. */
+.time-grid-wrap.group-mode .time-cell{background-clip:padding-box;border-bottom-color:#d3dfcf;border-left-color:#d3dfcf}
+.suggestion-select{display:block;width:100%;padding:0;background:transparent;text-align:left;border-radius:4px;color:inherit}
+.suggestion .suggestion-time{margin-bottom:0}
+.suggestion .suggestion-zone{margin:12px 0 0;font-size:11px}
+.suggestion .suggestion-zone button{font-size:11px}
