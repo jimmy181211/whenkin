@@ -256,3 +256,7 @@ button.person>svg{color:var(--primary)}
 .suggestion .suggestion-time{margin-bottom:0}
 .suggestion .suggestion-zone{margin:12px 0 0;font-size:11px}
 .suggestion .suggestion-zone button{font-size:11px}
+
+/* Give the full-group shared times a clear heading and room before the cards. */
+.suggestions-card>.sidebar-title{margin-bottom:18px}
+.suggestions-card>.sidebar-title h2{font-size:18px;line-height:1.45;font-weight:750;letter-spacing:-.2px;color:var(--primary)}

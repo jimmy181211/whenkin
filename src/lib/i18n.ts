@@ -6,7 +6,7 @@ export const languageOptions: { value: Language; label: string }[] = [
 export const messages: Record<string, [string, string]> = {
   'Who Is Available?': ['谁有空？', '¿Quién Está Disponible?'],
   'Hover over or tap a block in Group Availability to see who is free.': ['在群组空闲时间中悬停或点击一个时间块，查看谁有空。', 'Pasa el cursor o toca un bloque en Disponibilidad del Grupo para ver quién está libre.'],
-  'Everyone Available': ['所有人都有空', 'Todos Disponibles'],
+  'When Everyone Is Free': ['大家都有空的时段', 'Cuando Todos Están Libres'],
   'Responders': ['回复者', 'Participantes que Respondieron'],
   'Availability at This Time': ['此时段的空闲情况', 'Disponibilidad en este Horario'],
   'No responders available.': ['没有回复者全程有空。', 'Nadie está disponible durante todo el bloque.'],
