@@ -1,5 +1,5 @@
 import SlotDetails, { type SlotInspection } from '../../components/SlotDetails';
-import { Clock3, Pencil, Plus, Sparkles, Users } from 'lucide-react';
+import { Clock3, Pencil, Plus, Users } from 'lucide-react';
 import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import type { Candidate, MeetingEvent } from '../../lib/types';
@@ -24,7 +24,6 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
       {inspection && <SlotDetails event={event} zone={zone} inspection={inspection}/>}
       <section className="suggestions-card">
         <div className="sidebar-title">
-          <span className="sparkle-icon"><Sparkles size={18}/></span>
           <h2>{t("Everyone Available")}</h2>
         </div>
         <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
@@ -58,7 +57,6 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
       </section>
       <section className="people-card" aria-busy={switching}>
         <div className="sidebar-title">
-          <Users size={17}/>
           <h3>{t("Responders")} <span>{event.responses.length}</span></h3>
           <button className="icon-button" aria-label={t('Add Response')} title={t('Add Response')} disabled={switching} onClick={() => onEditResponse(null)}><Plus size={15}/></button>
         </div>

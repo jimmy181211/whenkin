@@ -215,12 +215,6 @@ button.person>svg{color:var(--primary)}
 .slot-details h2{font-size:17px;margin:0 0 12px}
 .slot-detail-time{font-size:14px;font-weight:600;margin-bottom:10px}
 .slot-detail-count{font-size:16px;font-weight:700;color:var(--primary)}
-.slot-person-list{margin-top:18px}
-.slot-person-list h3{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--primary);margin-bottom:8px}
-.slot-person-list h3 span{margin-left:auto}
-.slot-person-list p{font-size:14px;margin:0;padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
-.slot-person-list p small{display:block;color:var(--muted)}
-.slot-person-list.not-free h3{color:#785339}
 .time-grid-wrap.group-mode .time-cell{cursor:pointer}
 .time-grid-wrap.group-mode .time-cell:hover,.time-grid-wrap.group-mode .time-cell:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
 @media(max-width:699px){
@@ -241,3 +235,17 @@ button.person>svg{color:var(--primary)}
 .create-page .mobile-guide-link{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--primary);text-decoration:none}
 .create-page .mobile-guide-link:hover{text-decoration:underline}
 @media(max-width:699px){.create-page .intro{margin-bottom:18px}}
+
+/* Show shared time cards directly on the page, without a surrounding card. */
+.results-sidebar .suggestions-card{padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+.results-sidebar .suggestion{background:#fff;border:1px solid var(--line)}
+.slot-responders{list-style:none;padding:0;margin:12px 0 0}
+.slot-responders li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.slot-responders li:last-child{border-bottom:0;padding-bottom:0}
+.slot-responder-name{min-width:0;overflow-wrap:anywhere}
+.slot-responder-name small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.slot-presence{display:inline-flex;flex-shrink:0}
+.slot-presence.available{color:var(--primary)}
+.slot-presence.unavailable{color:#87553e}
+
+.results-sidebar .suggestion.active{border-color:var(--primary);background:#edf5e9}

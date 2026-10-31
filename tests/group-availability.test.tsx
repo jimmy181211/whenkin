@@ -27,9 +27,9 @@ describe('group availability',()=>{
       setLanguage(language);
       const html=renderToStaticMarkup(<SlotDetails event={event} zone="UTC" inspection={{stamps:[stamp,stamp+900000],range:range(0,30)}}/>);
       expect(html).toContain(t('Availability at This Time'));
-      expect(html).toContain('A</p>');expect(html).toContain('B<small>');
+      expect(html).toContain('A</span>');expect(html).toContain('B<small>');
       expect(html).toContain(t('Partly available'));
-      expect(html).toContain(t('Unavailable'));
+      expect(html).toContain('slot-presence available');expect(html).toContain('slot-presence unavailable');
     }
   });
   it('uses distinct colors for zero through six people and a dark all-available endpoint',()=>{

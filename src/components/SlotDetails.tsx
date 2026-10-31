@@ -7,17 +7,19 @@ import type { MeetingEvent, TimeRange } from '../lib/types';
 export type SlotInspection = { stamps: number[]; range: TimeRange };
 export default function SlotDetails({event,zone,inspection}:{event:MeetingEvent;zone:string;inspection:SlotInspection}) {
   const { available, unavailable } = inspectAvailability(event.responses, inspection.stamps);
+  const free = new Set(available.map(person => person.id));
+  const partial = new Set(unavailable.filter(person => person.partial).map(person => person.id));
   return <section id="slot-details" className="slot-details" aria-label={t('Availability at This Time')}>
     <h2>{t('Availability at This Time')}</h2>
     <p className="slot-detail-time">{displayRange(inspection.range,event.schedule_mode==='weekdays'?'UTC':zone,event.schedule_mode==='weekdays')}</p>
     <p className="slot-detail-count">{t('{count} of {total} available',{count:available.length,total:event.responses.length})}</p>
-    <div className="slot-person-list"><h3><Check size={16}/>{t('Available')} <span>{available.length}</span></h3>
-      {available.map(person=><p key={person.id}>{person.name}</p>)}
-      {!available.length&&<p className="field-help">{t('No responders available.')}</p>}
-    </div>
-    <div className="slot-person-list not-free"><h3><X size={16}/>{t('Unavailable')} <span>{unavailable.length}</span></h3>
-      {unavailable.map(person=><p key={person.id}>{person.name}{person.partial&&<small>{t('Partly available')}</small>}</p>)}
-      {!unavailable.length&&<p className="field-help">{t('No unavailable responders.')}</p>}
-    </div>
+    <ul className="slot-responders">
+      {event.responses.map(person => <li key={person.id}>
+        <span className="slot-responder-name">{person.name}{partial.has(person.id)&&<small>{t('Partly available')}</small>}</span>
+        <span className={free.has(person.id)?'slot-presence available':'slot-presence unavailable'} role="img" aria-label={t(free.has(person.id)?'Available':partial.has(person.id)?'Partly available':'Unavailable')}>
+          {free.has(person.id)?<Check size={18} aria-hidden="true"/>:<X size={18} aria-hidden="true"/>}
+        </span>
+      </li>)}
+    </ul>
   </section>;
 }
