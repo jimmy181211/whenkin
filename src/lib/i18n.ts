@@ -4,6 +4,15 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  'Who Is Available?': ['谁有空？', '¿Quién Está Disponible?'],
+  'Hover over or tap a block in Group Availability to see who is free.': ['在群组空闲时间中悬停或点击一个时间块，查看谁有空。', 'Pasa el cursor o toca un bloque en Disponibilidad del Grupo para ver quién está libre.'],
+  'Everyone Available': ['所有人都有空', 'Todos Disponibles'],
+  'Responders': ['回复者', 'Participantes que Respondieron'],
+  'Availability at This Time': ['此时段的空闲情况', 'Disponibilidad en este Horario'],
+  'No responders available.': ['没有回复者全程有空。', 'Nadie está disponible durante todo el bloque.'],
+  'No unavailable responders.': ['所有回复者都有空。', 'Todos están disponibles.'],
+  'Availability is for the entire selected block.': ['按整个所选时间块统计。', 'Se considera el bloque seleccionado completo.'],
+  'Retry': ['重试', 'Reintentar'],
   'Add Response': ['添加回复', 'Añadir Respuesta'],
   'Edit {name}': ['编辑 {name}', 'Editar a {name}'],
   'Everyone with the link can view and edit all responses.': ['持有链接的所有人都能查看和编辑全部回复。', 'Todos los que tengan el enlace pueden ver y editar todas las respuestas.'],

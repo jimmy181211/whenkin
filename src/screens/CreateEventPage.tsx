@@ -88,8 +88,6 @@ export default function CreateEventPage() {
     return <main className="create-page">
       {navigation.dialog}
       <section className="intro">
-        <div className="eyebrow mobile-hide"><span /> {t("LESS BACK-AND-FORTH. MORE TOGETHER.")}</div>
-        <h1>{t("Find a Time.")}<br /><span>{t("Make It Happen.")}</span></h1>
         <div className="overlap-art" aria-hidden="true">
           <div className="overlap-square one"/>
           <div className="overlap-square two"/>

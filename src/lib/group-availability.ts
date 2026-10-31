@@ -17,3 +17,15 @@ export function availabilityColor(count: number, total: number) {
   const percent = Math.round(100 * Math.min(count, total) / total);
   return `color-mix(in srgb, var(--primary) ${percent}%, var(--lime))`;
 }
+
+export function inspectAvailability(responses: ResponseData[], stamps: number[]) {
+  const available: ResponseData[] = [];
+  const unavailable: (ResponseData & { partial: boolean })[] = [];
+  for (const person of responses) {
+    const selected = new Set(allSlots(person.ranges));
+    const count = stamps.filter(stamp => selected.has(stamp)).length;
+    if (stamps.length && count === stamps.length) available.push(person);
+    else unavailable.push({ ...person, partial: count > 0 });
+  }
+  return { available, unavailable };
+}

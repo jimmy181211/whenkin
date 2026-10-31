@@ -6,11 +6,12 @@ import type { MeetingEvent, TimeRange } from '../lib/types';
 import { clearsSelection, paintSelection } from '../lib/selection';
 import { groupAvailability, availabilityColor } from '../lib/group-availability';
 import { scrollGrid } from '../lib/grid-scroll';
+import type { SlotInspection } from './SlotDetails';
 import { projectWeekly } from '../lib/weekly';
 
-type Props={event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlight?:TimeRange|null;canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode;view?:'personal'|'group';onViewChange?:(view:'personal'|'group')=>void};
+type Props={inspection?:SlotInspection|null;onInspect?:(value:SlotInspection|null)=>void;event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlight?:TimeRange|null;canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode;view?:'personal'|'group';onViewChange?:(view:'personal'|'group')=>void};
 type Gesture={base:Set<number>;row:number;col:number;endRow:number;endCol:number;remove:boolean};
-export default function AvailabilityGrid({event,zone,selected,onChange,highlight,canEdit=true,onEditBlocked,status,view='personal',onViewChange}:Props) {
+export default function AvailabilityGrid({event,zone,selected,onChange,highlight,canEdit=true,onEditBlocked,status,view='personal',onViewChange,onInspect,inspection}:Props) {
   const weekly=event.schedule_mode==='weekdays';
   const [zoom,setZoom]=useState(1),[page,setPage]=useState(0),[small,setSmall]=useState(()=>window.innerWidth<700);
   const group=view==='group',editing=canEdit&&!group,clockZone=weekly?'UTC':zone;
@@ -79,13 +80,14 @@ export default function AvailabilityGrid({event,zone,selected,onChange,highlight
           <div className={`time-label ${row.minute%60===0?'hour-label':''}`}>{row.minute%60===0?<>{clockLabel(row.minute)}{row.occurrence>0&&<small>{t("again")}</small>}</>:zoom>1?<small>:{String(row.minute%60).padStart(2,'0')}</small>:null}</div>
           {shown.map(([date],j)=>{const col=startCol+j,cells=cellMaps[col].get(row.key)||[],cell=cells[0];if(!cell)return <div key={date} className={`time-cell unavailable ${row.minute%60===0?'hour-start':''}`} aria-hidden="true"/>;
             const blockEnd=cells.at(-1)!.stamp+SLOT,selectedCells=cells.filter(c=>selected.has(canonical(c.stamp))),active=selectedCells.length===cells.length,partial=selectedCells.length>0&&!active;
+            const inspected=group&&inspection&&cells.some(c=>inspection.stamps.includes(canonical(c.stamp)));
             const highlighted=highlight&&cells.some(c=>canonical(c.stamp)>=Date.parse(highlight.start)&&canonical(c.stamp)<Date.parse(highlight.end));
             const cellCounts=cells.map(c=>counts.get(canonical(c.stamp))??0);
             const minimum=Math.min(...cellCounts),maximum=Math.max(...cellCounts);
             const groupLabel=t('{count} of {total} available',{count:minimum===maximum?minimum:`${minimum}–${maximum}`,total:event.responses.length});
             const label=`${formatDay(cell.stamp,clockZone,false,weekly)}, ${formatTime(cell.stamp,clockZone)}–${formatTime(blockEnd,clockZone)}, ${weekly?zoneLabel(zone):'UTC'+cell.offset}, ${group?groupLabel:t(partial?'Partly available':active?'Available':'not selected')}`;
             const background=group?`linear-gradient(to bottom, ${cellCounts.map((count,index)=>`${availabilityColor(count,event.responses.length)} ${index*100/cells.length}% ${(index+1)*100/cells.length}%`).join(', ')})`:undefined;
-            return <button type="button" key={date} aria-disabled={group||!canEdit} data-stamp={cell.stamp} data-row={r} data-col={col} aria-label={label} title={group?label:undefined} aria-pressed={group?undefined:partial?'mixed':active} className={`time-cell ${row.minute%60===0?'hour-start':''} ${!group&&active?'painted':''} ${!group&&partial?'partial':''} ${highlighted?'highlighted':''}`} style={group?{background}:partial?{'--selection-half':selected.has(canonical(cell.stamp))?'bottom':'top'} as React.CSSProperties:undefined} onClick={()=>{if(!group&&!canEdit)onEditBlocked?.();}} onKeyDown={e=>{
+            return <button type="button" key={date} aria-disabled={!group&&!canEdit} data-stamp={cell.stamp} data-row={r} data-col={col} aria-label={label}  aria-pressed={group?undefined:partial?'mixed':active} className={`time-cell ${row.minute%60===0?'hour-start':''} ${!group&&active?'painted':''} ${!group&&partial?'partial':''} ${highlighted?'highlighted':''} ${inspected?'inspected':''}`} style={group?{background}:partial?{'--selection-half':selected.has(canonical(cell.stamp))?'bottom':'top'} as React.CSSProperties:undefined} onPointerEnter={e=>{if(group&&e.pointerType!=='touch')onInspect?.({stamps:cells.map(c=>canonical(c.stamp)),range:{start:new Date(cell.stamp).toISOString(),end:new Date(blockEnd).toISOString()}});}} onFocus={()=>{if(group)onInspect?.({stamps:cells.map(c=>canonical(c.stamp)),range:{start:new Date(cell.stamp).toISOString(),end:new Date(blockEnd).toISOString()}});}} onClick={()=>{if(group){onInspect?.({stamps:cells.map(c=>canonical(c.stamp)),range:{start:new Date(cell.stamp).toISOString(),end:new Date(blockEnd).toISOString()}});if(small)requestAnimationFrame(()=>document.getElementById('slot-details')?.scrollIntoView({behavior:'smooth',block:'nearest'}));}else if(!canEdit)onEditBlocked?.();}} onKeyDown={e=>{
               if(e.key!==' '&&e.key!=='Enter')return;
               if(group)return;
               e.preventDefault();
