@@ -1,7 +1,8 @@
 import SlotDetails, { type SlotInspection } from '../../components/SlotDetails';
 import { Clock3, Pencil, Plus, Users } from 'lucide-react';
-import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
+import { displayRange, formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
+import { groupSharedTimes } from '../../lib/shared-time-groups';
 import type { Candidate, MeetingEvent } from '../../lib/types';
 import type { projectWeekly } from '../../lib/weekly';
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 export default function EventResults({ inspection, event, zone, editingId, onEditResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect }: Props) {
     const weekly = event.schedule_mode === 'weekdays';
     const viewZone = weekly ? 'UTC' : zone;
+    const groups = groupSharedTimes(suggestions, viewZone, weeklyView?.range);
     return <aside className="results-sidebar">
       {inspection && <SlotDetails event={event} zone={zone} inspection={inspection}/>}
       <section className="suggestions-card">
@@ -34,20 +36,22 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
           </p>
         </div> : <div className="suggestions">
           <div className="selection-group">
-          {suggestions.map(candidate => {
-                const shown = weeklyView ? weeklyView.range(candidate) : candidate;
-                return <article className={`suggestion ${active?.start === candidate.start ? 'active' : ''}`} key={candidate.start}>
-            <button type="button" className="suggestion-select" aria-pressed={active?.start === candidate.start} onClick={() => onSelect(candidate)}>
-            <div className="suggestion-top">
-              <strong>{formatDay(shown.start, viewZone, false, weekly)}</strong>
-            </div>
-            <span className="suggestion-time">{formatTime(shown.start, viewZone)} – {localDate(shown.start, viewZone) !== localDate(shown.end, viewZone) ? formatDay(shown.end, viewZone, false, weekly) + ' ' : ''}{formatTime(shown.end, viewZone)}</span>
-            </button>
-        <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
-            {t("Use Event’s Zone")}
-          </button>}</div>
-          </article>;
-            })}</div>
+          {groups.map(group => {
+            const headingId = 'shared-date-' + group.date;
+            return <article className="suggestion" key={group.date} aria-labelledby={headingId}>
+              <div className="suggestion-top">
+                <strong id={headingId}>{formatDay(group.entries[0].shown.start, viewZone, false, weekly)}</strong>
+              </div>
+              <div className="suggestion-times" role="group" aria-labelledby={headingId}>
+                {group.entries.map(({candidate, shown}) => <button type="button" className="suggestion-select" key={candidate.start} aria-label={displayRange(shown, viewZone, weekly)} aria-pressed={active?.start === candidate.start && active?.end === candidate.end} onClick={() => onSelect(candidate)}>
+                  <span className="suggestion-time">{formatTime(shown.start, viewZone)} – {localDate(shown.start, viewZone) !== localDate(shown.end, viewZone) ? formatDay(shown.end, viewZone, false, weekly) + ' ' : ''}{formatTime(shown.end, viewZone)}</span>
+                </button>)}
+              </div>
+              <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
+                {t("Use Event’s Zone")}
+              </button>}</div>
+            </article>;
+          })}</div>
         </div>}
       </section>
       <section className="people-card" aria-busy={switching}>

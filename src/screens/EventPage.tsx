@@ -347,7 +347,11 @@ export default function EventPage({ id }: {
 
         </section>
         <EventResults inspection={view === 'group' ? inspection : null} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
-        setActive(active?.start === candidate.start ? null : candidate);
+        const next = active?.start === candidate.start && active?.end === candidate.end ? null : candidate;
+        setActive(next);
+        if (next) requestAnimationFrame(() => {
+            document.querySelector<HTMLElement>('.time-cell.highlighted')?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        });
     }}/>
       </div>
       {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}
