@@ -14,6 +14,7 @@ import type { Candidate, MeetingEvent } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
+import EventTour from '../components/EventTour';
 import Toast from '../components/Toast';
 import type { SlotInspection } from '../components/SlotDetails';
 import { ApiError } from '../lib/api';
@@ -320,7 +321,8 @@ export default function EventPage({ id }: {
             <div className="event-heading">
               <div><h1>{event.title}</h1></div>
               <div className="event-actions">
-                <button className="button primary compact" onClick={() => setShare(true)}><Link2 size={17}/> {t('Share Event')}</button>
+                <button data-tour-share className="button primary compact" onClick={() => setShare(true)}><Link2 size={17}/> {t('Share Event')}</button>
+                <EventTour/>
               </div>
             </div>
             <div className="event-summary-details"><p className="event-meta">
