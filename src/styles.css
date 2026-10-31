@@ -23,8 +23,8 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 @media(max-width:699px){.site-header{height:auto;min-height:78px;padding-block:15px;gap:12px;align-items:flex-start;flex-wrap:wrap}.site-header nav{gap:10px;flex-wrap:wrap;justify-content:flex-end;flex:1}.language-selector select{font-size:12px;min-height:35px;max-width:118px}.language-selector>svg{width:14px}.brand{padding-top:4px}.site-header .intro h1{font-size:45px}.event-heading{flex-wrap:wrap}.event-heading>div{min-width:0}.grid-tools{flex-wrap:wrap;gap:8px}.grid-tool-actions{margin-left:auto}.participant-line p{flex-wrap:wrap}.participant-line p small{max-width:none;flex-basis:100%;margin-left:0}.save-bar{flex-wrap:wrap}.save-bar>span{max-width:none}.selection-guide{min-width:0;width:max-content}.time-grid{grid-template-columns:58px repeat(var(--days),minmax(0,1fr))}.intro h1 span:after{height:13px;bottom:3px}}
 
 /* Responsive editing, explicit validation and private participant views. */
-.event-heading h1,.event-description,.sidebar-title h2,.share-modal h2,.leave-dialog h2,.how-it-works strong,.suggestion-time{overflow-wrap:anywhere}.participant-name{display:grid;grid-template-columns:auto minmax(0,220px);align-items:center;gap:8px 12px;max-width:100%}.participant-name label{font-size:12px;font-weight:600}.participant-name input{max-width:100%;min-width:0}.participant-name .name-error,.participant-name .field-help{grid-column:1/-1;margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.name-error{color:var(--danger)}input[aria-invalid=true]{border-color:var(--danger);box-shadow:0 0 0 2px #a7353515}.participant-line>p{flex-shrink:0}.time-cell.partial{background:linear-gradient(to var(--selection-half,bottom),var(--lime) 50%,#f8faf5 50%)}.time-cell.partial:after{content:'';position:absolute;inset:50% 0 auto;border-top:1px dashed #77a843}.time-cell{position:relative}.grid-tools{position:sticky;top:0;z-index:25;background:white;padding-block:8px}.leave-dialog{width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--line);border-radius:18px;background:white;color:var(--ink);padding:28px;box-shadow:0 20px 80px #163f3b33}.leave-dialog::backdrop{background:#0b292a66}.leave-dialog h2{font-size:22px;line-height:1.4;margin:0 0 12px}.leave-dialog p{font-size:14px;color:var(--muted)}.dialog-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:22px}.dialog-actions .button{white-space:normal;min-width:0;overflow-wrap:anywhere}.event-meta,.suggestion-top,.attendance{flex-wrap:wrap}.segmented button{white-space:normal}.save-status{line-height:1.5}.save-bar .button{white-space:normal}.time-grid-wrap{overscroll-behavior:contain}.event-description{white-space:pre-wrap}.how-it-works{margin-top:25px}
-@media(max-width:699px){.participant-name{grid-template-columns:1fr}.participant-name input{width:100%;max-width:none}.participant-line>p{margin:0;text-align:left}.grid-tools .icon-button{min-width:38px;min-height:42px}.segmented.small button{min-height:42px}.dialog-actions{flex-direction:column}.dialog-actions .button{width:100%}.event-heading h1{max-width:100%}}
+.event-heading h1,.event-description,.sidebar-title h2,.share-modal h2,.how-it-works strong,.suggestion-time{overflow-wrap:anywhere}.participant-name{display:grid;grid-template-columns:auto minmax(0,220px);align-items:center;gap:8px 12px;max-width:100%}.participant-name label{font-size:12px;font-weight:600}.participant-name input{max-width:100%;min-width:0}.participant-name .name-error,.participant-name .field-help{grid-column:1/-1;margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.name-error{color:var(--danger)}input[aria-invalid=true]{border-color:var(--danger);box-shadow:0 0 0 2px #a7353515}.participant-line>p{flex-shrink:0}.time-cell.partial{background:linear-gradient(to var(--selection-half,bottom),var(--lime) 50%,#f8faf5 50%)}.time-cell.partial:after{content:'';position:absolute;inset:50% 0 auto;border-top:1px dashed #77a843}.time-cell{position:relative}.grid-tools{position:sticky;top:0;z-index:25;background:white;padding-block:8px}.event-meta,.suggestion-top,.attendance{flex-wrap:wrap}.segmented button{white-space:normal}.save-status{line-height:1.5}.save-bar .button{white-space:normal}.time-grid-wrap{overscroll-behavior:contain}.event-description{white-space:pre-wrap}.how-it-works{margin-top:25px}
+@media(max-width:699px){.participant-name{grid-template-columns:1fr}.participant-name input{width:100%;max-width:none}.participant-line>p{margin:0;text-align:left}.grid-tools .icon-button{min-width:38px;min-height:42px}.segmented.small button{min-height:42px}.event-heading h1{max-width:100%}}
 
 @media(max-width:699px){.grid-tools{position:relative;top:auto}}
 
@@ -270,3 +270,24 @@ button.person>svg{color:var(--primary)}
 @media(hover:hover){.suggestion-times>.suggestion-select:hover{background:var(--soft);border-color:#b5cdbd}}
 .suggestion-times>.suggestion-select[aria-pressed=true]{background:#e2f0df;border-color:var(--primary);font-weight:650}
 @media(max-width:699px){.suggestion-times .suggestion-time{font-size:16px}}
+
+.person-row{display:flex;align-items:center;gap:6px;min-width:0}
+.people-card .person-row>.person{flex:1;width:auto;min-width:0}
+.delete-response{min-width:40px;min-height:44px;color:var(--muted)}
+.delete-response:hover:not(:disabled){color:#a73535;background:#fff0ec}
+.anchored-panel{position:fixed;z-index:250;width:min(320px,calc(100vw - 24px));max-height:min(360px,calc(100dvh - 24px));overflow:auto;overscroll-behavior:contain;padding:20px;background:#fff;border:1px solid #adc8b6;border-radius:14px;box-shadow:0 10px 36px #163f3b30;color:var(--ink)}
+.anchored-panel h2{font-size:16px;line-height:1.45;margin:0 0 10px}
+.anchored-panel p{font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.panel-close{position:absolute;top:7px;right:7px}
+.availability-popover{background:#f5faf3}
+.availability-popover .slot-details{padding:0;border:0;border-radius:0;background:transparent}
+.availability-popover .slot-details h2{padding-right:24px;font-size:15px}
+.availability-popover .slot-detail-count{font-size:15px}
+.confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+.button.danger{background:#a73535;color:#fff}
+.button.danger:hover{background:#872828}
+.delete-response-popover h2{padding-right:0}
+@media(max-width:699px){.anchored-panel{padding:16px}}
+
+.person-row .person>span:nth-child(2){min-width:0;flex:1;overflow-wrap:anywhere}
+.person-row .person .avatar{flex-shrink:0}

@@ -181,3 +181,43 @@ describe('one-year expiry and manual cleanup', () => {
     expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 205 });
   });
 });
+describe('deleting a shared response', () => {
+  it('removes only the selected response and its availability, then recalculates shared times', async () => {
+    const created=await create(), event=await get(created.id);
+    const alice=await respond(created.id,event.windows,'Alice');
+    const bob=await respond(created.id,[],'Bob');
+    expect((await get(created.id)).candidates).toEqual([]);
+    expect((await request('/events/'+created.id+'/responses/'+bob.id,'DELETE',{revision:1})).status).toBe(200);
+    expect((await get(created.id)).responses.map(r=>r.id)).toEqual([alice.id]);
+    expect((await get(created.id)).candidates).toHaveLength(1);
+    expect((await request('/events/'+created.id+'/responses/'+alice.id,'DELETE',{revision:1})).status).toBe(200);
+    expect(await query('SELECT id FROM availability WHERE response_id=$1',[alice.id])).toEqual([]);
+    expect((await get(created.id)).responses).toEqual([]);
+    expect((await get(created.id)).windows).toEqual(event.windows);
+    expect((await get(created.id)).candidates).toEqual([]);
+    expect((await request('/events/'+created.id+'/responses/'+alice.id,'PUT',{name:'Alice',timezone:'UTC',revision:1,ranges:[]})).status).toBe(404);
+    expect((await request('/events/'+created.id+'/responses/'+alice.id,'DELETE',{revision:1})).status).toBe(404);
+    await respond(created.id,event.windows,'New response');
+    expect((await get(created.id)).response_count).toBe(1);
+  });
+  it('rejects stale confirmations, wrong-event targets, and invalid revisions', async () => {
+    const first=await create(), second=await create(), person=await respond(first.id,[]);
+    const path='/events/'+first.id+'/responses/'+person.id;
+    expect((await request('/events/'+second.id+'/responses/'+person.id,'DELETE',{revision:1})).status).toBe(404);
+    expect((await request(path,'DELETE',{revision:0})).status).toBe(400);
+    expect((await request(path,'DELETE',{revision:1,schedule_revision:99})).status).toBe(409);
+    expect((await request(path,'PUT',{name:'Changed',timezone:'UTC',revision:1,ranges:[]})).status).toBe(200);
+    expect((await request(path,'DELETE',{revision:1})).status).toBe(409);
+    expect((await get(first.id)).responses[0].revision).toBe(2);
+    expect((await request(path,'DELETE',{revision:2})).status).toBe(200);
+  });
+  it('rejects cross-origin deletion and expiry, including expiry racing the write', async () => {
+    const created=await create(), person=await respond(created.id,[]);
+    const path='/events/'+created.id+'/responses/'+person.id;
+    expect((await app.request('http://localhost/api'+path,{method:'DELETE',headers:{Origin:'https://elsewhere.example','Content-Type':'application/json'},body:JSON.stringify({revision:1})},{})).status).toBe(403);
+    const racing=createApp(()=>({query:async <T,>(sql:string,params:unknown[]=[])=>{if(sql.includes('WITH gate AS'))await query("UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1",[created.id]);return query<T>(sql,params);}}));
+    expect((await racing.request('http://localhost/api'+path,{method:'DELETE',body:JSON.stringify({revision:1}),headers:{'Content-Type':'application/json'}},{})).status).toBe(410);
+    expect(await query('SELECT id FROM responses WHERE id=$1',[person.id])).toHaveLength(1);
+    expect((await request(path,'DELETE',{revision:1})).status).toBe(410);
+  });
+});
