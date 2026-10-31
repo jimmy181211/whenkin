@@ -56,6 +56,8 @@ describe('shared result and editing UI', () => {
       const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}}/>);
       expect(html).toContain(t('Everyone Available')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
+      expect(html).not.toContain('best-badge'); expect(html).not.toContain('attendance-dots');
+      expect(html).toMatch(/<article class="suggestion[^"]*">[\s\S]*?class="suggestion-zone"[\s\S]*?<\/article>/);
       expect(html).toContain(t('Edit {name}',{name:'A'}));expect(html).toContain(t('Edit {name}',{name:'B'}));
       expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
       expect(html).toContain(t('Add Response'));expect(html).not.toContain('(you)');

@@ -26,9 +26,6 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
         <div className="sidebar-title">
           <h2>{t("Everyone Available")}</h2>
         </div>
-        <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
-            {t("Use Event’s Zone")}
-          </button>}</div>
         {!suggestions.length ? <div className="empty-results">
           <Users size={28}/>
           <strong>{t(event.responses.length ? 'No Shared Times Yet' : 'The Possibilities Start With You.')}</strong>
@@ -39,19 +36,17 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
           <div className="selection-group">
           {suggestions.map(candidate => {
                 const shown = weeklyView ? weeklyView.range(candidate) : candidate;
-                return <button className={`suggestion ${active?.start === candidate.start ? 'active' : ''}`} key={candidate.start} onClick={() => onSelect(candidate)}>
+                return <article className={`suggestion ${active?.start === candidate.start ? 'active' : ''}`} key={candidate.start}>
+            <button type="button" className="suggestion-select" aria-pressed={active?.start === candidate.start} onClick={() => onSelect(candidate)}>
             <div className="suggestion-top">
               <strong>{formatDay(shown.start, viewZone, false, weekly)}</strong>
-              <span className="best-badge">{t('Everyone')}</span>
             </div>
             <span className="suggestion-time">{formatTime(shown.start, viewZone)} – {localDate(shown.start, viewZone) !== localDate(shown.end, viewZone) ? formatDay(shown.end, viewZone, false, weekly) + ' ' : ''}{formatTime(shown.end, viewZone)}</span>
-            <span className="attendance">
-              <span className="attendance-dots">
-                {Array.from({ length: Math.min(event.responses.length, 8) }, (_, j) => <i key={j} className={j < candidate.available.length ? 'filled' : ''}/>)}
-              </span>
-              {t('Everyone available')}
-            </span>
-          </button>;
+            </button>
+        <div className="suggestion-zone"><Clock3 size={13}/> {t('Times shown in {zone}', { zone: zoneLabel(zone) })}{zone !== event.timezone && <button className="text-button" onClick={() => onZoneChange(event.timezone)}>
+            {t("Use Event’s Zone")}
+          </button>}</div>
+          </article>;
             })}</div>
         </div>}
       </section>
