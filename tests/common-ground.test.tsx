@@ -54,7 +54,7 @@ describe('shared result and editing UI', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}}/>);
-      expect(html).toContain(t('Everyone Available')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
+      expect(html).toContain(t('When Everyone Is Free')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
       expect(html).not.toContain('best-badge'); expect(html).not.toContain('attendance-dots');
       expect(html).toMatch(/<article class="suggestion[^"]*">[\s\S]*?class="suggestion-zone"[\s\S]*?<\/article>/);

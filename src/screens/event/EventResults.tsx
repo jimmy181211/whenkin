@@ -24,7 +24,7 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
       {inspection && <SlotDetails event={event} zone={zone} inspection={inspection}/>}
       <section className="suggestions-card">
         <div className="sidebar-title">
-          <h2>{t("Everyone Available")}</h2>
+          <h2>{t("When Everyone Is Free")}</h2>
         </div>
         {!suggestions.length ? <div className="empty-results">
           <Users size={28}/>
