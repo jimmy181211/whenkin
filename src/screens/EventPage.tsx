@@ -4,19 +4,19 @@ import ParticipantName from '../components/ParticipantName';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
 import PageLink from '../components/PageLink';
-import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { projectWeekly } from '../lib/weekly';
 import { loadEvent } from '../lib/load-event';
 import { api } from '../lib/api';
 import { allSlots, deviceTimezone, slotsToRanges } from '../lib/time';
 import { t } from '../lib/i18n';
-import type { Candidate, MeetingEvent } from '../lib/types';
+import type { Candidate, MeetingEvent, ResponseData } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
 import EventTour from '../components/EventTour';
 import Toast from '../components/Toast';
 import type { SlotInspection } from '../components/SlotDetails';
+import AvailabilityPopover from '../components/AvailabilityPopover';
 import { ApiError } from '../lib/api';
 import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
 export default function EventPage({ id }: {
@@ -52,6 +52,7 @@ export default function EventPage({ id }: {
     const editingIdRef = useRef<string | null>(null);
     const savingTask = useRef<Promise<boolean> | null>(null);
     const conflict = useRef(false);
+    const deletingResponse = useRef<string | null>(null);
     const revisionRef = useRef(0);
     const responseZoneRef = useRef<string | null>(null);
     const latest = useRef({ name, zone, selected });
@@ -151,7 +152,6 @@ export default function EventPage({ id }: {
             document.removeEventListener('visibilitychange', refresh);
         };
     }, [hasEvent, load, applyEvent, expire]);
-    const navigation = useUnsavedNavigation(saveState !== 'saved');
     function requestEditing() {
         setEditNotice(true);
         notify('Enter your name before editing availability.', nameInput.current);
@@ -184,7 +184,7 @@ export default function EventPage({ id }: {
         if (!editingIdRef.current && latest.current.name.trim()) changeDraft({ zone: next });
     }
     const persist = useCallback(async (): Promise<boolean> => {
-        if (!eventRef.current || unavailable) return false;
+        if (!eventRef.current || unavailable || (deletingResponse.current !== null && deletingResponse.current === editingIdRef.current)) return false;
         const value = latest.current;
         if (!value.name.trim()) {
             setEditNotice(true);
@@ -203,7 +203,7 @@ export default function EventPage({ id }: {
             const result = await api<{
                 id: string;
                 revision: number;
-            }>(`/events/${id}/responses${responseId ? '/' + responseId : ''}`, { method: responseId ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+            }>(`/events/${id}/responses${responseId ? '/' + responseId : ''}`, { method: responseId ? 'PUT' : 'POST', keepalive: true, body: JSON.stringify(payload) });
             if (!responseId) {
                 editingIdRef.current = result.id;
                 responseZoneRef.current = value.zone;
@@ -240,7 +240,7 @@ export default function EventPage({ id }: {
         void task.then(() => { if (savingTask.current === task) savingTask.current = null; });
         return task;
     }, [persist]);
-    async function editResponse(responseId: string | null) {
+    async function editResponse(responseId: string) {
         if (switchingRef.current) return;
         switchingRef.current = true;
         setSwitching(true);
@@ -251,17 +251,17 @@ export default function EventPage({ id }: {
             const result = await load();
             if (dirty.current && !reloadConflict) return;
             const person = result.responses.find(response => response.id === responseId);
-            if (responseId && !person) throw new Error('This response could not be found. Refresh the group and try again.');
+            if (!person) throw new Error('This response could not be found. Refresh the group and try again.');
             applyEvent(result);
-            const next = { name: person?.name ?? '', zone: latest.current.zone, selected: new Set(allSlots(person?.ranges ?? [])) };
-            editingIdRef.current = person?.id ?? null;
-            revisionRef.current = person?.revision ?? 0;
-            responseZoneRef.current = person?.timezone ?? null;
+            const next = { name: person.name, zone: latest.current.zone, selected: new Set(allSlots(person.ranges)) };
+            editingIdRef.current = person.id;
+            revisionRef.current = person.revision;
+            responseZoneRef.current = person.timezone;
             latest.current = next;
             generation.current++;
             dirty.current = false;
             conflict.current = false;
-            setEditingId(person?.id ?? null);
+            setEditingId(person.id);
             setName(next.name);
             setSelected(next.selected);
             setSaveState('saved');
@@ -281,14 +281,86 @@ export default function EventPage({ id }: {
         }
     }
     useEffect(() => {
-        if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable) {
+        if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable || switching) {
             return;
         }
         const timer = setTimeout(() => {
             void save();
         }, 1000);
         return () => clearTimeout(timer);
-    }, [saveState, name, selected, zone, save, isSaving, unavailable]);
+    }, [saveState, name, selected, zone, save, isSaving, unavailable, switching]);
+    function clearDeletedDraft(responseId: string) {
+        if (editingIdRef.current !== responseId) return;
+        editingIdRef.current = null;
+        revisionRef.current = 0;
+        responseZoneRef.current = null;
+        latest.current = { name: '', zone: latest.current.zone, selected: new Set<number>() };
+        generation.current++;
+        dirty.current = false;
+        conflict.current = false;
+        setEditingId(null);
+        setName('');
+        setSelected(new Set());
+        setSaveState('saved');
+        setEditNotice(false);
+        setResponseSession(value => value + 1);
+    }
+    async function deleteResponse(response: ResponseData): Promise<boolean> {
+        if (switchingRef.current || !eventRef.current) return false;
+        switchingRef.current = true;
+        deletingResponse.current = response.id;
+        setSwitching(true);
+        const own = editingIdRef.current === response.id;
+        const pending = savingTask.current;
+        const anchor = document.getElementById('delete-response-' + response.id);
+        let removed = false;
+        try {
+            if (own) {
+                // Finish an already-sent write, but do not save a draft that is being deleted.
+                if (pending) await pending;
+            } else if ((dirty.current || savingTask.current) && !(await save())) return false;
+            const revision = own && pending ? revisionRef.current : response.revision;
+            let fresh: MeetingEvent | undefined;
+            try {
+                await api('/events/' + id + '/responses/' + response.id, {
+                    method: 'DELETE', keepalive: true,
+                    body: JSON.stringify({ revision, schedule_revision: eventRef.current!.schedule_revision }),
+                });
+            } catch (error) {
+                if (!(error instanceof ApiError) || error.status !== 404) throw error;
+                fresh = await load();
+                if (fresh.responses.some(person => person.id === response.id)) throw error;
+            }
+            removed = true;
+            clearDeletedDraft(response.id);
+            const previous = eventRef.current!;
+            const responses = previous.responses.filter(person => person.id !== response.id);
+            applyEvent(fresh ?? { ...previous, responses, response_count: responses.length, candidates: [] });
+            setActive(null);
+            setError('');
+            if (!fresh) applyEvent(await load());
+            return true;
+        } catch (error) {
+            if (removed) {
+                setError('Response deleted. Results will refresh shortly.');
+                return true;
+            }
+            if (error instanceof ApiError && error.status === 410) expire();
+            else {
+                const message = error instanceof Error ? error.message : 'Could not delete this response. Please try again.';
+                setError(message);
+                notify(message, anchor);
+                if (error instanceof ApiError && error.status === 409) {
+                    try { applyEvent(await load()); } catch { /* The next refresh can retry. */ }
+                }
+            }
+            return false;
+        } finally {
+            deletingResponse.current = null;
+            switchingRef.current = false;
+            setSwitching(false);
+        }
+    }
     const suggestions = event?.candidates ?? [];
     async function copy(value: string, label: string) {
         try {
@@ -313,7 +385,7 @@ export default function EventPage({ id }: {
     const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
     return <main className="event-page">
-      {navigation.dialog}
+      {view === 'group' && inspection && <AvailabilityPopover event={event} zone={zone} inspection={inspection} onClose={() => setInspection(null)}/>}
       {notice && <Toast key={notice.id} message={notice.message} anchor={notice.anchor} onDismiss={dismissNotice}/>}
       <div className="event-layout">
         <section className="schedule-card">
@@ -346,7 +418,7 @@ export default function EventPage({ id }: {
           <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} inspection={view === 'group' ? inspection : null} onInspect={setInspection} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
 
         </section>
-        <EventResults inspection={view === 'group' ? inspection : null} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
+        <EventResults onDeleteResponse={deleteResponse} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
         const next = active?.start === candidate.start && active?.end === candidate.end ? null : candidate;
         setActive(next);
         if (next) requestAnimationFrame(() => {

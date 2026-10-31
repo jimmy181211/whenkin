@@ -1,16 +1,17 @@
-import SlotDetails, { type SlotInspection } from '../../components/SlotDetails';
-import { Clock3, Pencil, Plus, Users } from 'lucide-react';
+import { useState } from 'react';
+import DeleteResponsePopover from '../../components/DeleteResponsePopover';
+import { Clock3, Pencil, Trash2, Users } from 'lucide-react';
 import { displayRange, formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import { groupSharedTimes } from '../../lib/shared-time-groups';
-import type { Candidate, MeetingEvent } from '../../lib/types';
+import type { Candidate, MeetingEvent, ResponseData } from '../../lib/types';
 import type { projectWeekly } from '../../lib/weekly';
 type Props = {
-    inspection?: SlotInspection | null;
     event: MeetingEvent;
     zone: string;
     editingId?: string | null;
-    onEditResponse: (id: string | null) => void;
+    onEditResponse: (id: string) => void;
+    onDeleteResponse: (response: ResponseData) => Promise<boolean>;
     switching?: boolean;
     active: Candidate | null;
     suggestions: Candidate[];
@@ -18,12 +19,12 @@ type Props = {
     onZoneChange: (zone: string) => void;
     onSelect: (candidate: Candidate) => void;
 };
-export default function EventResults({ inspection, event, zone, editingId, onEditResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect }: Props) {
+export default function EventResults({ event, zone, editingId, onEditResponse, onDeleteResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect }: Props) {
+    const [deletion,setDeletion] = useState<{response:ResponseData;anchor:HTMLElement}|null>(null);
     const weekly = event.schedule_mode === 'weekdays';
     const viewZone = weekly ? 'UTC' : zone;
     const groups = groupSharedTimes(suggestions, viewZone, weeklyView?.range);
     return <aside className="results-sidebar">
-      {inspection && <SlotDetails event={event} zone={zone} inspection={inspection}/>}
       <section className="suggestions-card">
         <div className="sidebar-title">
           <h2>{t("When Everyone Is Free")}</h2>
@@ -57,18 +58,18 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
       <section className="people-card" aria-busy={switching}>
         <div className="sidebar-title">
           <h3>{t("Responders")} <span>{event.responses.length}</span></h3>
-          <button className="icon-button" aria-label={t('Add Response')} title={t('Add Response')} disabled={switching} onClick={() => onEditResponse(null)}><Plus size={15}/></button>
         </div>
-        {event.responses.length ? event.responses.map((r, i) => <button type="button" className="person" key={r.id} aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
+        {event.responses.length ? event.responses.map((r, i) => <div className="person-row" key={r.id}><button type="button" className="person" aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
           <span className={`avatar avatar-${i % 3}`}>{r.name.slice(0, 1).toUpperCase()}</span>
           <span>
             <strong>{r.name}</strong>
             <small>{zoneLabel(r.timezone)}</small>
           </span>
           <Pencil size={14}/>
-        </button>) : <p className="field-help">
+        </button><button type="button" id={'delete-response-'+r.id} className="icon-button delete-response" aria-label={t('Delete {name}',{name:r.name})} title={t('Delete {name}',{name:r.name})} disabled={switching} onClick={e=>setDeletion({response:r,anchor:e.currentTarget})}><Trash2 size={16}/></button></div>) : <p className="field-help">
           {t("Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.")}
         </p>}
       </section>
+      {deletion && <DeleteResponsePopover anchor={deletion.anchor} name={deletion.response.name} onConfirm={()=>onDeleteResponse(deletion.response)} onClose={()=>setDeletion(null)}/>}
     </aside>;
 }

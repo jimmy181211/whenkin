@@ -4,7 +4,6 @@ import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import PageLink from '../components/PageLink';
 import EventLimits from '../components/EventLimits';
-import { useUnsavedNavigation } from '../components/UnsavedNavigation';
 import { api } from '../lib/api';
 import { deviceTimezone } from '../lib/time';
 import { getLocale, t } from '../lib/i18n';
@@ -38,9 +37,6 @@ export default function CreateEventPage() {
     const [end, setEnd] = useState('18:00');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const createSnapshot = JSON.stringify({ zone, dates, scheduleMode, weekdays, title, description, start, end });
-    const [initialSnapshot] = useState(createSnapshot);
-    const navigation = useUnsavedNavigation(createSnapshot !== initialSnapshot, "Your Event Has Not Been Saved.");
     const [connection, setConnection] = useState<'checking' | 'ready' | 'setup' | 'unreachable'>('checking');
     const checkConnection = async () => {
         setConnection('checking');
@@ -76,7 +72,6 @@ export default function CreateEventPage() {
             const result = await api<{
                 id: string;
             }>('/events', { method: 'POST', body: JSON.stringify({ title, description, timezone: zone, dates, schedule_mode: scheduleMode, weekdays, startTime: start, endTime: end }) });
-            navigation.allowNavigation();
             window.location.assign(new URL(`/e/${result.id}`, location.href).href);
         }
         catch (e) {
@@ -85,7 +80,6 @@ export default function CreateEventPage() {
         }
     }
     return <main className="create-page">
-      {navigation.dialog}
       <section className="intro">
         <PageLink className="mobile-guide-link" href="/how-it-works">{t("How It Works")} <ArrowRight size={16}/></PageLink>
       </section>

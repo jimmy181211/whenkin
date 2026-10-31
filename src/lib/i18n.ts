@@ -4,6 +4,17 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  "Delete {name}": ["删除 {name}","Eliminar a {name}"],
+  "Delete response?": ["删除回复？","¿Eliminar respuesta?"],
+  "Delete {name} and their availability?": ["删除 {name} 的回复和空闲时间？","¿Eliminar la respuesta y disponibilidad de {name}?"],
+  "Cancel": ["取消","Cancelar"],
+  "Delete": ["删除","Eliminar"],
+  "Deleting…": ["正在删除…","Eliminando…"],
+  "Close availability details": ["关闭空闲说明","Cerrar detalles de disponibilidad"],
+  "Please reload this response before deleting it.": ["请重新加载此回复后再删除。","Recarga esta respuesta antes de eliminarla."],
+  "This response changed. Review it before deleting.": ["这份回复已更改，请重新查看后再删除。","Esta respuesta cambió. Revísala antes de eliminarla."],
+  "Could not delete this response. Please try again.": ["无法删除此回复，请重试。","No se pudo eliminar esta respuesta. Inténtalo de nuevo."],
+  "Response deleted. Results will refresh shortly.": ["回复已删除，结果稍后会自动更新。","Respuesta eliminada. Los resultados se actualizarán pronto."],
   'Who Is Available?': ['谁有空？', '¿Quién Está Disponible?'],
   'Hover over or tap a block in Group Availability to see who is free.': ['在群组空闲时间中悬停或点击一个时间块，查看谁有空。', 'Pasa el cursor o toca un bloque en Disponibilidad del Grupo para ver quién está libre.'],
   'When Everyone Is Free': ['大家都有空的时段', 'Cuando Todos Están Libres'],
@@ -13,7 +24,6 @@ export const messages: Record<string, [string, string]> = {
   'No unavailable responders.': ['所有回复者都有空。', 'Todos están disponibles.'],
   'Availability is for the entire selected block.': ['按整个所选时间块统计。', 'Se considera el bloque seleccionado completo.'],
   'Retry': ['重试', 'Reintentar'],
-  'Add Response': ['添加回复', 'Añadir Respuesta'],
   'Edit {name}': ['编辑 {name}', 'Editar a {name}'],
   'Everyone with the link can view and edit all responses.': ['持有链接的所有人都能查看和编辑全部回复。', 'Todos los que tengan el enlace pueden ver y editar todas las respuestas.'],
   'This response could not be found. Refresh the group and try again.': ['找不到这份回复，请刷新参与者列表后重试。', 'No se encontró esta respuesta. Actualiza el grupo e inténtalo de nuevo.'],
@@ -558,18 +568,6 @@ export const messages: Record<string, [string, string]> = {
     "No se pudo guardar el cambio. Inténtalo de nuevo en un momento."
   ],
 
-  "Leave without saving your changes?": [
-    "要放弃保存这些更改并离开吗？",
-    "¿Quieres salir sin guardar tus cambios?"
-  ],
-  "Keep Editing": [
-    "继续编辑",
-    "Seguir editando"
-  ],
-  "Leave Without Saving": [
-    "不保存并离开",
-    "Salir sin guardar"
-  ],
   "Partly available": [
     "部分时段有空",
     "Disponibilidad parcial"
@@ -609,14 +607,6 @@ export const messages: Record<string, [string, string]> = {
   "We Couldn’t Open That Event.": [
     "无法打开此活动。",
     "No Pudimos Abrir Ese Evento."
-  ],
-  "Your Availability Hasn't Been Saved.": [
-    "你的空闲时间尚未保存。",
-    "Tu Disponibilidad No Se Ha Guardado."
-  ],
-  "Your Event Has Not Been Saved.": [
-    "你的活动尚未保存。",
-    "Tu Evento No Se Ha Guardado."
   ],
   "Find Your Shared Time.": [
     "找到大家的共同时间。",

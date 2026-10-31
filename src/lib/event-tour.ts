@@ -39,7 +39,7 @@ export const tourCopy = {
     personal: ['Your Availability', 'View or edit your current response.'],
     group: ['Group Availability', 'See everyone’s availability. Hover over or tap a time block to see who’s free.'],
     everyone: ['When Everyone Is Free', 'These periods work for every responder.'],
-    responders: ['Responders', 'Click a name to view or edit a response; use + to add one.'],
+    responders: ['Responders', 'Click a name to edit a response. Use the trash button to delete it after confirmation.'],
     share: ['Share the event', 'Copy the link through Share Event, or copy the URL from your browser’s address bar. Both open the same event.'],
   },
   zh: {
@@ -52,7 +52,7 @@ export const tourCopy = {
     personal: ['你的空闲时间', '查看或修改你正在填写的空闲时间。'],
     group: ['群组空闲时间', '查看大家的空闲情况。悬停或点击时间块，查看谁有空。'],
     everyone: ['大家都有空的时段', '这里只显示所有回复者都有空的时段。'],
-    responders: ['回复者', '点名字查看或修改回复；点加号添加回复。'],
+    responders: ['回复者', '点名字查看或修改回复；点垃圾桶并确认后删除回复。'],
     share: ['分享活动', '在“分享活动”中复制链接，或直接复制浏览器地址栏的网址，效果一样。'],
   },
   es: {
@@ -65,7 +65,7 @@ export const tourCopy = {
     personal: ['Tu Disponibilidad', 'Consulta o edita tu respuesta actual.'],
     group: ['Disponibilidad del Grupo', 'Consulta la disponibilidad de todos. Pasa el cursor o toca un bloque para ver quién está libre.'],
     everyone: ['Cuando Todos Están Libres', 'Estos periodos les vienen bien a todos los que respondieron.'],
-    responders: ['Participantes que Respondieron', 'Pulsa un nombre para ver o editar su respuesta; usa + para añadir otra.'],
+    responders: ['Participantes que Respondieron', 'Pulsa un nombre para editar su respuesta. Usa la papelera y confirma para eliminarla.'],
     share: ['Comparte el evento', 'Copia el enlace desde Compartir Evento o la URL de la barra de direcciones. Ambos abren el mismo evento.'],
   },
 } as const;

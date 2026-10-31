@@ -38,7 +38,7 @@ React and TypeScript provide the interface. ChatGPT Sites hosts the website and 
 
 Weekday polls describe a typical week, not recurring appointments. Their shared-clock coordinate week and time-zone conversion remain unchanged. All range comparisons use numeric timestamps. The server calculates Common Ground once; the browser displays it.
 
-Everyone with an event link can see and edit all saved responses. A fresh visit opens a blank form. Click a name in The Group to load and edit that response, or use Add Response to start another one. No account or private edit link is needed. The server checks revisions to prevent old pages from overwriting newer changes.
+Everyone with an event link can see, edit, and delete saved responses. A fresh visit opens a blank form. Click a name in Responders to edit it, or use its trash button and confirm in the small popup to delete it. No account or private edit link is needed. The server checks revisions to prevent old pages from overwriting or deleting newer changes. Availability changes save automatically; navigation is never intercepted by an unsaved-changes dialog.
 
 ## Manual Cleanup
 

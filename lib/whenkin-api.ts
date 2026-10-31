@@ -180,6 +180,31 @@ export function createApp(factory?: (env: Env) => Database) {
         }
         return c.json(updated[0]);
     });
+    app.delete('/api/events/:id/responses/:responseId', async (c) => {
+        const database = db(c.env);
+        const event = await readEvent(database, c.req.param('id'));
+        const id = c.req.param('responseId');
+        checkId(id);
+        const input = await body(c.req.raw);
+        if (typeof input.revision !== 'number' || !Number.isInteger(input.revision) || input.revision < 1) {
+            throw new Problem(400, 'Please reload this response before deleting it.');
+        }
+        const expectedSchedule = input.schedule_revision ?? event.schedule_revision;
+        if (expectedSchedule !== event.schedule_revision) throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
+        const existing = await database.query('SELECT id FROM responses WHERE id=$1 AND event_id=$2', [id, event.id]);
+        if (!existing.length) throw new Problem(404, 'This response could not be found. Refresh the group and try again.');
+        // Parent lock serializes deletion with writes; FK cascade removes only this response's availability.
+        const removed = await database.query<{id: string}>(`WITH gate AS (
+          UPDATE events SET write_revision=write_revision+1
+          WHERE id=$2 AND schedule_revision=$4 AND expires_at>clock_timestamp() RETURNING id
+        ) DELETE FROM responses WHERE id=$1 AND event_id=$2 AND revision=$3
+          AND EXISTS (SELECT 1 FROM gate) RETURNING id`, [id, event.id, input.revision, expectedSchedule]);
+        if (!removed.length) {
+            await readEvent(database, event.id);
+            throw new Problem(409, 'This response changed. Review it before deleting.');
+        }
+        return c.json({ id: removed[0].id });
+    });
     app.all('/api/*', c => c.json({ error: 'This action could not be found.' }, 404));
     app.get('*', async (c) => c.env.ASSETS ? await c.env.ASSETS.fetch(c.req.raw) : c.text('Start the website with npm run dev.', 404));
     app.onError((error, c) => {

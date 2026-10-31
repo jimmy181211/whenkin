@@ -4,7 +4,7 @@ import { displayRange } from '../lib/time';
 import { inspectAvailability } from '../lib/group-availability';
 import type { MeetingEvent, TimeRange } from '../lib/types';
 
-export type SlotInspection = { stamps: number[]; range: TimeRange };
+export type SlotInspection = { stamps: number[]; range: TimeRange; anchor?: HTMLElement };
 export default function SlotDetails({event,zone,inspection}:{event:MeetingEvent;zone:string;inspection:SlotInspection}) {
   const { available, unavailable } = inspectAvailability(event.responses, inspection.stamps);
   const free = new Set(available.map(person => person.id));
