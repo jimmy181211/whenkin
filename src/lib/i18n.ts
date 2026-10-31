@@ -10,7 +10,6 @@ export const messages: Record<string, [string, string]> = {
   "Cancel": ["取消","Cancelar"],
   "Delete": ["删除","Eliminar"],
   "Deleting…": ["正在删除…","Eliminando…"],
-  "Close availability details": ["关闭空闲说明","Cerrar detalles de disponibilidad"],
   "Please reload this response before deleting it.": ["请重新加载此回复后再删除。","Recarga esta respuesta antes de eliminarla."],
   "This response changed. Review it before deleting.": ["这份回复已更改，请重新查看后再删除。","Esta respuesta cambió. Revísala antes de eliminarla."],
   "Could not delete this response. Please try again.": ["无法删除此回复，请重试。","No se pudo eliminar esta respuesta. Inténtalo de nuevo."],
