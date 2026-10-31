@@ -278,10 +278,9 @@ button.person>svg{color:var(--primary)}
 .anchored-panel{position:fixed;z-index:250;width:min(320px,calc(100vw - 24px));max-height:min(360px,calc(100dvh - 24px));overflow:auto;overscroll-behavior:contain;padding:20px;background:#fff;border:1px solid #adc8b6;border-radius:14px;box-shadow:0 10px 36px #163f3b30;color:var(--ink)}
 .anchored-panel h2{font-size:16px;line-height:1.45;margin:0 0 10px}
 .anchored-panel p{font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.panel-close{position:absolute;top:7px;right:7px}
 .availability-popover{background:#f5faf3}
 .availability-popover .slot-details{padding:0;border:0;border-radius:0;background:transparent}
-.availability-popover .slot-details h2{padding-right:24px;font-size:15px}
+.availability-popover .slot-details h2{font-size:15px}
 .availability-popover .slot-detail-count{font-size:15px}
 .confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
 .button.danger{background:#a73535;color:#fff}
