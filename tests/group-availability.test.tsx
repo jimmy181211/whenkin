@@ -1,8 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import AvailabilityGrid from '../src/components/AvailabilityGrid';
+import SlotDetails from '../src/components/SlotDetails';
 import Toast from '../src/components/Toast';
-import { groupAvailability, availabilityColor } from '../src/lib/group-availability';
+import { groupAvailability, availabilityColor, inspectAvailability } from '../src/lib/group-availability';
 import { setLanguage, t } from '../src/lib/i18n';
 import type { MeetingEvent } from '../src/lib/types';
 const stamp=Date.parse('2027-01-15T09:00:00Z');
@@ -13,6 +14,24 @@ const event:MeetingEvent={id:'test',title:'Event',organizer_name:'',description:
 ]};
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('en');});
 describe('group availability',()=>{
+  it('lists full-block availability separately from partial and empty responses',()=>{
+    const inspected = inspectAvailability([...event.responses, {id:'C',name:'C',timezone:'UTC',revision:1,ranges:[]}], [stamp,stamp+900000]);
+    expect(inspected.available.map(p=>p.id)).toEqual(['A']);
+    expect(inspected.unavailable.map(p=>[p.id,p.partial])).toEqual([['B',true],['C',false]]);
+    expect(inspectAvailability(event.responses,[stamp+2700000]).available).toEqual([]);
+    expect(inspectAvailability([], [stamp])).toEqual({available:[],unavailable:[]});
+  });
+
+  it('shows responder names and marks partial availability in each language',()=>{
+    for(const language of ['en','zh','es'] as const){
+      setLanguage(language);
+      const html=renderToStaticMarkup(<SlotDetails event={event} zone="UTC" inspection={{stamps:[stamp,stamp+900000],range:range(0,30)}}/>);
+      expect(html).toContain(t('Availability at This Time'));
+      expect(html).toContain('A</span>');expect(html).toContain('B<small>');
+      expect(html).toContain(t('Partly available'));
+      expect(html).toContain('slot-presence available');expect(html).toContain('slot-presence unavailable');
+    }
+  });
   it('uses distinct colors for zero through six people and a dark all-available endpoint',()=>{
     const colors=Array.from({length:7},(_,n)=>availabilityColor(n,6));
     expect(new Set(colors).size).toBe(7);expect(colors[0]).toBe('#fafbf8');

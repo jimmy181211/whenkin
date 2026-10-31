@@ -11,14 +11,14 @@ vi.mock('next/navigation',()=>({usePathname:()=>window.location.pathname,useRout
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path,href:'http://localhost'+path,origin:'http://localhost'},innerWidth:390});return renderToStaticMarkup(<App/>);};
 describe('language changes across the website',()=>{
-  it('starts in English with desktop steps and a link to the mobile guide',()=>{
+  it('starts in English with a compact guide entry on every screen',()=>{
     expect(getLanguage()).toBe('en');
     const html=page();
     expect(html).toContain('Event Name');
     expect(html).not.toContain('What are you planning?');
-    expect(html).toContain('The Organizer Creates an Event');
-    expect(html).toContain('Participants Mark When They’re Free');
-    expect(html).toContain('Whenkin Suggests the Best Times');
+    expect(html).not.toContain('The Organizer Creates an Event');
+    expect(html).not.toContain('Participants Mark When They’re Free');
+    expect(html).not.toContain('Whenkin Suggests the Best Times');
     expect(html).not.toMatch(/href="\/demo"|Try an example|Try the demo/);
     expect(html).toContain('href="/how-it-works"');
     expect(page('/how-it-works')).toContain('The Organizer Creates an Event');
@@ -30,8 +30,8 @@ describe('language changes across the website',()=>{
   it('renders Chinese forms, instructions, and the selected language',()=>{
     setLanguage('zh');const html=page();
     expect(html).toContain('创建你的活动');
-    expect(html).toContain('组织者创建活动');
-    expect(html).toContain('参与者标记空闲时间');
+    expect(html).not.toContain('组织者创建活动');
+    expect(html).not.toContain('参与者标记空闲时间');
     expect(html).toContain('value="zh" selected=""');
     expect(html).not.toContain('What are you planning?');
     expect(page('/how-it-works')).toContain('guide-page');
@@ -40,7 +40,7 @@ describe('language changes across the website',()=>{
   it('renders Spanish forms, guide, dates, and explanatory errors',()=>{
     setLanguage('es');const html=page();
     expect(html).toContain('Crea tu Evento');
-    expect(html).toContain('Los Participantes Marcan Cuándo Están Libres');
+    expect(html).not.toContain('Los Participantes Marcan Cuándo Están Libres');
     expect(html).toContain('Fechas del evento');
     expect(page('/how-it-works')).toContain('guide-page');
     expect(t('Edit {name}',{name:'Sam'})).toBe('Editar a Sam');

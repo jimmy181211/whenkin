@@ -203,3 +203,49 @@ button.person{width:100%;text-align:left;background:transparent;color:inherit;bo
 button.person:hover{background:var(--soft)}
 button.person[aria-pressed=true]{background:var(--soft);border-color:#9dbdaf}
 button.person>svg{color:var(--primary)}
+
+/* Calendar dates remain neutral until selected; hover adds a slightly deeper green. */
+.calendar-day:not(:disabled){background:#fff;color:var(--ink)}
+.calendar-day.other-month:not(:disabled){background:#fff;color:#a2aca1}
+.calendar-day[aria-pressed=true]:not(:disabled){background:#e2f0df;color:#205546;font-weight:700;box-shadow:inset 0 0 0 1px #b5d4b3}
+.calendar-day[aria-pressed=true]:before{content:'✓';position:absolute;right:3px;top:0;font-size:9px}
+@media(hover:hover){.calendar-day:hover:not(:disabled){background:#c8e3c6;color:#164c40}.calendar-day[aria-pressed=true]:hover:not(:disabled){background:#c8e3c6;color:#164c40}}
+.calendar-day:focus-visible{outline-offset:1px}
+.slot-details{border:1px solid #a9ccba;border-radius:16px;padding:20px;background:#f5faf3;scroll-margin-block:20px}
+.slot-details h2{font-size:17px;margin:0 0 12px}
+.slot-detail-time{font-size:14px;font-weight:600;margin-bottom:10px}
+.slot-detail-count{font-size:16px;font-weight:700;color:var(--primary)}
+.time-grid-wrap.group-mode .time-cell{cursor:pointer}
+.time-grid-wrap.group-mode .time-cell:hover,.time-grid-wrap.group-mode .time-cell:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
+@media(max-width:699px){
+  .event-page{padding-inline:18px}
+  .schedule-card{padding-inline:18px}
+  .time-grid-wrap{margin-inline:0}
+  .create-page{padding-inline:22px}
+  .create-card{padding-inline:20px}
+  .calendar{margin-inline:4px}
+  .calendar-day{min-height:38px}
+}
+
+.time-grid-wrap.group-mode .time-cell.inspected{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
+
+/* Use the mobile guide entry on desktop too, keeping the form as the main task. */
+.create-page{grid-template-columns:minmax(0,1fr);max-width:560px;gap:18px;padding-top:32px}
+.create-page .intro{padding:0}
+.create-page .mobile-guide-link{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--primary);text-decoration:none}
+.create-page .mobile-guide-link:hover{text-decoration:underline}
+@media(max-width:699px){.create-page .intro{margin-bottom:18px}}
+
+/* Show shared time cards directly on the page, without a surrounding card. */
+.results-sidebar .suggestions-card{padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}
+.results-sidebar .suggestion{background:#fff;border:1px solid var(--line)}
+.slot-responders{list-style:none;padding:0;margin:12px 0 0}
+.slot-responders li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.slot-responders li:last-child{border-bottom:0;padding-bottom:0}
+.slot-responder-name{min-width:0;overflow-wrap:anywhere}
+.slot-responder-name small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.slot-presence{display:inline-flex;flex-shrink:0}
+.slot-presence.available{color:var(--primary)}
+.slot-presence.unavailable{color:#87553e}
+
+.results-sidebar .suggestion.active{border-color:var(--primary);background:#edf5e9}

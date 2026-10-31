@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, CalendarDays, Info, LoaderCircle, Users, Plus, RefreshCw } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
-import Steps from '../components/Steps';
 import PageLink from '../components/PageLink';
 import EventLimits from '../components/EventLimits';
 import { useUnsavedNavigation } from '../components/UnsavedNavigation';
@@ -88,17 +87,6 @@ export default function CreateEventPage() {
     return <main className="create-page">
       {navigation.dialog}
       <section className="intro">
-        <div className="eyebrow mobile-hide"><span /> {t("LESS BACK-AND-FORTH. MORE TOGETHER.")}</div>
-        <h1>{t("Find a Time.")}<br /><span>{t("Make It Happen.")}</span></h1>
-        <div className="overlap-art" aria-hidden="true">
-          <div className="overlap-square one"/>
-          <div className="overlap-square two"/>
-          <div className="overlap-square intersection"/>
-          <span className="art-label first">{t("your time")}</span>
-          <span className="art-label second">{t("their time")}</span>
-          <span className="art-label shared">{t("a little common ground")} <ArrowRight size={16}/></span>
-        </div>
-        <div className="desktop-steps"><Steps /></div>
         <PageLink className="mobile-guide-link" href="/how-it-works">{t("How It Works")} <ArrowRight size={16}/></PageLink>
       </section>
       <section className="create-card">

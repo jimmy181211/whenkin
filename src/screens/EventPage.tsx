@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Link2, LoaderCircle, Users } from 'lucide-react';
+import { Link2, LoaderCircle, Users } from 'lucide-react';
 import ParticipantName from '../components/ParticipantName';
-import AvailabilityStatus from '../components/AvailabilityStatus';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
 import PageLink from '../components/PageLink';
@@ -16,6 +15,7 @@ import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
 import Toast from '../components/Toast';
+import type { SlotInspection } from '../components/SlotDetails';
 import { ApiError } from '../lib/api';
 import { EVENT_EXPIRED_MESSAGE } from '../lib/event-limits';
 export default function EventPage({ id }: {
@@ -42,6 +42,7 @@ export default function EventPage({ id }: {
     const [view, setView] = useState<'personal' | 'group'>('personal');
     const [share, setShare] = useState(false);
     const [copied, setCopied] = useState('');
+    const [inspection, setInspection] = useState<SlotInspection | null>(null);
     const [active, setActive] = useState<Candidate | null>(null);
     const eventRef = useRef<MeetingEvent | null>(null);
     const dirty = useRef(false);
@@ -69,6 +70,7 @@ export default function EventPage({ id }: {
             revisionRef.current = person?.revision ?? 0;
             generation.current++;
             setActive(null);
+            setInspection(null);
         }
         const current = result.responses.find(response => response.id === editingIdRef.current);
         if (current && !dirty.current && !saving.current && current.revision !== revisionRef.current) {
@@ -175,6 +177,7 @@ export default function EventPage({ id }: {
         if (next === zone) {
             return;
         }
+        setInspection(null);
         setZone(next);
         latest.current = { ...latest.current, zone: next };
         if (!editingIdRef.current && latest.current.name.trim()) changeDraft({ zone: next });
@@ -308,7 +311,6 @@ export default function EventPage({ id }: {
     }
     const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
-    const saveStatus = <AvailabilityStatus state={saveState} hasSavedResponse={!!editingId}/>;
     return <main className="event-page">
       {navigation.dialog}
       {notice && <Toast key={notice.id} message={notice.message} anchor={notice.anchor} onDismiss={dismissNotice}/>}
@@ -330,7 +332,7 @@ export default function EventPage({ id }: {
             <EventLimits/></div>
             {event.description && <p className="event-description">{event.description}</p>}
           </header>
-          {error && <div className="error-message" role="alert">{t(error)}</div>}
+          {error && <div className="error-message" role="alert">{t(error)} {saveState === 'error' && !conflict.current && <button type="button" className="text-button" disabled={isSaving} onClick={() => void save()}>{t('Retry')}</button>}</div>}
           <div className="participant-controls">
             <ParticipantName name={name} disabled={switching} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
@@ -339,19 +341,11 @@ export default function EventPage({ id }: {
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} status={saveStatus} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
-          <div className="save-bar">
-            <button className="button primary compact" disabled={saveState === 'saved' || saveState === 'saving'} onClick={() => void save()}>
-              {t(saveState === 'saving' ? 'Saving…' : 'Save Availability')}
-              <Check size={16}/>
-            </button>
-          </div>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} inspection={view === 'group' ? inspection : null} onInspect={setInspection} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
 
         </section>
-        <EventResults event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
+        <EventResults inspection={view === 'group' ? inspection : null} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
         setActive(active?.start === candidate.start ? null : candidate);
-    }} onRefresh={() => {
-        load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
       {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}

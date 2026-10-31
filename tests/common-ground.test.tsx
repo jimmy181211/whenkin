@@ -50,11 +50,11 @@ describe('everyone-free common ground', () => {
 describe('shared result and editing UI', () => {
   const responses = [person('A', [range(0, 90)]), person('B', [range(30, 60)])];
   const event: MeetingEvent = { id: 'shared', title: 'Event', organizer_name: '', description: '', timezone: 'UTC', windows: [range(0, 90)], responses };
-  it('shows only primary cards and makes every member selectable in all languages', () => {
+  it('shows only everyone-available cards and makes every member selectable in all languages', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
-      const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}} onRefresh={() => {}}/>);
-      expect(html).toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
+      const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}}/>);
+      expect(html).toContain(t('Everyone Available')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
       expect(html).toContain(t('Edit {name}',{name:'A'}));expect(html).toContain(t('Edit {name}',{name:'B'}));
       expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
