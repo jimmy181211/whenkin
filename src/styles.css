@@ -221,7 +221,6 @@ button.person>svg{color:var(--primary)}
 .slot-person-list p{font-size:14px;margin:0;padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .slot-person-list p small{display:block;color:var(--muted)}
 .slot-person-list.not-free h3{color:#785339}
-.slot-details>.field-help{margin:16px 0 0}
 .time-grid-wrap.group-mode .time-cell{cursor:pointer}
 .time-grid-wrap.group-mode .time-cell:hover,.time-grid-wrap.group-mode .time-cell:focus-visible{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
 @media(max-width:699px){
@@ -235,7 +234,6 @@ button.person>svg{color:var(--primary)}
 }
 
 .time-grid-wrap.group-mode .time-cell.inspected{outline:2px solid var(--primary);outline-offset:-2px;z-index:1}
-.slot-details-hint p{font-size:13px;margin:0;color:var(--muted)}
 
 /* Use the mobile guide entry on desktop too, keeping the form as the main task. */
 .create-page{grid-template-columns:minmax(0,1fr);max-width:560px;gap:18px;padding-top:32px}

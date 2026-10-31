@@ -53,7 +53,7 @@ describe('shared result and editing UI', () => {
   it('shows only everyone-available cards and makes every member selectable in all languages', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
-      const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}} onRefresh={() => {}}/>);
+      const html = renderToStaticMarkup(<EventResults event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}}/>);
       expect(html).toContain(t('Everyone Available')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
       expect(html).toContain(t('Edit {name}',{name:'A'}));expect(html).toContain(t('Edit {name}',{name:'B'}));

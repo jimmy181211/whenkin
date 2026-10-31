@@ -19,6 +19,5 @@ export default function SlotDetails({event,zone,inspection}:{event:MeetingEvent;
       {unavailable.map(person=><p key={person.id}>{person.name}{person.partial&&<small>{t('Partly available')}</small>}</p>)}
       {!unavailable.length&&<p className="field-help">{t('No unavailable responders.')}</p>}
     </div>
-    <p className="field-help">{t('Availability is for the entire selected block.')}</p>
   </section>;
 }

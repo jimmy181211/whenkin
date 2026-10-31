@@ -346,8 +346,6 @@ export default function EventPage({ id }: {
         </section>
         <EventResults inspection={view === 'group' ? inspection : null} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
         setActive(active?.start === candidate.start ? null : candidate);
-    }} onRefresh={() => {
-        load().then(applyEvent).catch(e => setError(e.message));
     }}/>
       </div>
       {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}

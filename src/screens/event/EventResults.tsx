@@ -1,5 +1,5 @@
 import SlotDetails, { type SlotInspection } from '../../components/SlotDetails';
-import { Check, Clock3, Pencil, Plus, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { Check, Clock3, Pencil, Plus, Sparkles, Users } from 'lucide-react';
 import { formatDay, formatTime, localDate, zoneLabel } from '../../lib/time';
 import { t } from '../../lib/i18n';
 import type { Candidate, MeetingEvent } from '../../lib/types';
@@ -16,13 +16,12 @@ type Props = {
     weeklyView: ReturnType<typeof projectWeekly> | null;
     onZoneChange: (zone: string) => void;
     onSelect: (candidate: Candidate) => void;
-    onRefresh: () => void;
 };
-export default function EventResults({ inspection, event, zone, editingId, onEditResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect, onRefresh }: Props) {
+export default function EventResults({ inspection, event, zone, editingId, onEditResponse, switching, active, suggestions, weeklyView, onZoneChange, onSelect }: Props) {
     const weekly = event.schedule_mode === 'weekdays';
     const viewZone = weekly ? 'UTC' : zone;
     return <aside className="results-sidebar">
-      {inspection ? <SlotDetails event={event} zone={zone} inspection={inspection}/> : <section className="slot-details slot-details-hint"><h2>{t('Who Is Available?')}</h2><p>{t('Hover over or tap a block in Group Availability to see who is free.')}</p></section>}
+      {inspection && <SlotDetails event={event} zone={zone} inspection={inspection}/>}
       <section className="suggestions-card">
         <div className="sidebar-title">
           <span className="sparkle-icon"><Sparkles size={18}/></span>
@@ -72,9 +71,6 @@ export default function EventResults({ inspection, event, zone, editingId, onEdi
           <Users size={17}/>
           <h3>{t("Responders")} <span>{event.responses.length}</span></h3>
           <button className="icon-button" aria-label={t('Add Response')} title={t('Add Response')} disabled={switching} onClick={() => onEditResponse(null)}><Plus size={15}/></button>
-          <button className="icon-button" aria-label={t("Refresh responses")} onClick={onRefresh}>
-            <RefreshCw size={14}/>
-          </button>
         </div>
         {event.responses.length ? event.responses.map((r, i) => <button type="button" className="person" key={r.id} aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
           <span className={`avatar avatar-${i % 3}`}>{r.name.slice(0, 1).toUpperCase()}</span>
