@@ -2,7 +2,8 @@
 export function tourScrollDelta(target: { top: number; bottom: number }, bounds: { top: number; bottom: number }) {
   const room = bounds.bottom - bounds.top;
   if (room <= 0) return 0;
-  if (target.bottom - target.top <= room) {
+  // Large sections need a clear visible portion, not a viewport-filling close-up.
+  if (target.bottom - target.top <= Math.min(240, room)) {
     if (target.top < bounds.top) return target.top - bounds.top;
     if (target.bottom > bounds.bottom) return target.bottom - bounds.bottom;
     return 0;

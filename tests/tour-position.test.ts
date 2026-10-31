@@ -14,6 +14,7 @@ describe('context-preserving guide scrolling', () => {
   it('does not recenter a large grid that is already substantially visible', () => {
     expect(tourScrollDelta({ top: 280, bottom: 900 }, bounds)).toBe(0);
     expect(tourScrollDelta({ top: -100, bottom: 900 }, bounds)).toBe(0);
+    expect(tourScrollDelta({ top: 300, bottom: 800 }, bounds)).toBe(0);
   });
   it('reveals enough of a tall grid while retaining the field above it', () => {
     expect(tourScrollDelta({ top: 500, bottom: 1040 }, bounds)).toBe(110);
