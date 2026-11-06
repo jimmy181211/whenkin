@@ -117,7 +117,6 @@ export default function CreateEventPage() {
             </label>
           </div>
           <TimezonePicker value={zone} onChange={setZone}/>
-          <p className="field-help">{t("Your guests will see their own local time")}</p>
           {(connection === 'setup' || connection === 'unreachable') && <div className="connection-notice" role="status">
             <Info size={17}/>
             <div>

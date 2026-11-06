@@ -34,9 +34,9 @@ describe('first-visit event guide', () => {
     const saved = storage(); saved.setItem(tour.EVENT_TOUR_KEY, 'started');
     expect(tour.shouldOfferTour(saved)).toBe(true);
   });
-  it('provides seven concise steps with separate group guidance and both sharing methods', async () => {
+  it('provides three unchanged steps with separate group guidance and both sharing methods', async () => {
     const { tourCopy, tourSteps } = await import('../src/lib/event-tour');
-    expect(tourSteps.map(step => step.key)).toEqual(['name', 'grid', 'personal', 'group', 'everyone', 'responders', 'share']);
+    expect(tourSteps.map(step => step.key)).toEqual(['personal', 'group', 'share']);
     for (const copy of Object.values(tourCopy)) {
       expect(copy.start).toBeTruthy(); expect(copy.skip).toBeTruthy();
       for (const step of tourSteps) {

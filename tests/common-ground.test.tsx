@@ -53,28 +53,29 @@ describe('shared result and editing UI', () => {
   it('shows only everyone-available cards and makes every member selectable in all languages', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
-      const html = renderToStaticMarkup(<EventResults onDeleteResponse={async()=>false} event={event} editingId="B" onEditResponse={()=>{}} zone="UTC" active={null} suggestions={commonGround(event.windows, responses)} weeklyView={null} onSelect={() => {}} onZoneChange={() => {}}/>);
+      const html = renderToStaticMarkup(<EventResults onDeleteResponse={async()=>false} event={event} editingId="B" onEditResponse={()=>{}} highlighted={false} suggestions={commonGround(event.windows, responses)} onToggleHighlight={() => {}}/>);
       expect(html).toContain(t('When Everyone Is Free')); expect(html).toContain(t('Responders')); expect(html).not.toContain(t('Primary Selection')); expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
       expect(html).toContain('suggestions-card'); expect(html).toContain('people-card');
       expect(html).not.toContain('best-badge'); expect(html).not.toContain('attendance-dots');
-      expect(html).toMatch(/<article class="suggestion[^"]*"[^>]*>[\s\S]*?class="suggestion-zone"[\s\S]*?<\/article>/);
       expect(html).toContain(t('Edit {name}',{name:'A'}));expect(html).toContain(t('Edit {name}',{name:'B'}));
       expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
       expect(html).not.toContain('Add Response');expect(html).toContain(t('Delete {name}',{name:'A'}));expect(html).toContain(t('Delete {name}',{name:'B'}));expect(html).not.toContain('(you)');
     }
   });
-  it('shows each date and timezone once while retaining a button for every disjoint time',()=>{
+  it('offers one toggle for all disjoint periods and no individual date cards',()=>{
     const suggestions = [
       {start:'2027-01-15T19:00:00Z',end:'2027-01-15T21:00:00Z',available:['A','B']},
       {start:'2027-01-15T22:00:00Z',end:'2027-01-15T23:00:00Z',available:['A','B']},
       {start:'2027-01-16T19:00:00Z',end:'2027-01-16T20:00:00Z',available:['A','B']},
     ];
-    const html=renderToStaticMarkup(<EventResults onDeleteResponse={async()=>false} event={event} zone="America/Los_Angeles" active={suggestions[1]} suggestions={suggestions} weeklyView={null} onEditResponse={()=>{}} onSelect={()=>{}} onZoneChange={()=>{}}/>);
-    expect(html.match(/<article /g)).toHaveLength(2);
-    expect(html.match(/class="suggestion-zone"/g)).toHaveLength(2);
-    expect(html.match(/class="suggestion-select"/g)).toHaveLength(3);
-    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(html).toContain('11:00 AM – 1:00 PM');expect(html).toContain('2:00 PM – 3:00 PM');
+    const html=renderToStaticMarkup(<EventResults onDeleteResponse={async()=>false} event={event} highlighted={true} suggestions={suggestions} onEditResponse={()=>{}} onToggleHighlight={()=>{}}/>);
+    expect(html).not.toContain('<article ');
+    expect(html).not.toContain('suggestion-zone');
+    expect(html).not.toContain('suggestion-select');
+    expect(html).toContain('Cancel Highlight');
+    expect(html).toContain('3 shared time periods');
+    expect(html.indexOf('people-card')).toBeLessThan(html.indexOf('suggestions-card'));
+    expect(html).toMatch(/highlight-shared-times" aria-pressed="true"/);
     let depth=0;
     for(const tag of html.match(/<\/?button\b[^>]*>/g)??[]){
       depth+=tag.startsWith('</')?-1:1;

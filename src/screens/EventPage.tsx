@@ -9,7 +9,7 @@ import { loadEvent } from '../lib/load-event';
 import { api } from '../lib/api';
 import { allSlots, deviceTimezone, slotsToRanges } from '../lib/time';
 import { t } from '../lib/i18n';
-import type { Candidate, MeetingEvent, ResponseData } from '../lib/types';
+import type { MeetingEvent, ResponseData } from '../lib/types';
 import EventResults from './event/EventResults';
 import ShareEventDialog from './event/ShareEventDialog';
 import EventLimits from '../components/EventLimits';
@@ -44,7 +44,7 @@ export default function EventPage({ id }: {
     const [share, setShare] = useState(false);
     const [copied, setCopied] = useState('');
     const [inspection, setInspection] = useState<SlotInspection | null>(null);
-    const [active, setActive] = useState<Candidate | null>(null);
+    const [highlightShared, setHighlightShared] = useState(false);
     const eventRef = useRef<MeetingEvent | null>(null);
     const dirty = useRef(false);
     const saving = useRef(false);
@@ -71,7 +71,7 @@ export default function EventPage({ id }: {
             latest.current = { ...value, selected: next };
             revisionRef.current = person?.revision ?? 0;
             generation.current++;
-            setActive(null);
+            setHighlightShared(false);
             setInspection(null);
         }
         const current = result.responses.find(response => response.id === editingIdRef.current);
@@ -86,7 +86,6 @@ export default function EventPage({ id }: {
         }
         eventRef.current = result;
         setEvent(result);
-        setActive(current => current ? result.candidates?.find(candidate => candidate.start === current.start && candidate.end === current.end) ?? null : null);
     }, []);
     const load = useCallback(() => loadEvent(id), [id]);
     useEffect(() => {
@@ -266,7 +265,7 @@ export default function EventPage({ id }: {
             setSelected(next.selected);
             setSaveState('saved');
             setView('personal');
-            setActive(null);
+            setHighlightShared(false);
             setError('');
             setEditNotice(false);
             dismissNotice();
@@ -336,7 +335,7 @@ export default function EventPage({ id }: {
             const previous = eventRef.current!;
             const responses = previous.responses.filter(person => person.id !== response.id);
             applyEvent(fresh ?? { ...previous, responses, response_count: responses.length, candidates: [] });
-            setActive(null);
+            setHighlightShared(false);
             setError('');
             if (!fresh) applyEvent(await load());
             return true;
@@ -415,15 +414,17 @@ export default function EventPage({ id }: {
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>
           </div>
-          <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlight={active} view={view} onViewChange={setView} inspection={view === 'group' ? inspection : null} onInspect={setInspection} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
+          <AvailabilityGrid key={event.id + ':' + event.schedule_revision + ':' + responseSession} event={event} zone={zone} selected={selected} onChange={mark} highlights={highlightShared && view === 'group' ? suggestions : []} view={view} onViewChange={next => { setView(next); if (next === 'personal') setHighlightShared(false); }} inspection={view === 'group' ? inspection : null} onInspect={setInspection} canEdit={!switching && !!name.trim()} onEditBlocked={() => { if (!switching) requestEditing(); }}/>
 
         </section>
-        <EventResults onDeleteResponse={deleteResponse} event={event} zone={zone} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} active={active} suggestions={suggestions} weeklyView={weeklyView} onZoneChange={changeZone} onSelect={candidate => {
-        const next = active?.start === candidate.start && active?.end === candidate.end ? null : candidate;
-        setActive(next);
-        if (next) requestAnimationFrame(() => {
-            document.querySelector<HTMLElement>('.time-cell.highlighted')?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-        });
+        <EventResults onDeleteResponse={deleteResponse} event={event} editingId={editingId} onEditResponse={responseId => void editResponse(responseId)} switching={switching} highlighted={highlightShared} suggestions={suggestions} onToggleHighlight={() => {
+        const next = !highlightShared;
+        setHighlightShared(next);
+        setInspection(null);
+        if (next) {
+            setView('group');
+            requestAnimationFrame(() => document.querySelector<HTMLElement>('.time-cell.highlighted')?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }));
+        }
     }}/>
       </div>
       {share && <ShareEventDialog eventLink={eventLink} copied={copied} onClose={() => { setShare(false); dismissNotice(); }} onCopy={copy}/>}

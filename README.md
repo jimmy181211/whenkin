@@ -66,3 +66,7 @@ Run `npm run check`, `npm test`, and `npm run build`. Tests cover shared visibil
 [Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) describe the shared visibility and retention rules. UCSD CSSA operates Whenkin; contact j4ouyang@ucsd.edu for data requests.
 
 Source: https://github.com/jimmy181211/whenkin
+
+See [local analytics and cleanup verification](docs/analytics.md) for the
+read-only report generator and reproducible isolated retention test. Generated
+reports stay local; only the reusable code belongs in this repository.

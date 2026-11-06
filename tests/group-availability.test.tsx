@@ -14,6 +14,17 @@ const event:MeetingEvent={id:'test',title:'Event',organizer_name:'',description:
 ]};
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('en');});
 describe('group availability',()=>{
+  it('highlights all shared portions without painting an unavailable half-slot or changing the personal selection',()=>{
+    vi.stubGlobal('window',{innerWidth:390});
+    const shared=[range(15,30),range(45,60)];
+    const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="UTC" selected={new Set([stamp])} view="group" highlights={shared} onChange={()=>{throw Error('Highlight must not edit a response');}}/>);
+    expect(html.match(/shared-highlight-slice/g)).toHaveLength(2);
+    expect(html.match(/top:50%;height:50%/g)).toHaveLength(2);
+    expect(html).not.toContain(' painted');
+    const personal=renderToStaticMarkup(<AvailabilityGrid event={event} zone="UTC" selected={new Set([stamp])} view="personal" highlights={shared} onChange={()=>{}}/>);
+    expect(personal).not.toContain('shared-highlight-slice');
+    expect(personal).toContain('partial');
+  });
   it('lists full-block availability separately from partial and empty responses',()=>{
     const inspected = inspectAvailability([...event.responses, {id:'C',name:'C',timezone:'UTC',revision:1,ranges:[]}], [stamp,stamp+900000]);
     expect(inspected.available.map(p=>p.id)).toEqual(['A']);

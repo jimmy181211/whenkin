@@ -9,9 +9,9 @@ import { scrollGrid } from '../lib/grid-scroll';
 import type { SlotInspection } from './SlotDetails';
 import { projectWeekly } from '../lib/weekly';
 
-type Props={inspection?:SlotInspection|null;onInspect?:(value:SlotInspection|null)=>void;event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlight?:TimeRange|null;canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode;view?:'personal'|'group';onViewChange?:(view:'personal'|'group')=>void};
+type Props={inspection?:SlotInspection|null;onInspect?:(value:SlotInspection|null)=>void;event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlights?:TimeRange[];canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode;view?:'personal'|'group';onViewChange?:(view:'personal'|'group')=>void};
 type Gesture={base:Set<number>;row:number;col:number;endRow:number;endCol:number;remove:boolean};
-export default function AvailabilityGrid({event,zone,selected,onChange,highlight,canEdit=true,onEditBlocked,status,view='personal',onViewChange,onInspect,inspection}:Props) {
+export default function AvailabilityGrid({event,zone,selected,onChange,highlights=[],canEdit=true,onEditBlocked,status,view='personal',onViewChange,onInspect,inspection}:Props) {
   const weekly=event.schedule_mode==='weekdays';
   const [zoom,setZoom]=useState(1),[page,setPage]=useState(0),[small,setSmall]=useState(()=>window.innerWidth<700);
   const group=view==='group',editing=canEdit&&!group,clockZone=weekly?'UTC':zone;
@@ -81,7 +81,8 @@ export default function AvailabilityGrid({event,zone,selected,onChange,highlight
           {shown.map(([date],j)=>{const col=startCol+j,cells=cellMaps[col].get(row.key)||[],cell=cells[0];if(!cell)return <div key={date} className={`time-cell unavailable ${row.minute%60===0?'hour-start':''}`} aria-hidden="true"/>;
             const blockEnd=cells.at(-1)!.stamp+SLOT,selectedCells=cells.filter(c=>selected.has(canonical(c.stamp))),active=selectedCells.length===cells.length,partial=selectedCells.length>0&&!active;
             const inspected=group&&inspection&&cells.some(c=>inspection.stamps.includes(canonical(c.stamp)));
-            const highlighted=highlight&&cells.some(c=>canonical(c.stamp)>=Date.parse(highlight.start)&&canonical(c.stamp)<Date.parse(highlight.end));
+            const highlightedCells=cells.map(c=>group&&highlights.some(range=>canonical(c.stamp)>=Date.parse(range.start)&&canonical(c.stamp)<Date.parse(range.end)));
+            const highlighted=highlightedCells.some(Boolean),fullyHighlighted=highlightedCells.every(Boolean);
             const cellCounts=cells.map(c=>counts.get(canonical(c.stamp))??0);
             const minimum=Math.min(...cellCounts),maximum=Math.max(...cellCounts);
             const groupLabel=t('{count} of {total} available',{count:minimum===maximum?minimum:`${minimum}–${maximum}`,total:event.responses.length});
@@ -94,7 +95,7 @@ export default function AvailabilityGrid({event,zone,selected,onChange,highlight
               if(!canEdit){onEditBlocked?.();return;}
               history.current=[...history.current.slice(-19),new Set(selected)];setUndos(history.current.length);
               onChange(paintSelection(selected,cells.map(c=>canonical(c.stamp)),selectedCells.length>0));
-            }}>{!group&&partial?<span className="sr-only">{t('Partly available')}</span>:null}</button>;
+            }}>{highlightedCells.map((yes,index)=>yes&&(!fullyHighlighted||index===0)?<span key={index} aria-hidden="true" className="shared-highlight-slice" style={{top:fullyHighlighted?'0%':index*100/cells.length+'%',height:fullyHighlighted?'100%':100/cells.length+'%'}}/>:null)}{!group&&partial?<span className="sr-only">{t('Partly available')}</span>:null}</button>;
           })}
         </GridRow>)}
       </div>

@@ -4,6 +4,10 @@ export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
 ];
 export const messages: Record<string, [string, string]> = {
+  "Highlight Everyone’s Free Times": ["高亮全部共同空闲时间", "Resaltar todos los horarios comunes"],
+  "Cancel Highlight": ["取消高亮", "Cancelar resaltado"],
+  "{count} shared time period": ["共 {count} 个共同空闲时段", "{count} periodo de disponibilidad común"],
+  "{count} shared time periods": ["共 {count} 个共同空闲时段", "{count} periodos de disponibilidad común"],
   "Delete {name}": ["删除 {name}","Eliminar a {name}"],
   "Delete response?": ["删除回复？","¿Eliminar respuesta?"],
   "Delete {name} and their availability?": ["删除 {name} 的回复和空闲时间？","¿Eliminar la respuesta y disponibilidad de {name}?"],
@@ -163,10 +167,6 @@ export const messages: Record<string, [string, string]> = {
   "{count} hours": [
     "{count} 小时",
     "{count} horas"
-  ],
-  "Your guests will see their own local time": [
-    "参与者会看到各自的当地时间",
-    "Los participantes verán su hora local"
   ],
   "Event creation is still being set up.": [
     "活动创建功能正在配置中。",
