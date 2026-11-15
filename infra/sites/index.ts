@@ -5,6 +5,7 @@ import { createApp } from '../../App/backend/app.js';
 import { Problem } from '../../App/backend/shared/validation.js';
 import type { Database } from '../../App/backend/db/types.js';
 import { pageRoute } from '../../App/shared/routes.js';
+import { documentWithManifest } from '../../App/backend/web-manifest.js';
 
 // Keep the current Sites/Neon deployment working until the EC2 cutover.
 // All six endpoints use the same Express app and SQL as the Node deployment.
@@ -23,7 +24,13 @@ async function appDocument(request: Request): Promise<Response> {
   // instead require index.html. Accept only a real HTML response, never a redirect.
   for (const path of ['/', '/index.html']) {
     const document = await env.ASSETS.fetch(new Request(new URL(path, request.url), request));
-    if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) return document;
+    if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) {
+      const headers = new Headers(document.headers);
+      headers.delete('Content-Length');
+      headers.delete('Content-Encoding');
+      headers.delete('ETag');
+      return new Response(documentWithManifest(await document.text(), new URL(request.url).pathname), { status: document.status, headers });
+    }
   }
   return new Response('The page is temporarily unavailable. Please reload.', {
     status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
@@ -33,7 +40,7 @@ async function appDocument(request: Request): Promise<Response> {
 export default {
   async fetch(request: Request, bindings: unknown, context: unknown): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
+    if (url.pathname === '/api' || url.pathname.startsWith('/api/') || url.pathname === '/site.webmanifest') {
       const headers = new Headers(request.headers);
       headers.set('Host', url.host);
       headers.set('X-Forwarded-Proto', url.protocol.slice(0, -1));

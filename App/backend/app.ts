@@ -9,6 +9,7 @@ import getEvent from './api/get-event.js';
 import createResponse from './api/create-response.js';
 import updateResponse from './api/update-response.js';
 import deleteResponse from './api/delete-response.js';
+import { webManifest } from './web-manifest.js';
 
 export type AppOptions = {
   publicOrigin?: string;
@@ -42,6 +43,7 @@ export function createApp(database: Database, options: AppOptions = {}) {
   });
   // Keep the previous 128 KiB JSON-body limit, including clients without a content type.
   app.use(express.json({ limit: 131072, strict: true, type: () => true }));
+  app.get('/site.webmanifest', (req, res) => res.type('application/manifest+json').json(webManifest(req.query.page)));
   app.get('/api/health', health(database));
   app.post('/api/events', createEvent(database));
   app.get('/api/events/:id', getEvent(database));

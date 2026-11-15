@@ -95,13 +95,19 @@ async function checkRuntime(htmlHandling) {
       assert.match(page.text, /id="root"/, route + ' must contain the React document');
       assert.match(page.headers.get('content-type') || '', /text\/html/);
       assert.equal(page.headers.get('location'), null, route + ' must not carry a canonical asset redirect');
-      assert.match(page.text, /href="\/site\.webmanifest"/);
+      const manifestLink = page.text.match(/href="(\/site\.webmanifest[^"]*)"/);
+      assert.ok(manifestLink, 'page must declare its installation metadata');
+      const launch = (await request(manifestLink[1])).data;
+      assert.equal(launch.start_url, route.replace(/\/$/, '') || '/');
+      assert.equal(launch.id, launch.start_url);
       assert.match(page.text, /href="\/apple-touch-icon\.png"/);
     }
     const manifest = await request('/site.webmanifest');
     assert.equal(manifest.status, 200);
-    assert.equal(manifest.data.display, 'browser');
-    assert.equal(manifest.data.start_url, undefined, 'keep the page being bookmarked as its destination');
+    assert.equal(manifest.data.display, 'standalone');
+    assert.equal(manifest.data.start_url, '/');
+    assert.equal(manifest.data.icons.length, 2);
+    assert.equal((await request('/site.webmanifest?page=https%3A%2F%2Fother.test')).data.start_url, '/');
     for (const [asset, size] of [['/icon-192.png', 192], ['/icon-512.png', 512], ['/apple-touch-icon.png', 180]]) {
       const icon = await mf.dispatchFetch('https://whenkin.test' + asset);
       assert.equal(icon.status, 200); assert.match(icon.headers.get('content-type'), /^image\/png/);

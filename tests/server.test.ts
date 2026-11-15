@@ -15,7 +15,7 @@ let root: string;
 beforeAll(async () => {
   root = await mkdtemp(join(tmpdir(), 'whenkin-web-'));
   await mkdir(join(root, 'assets'));
-  await writeFile(join(root, 'index.html'), '<!doctype html><div id="root">Whenkin</div>');
+  await writeFile(join(root, 'index.html'), '<!doctype html><link rel="manifest" href="/site.webmanifest"><div id="root">Whenkin</div>');
   await writeFile(join(root, 'assets', 'app-hash.js'), 'console.log("Whenkin")');
 });
 afterAll(async () => { await rm(root, { recursive: true }); });
@@ -43,6 +43,17 @@ describe('Node server and browser routes', () => {
     expect(missing.status).toBe(404);
     expect(missing.headers.get('Content-Type')).toContain('application/json');
     expect(missing.headers.get('Cache-Control')).toBe('no-store');
+  });
+  it('serves page-specific launch metadata without querying the database', async () => {
+    const app = createWebApp({ query: async () => { throw Error('manifest must not query the database'); } }, { staticRoot: root });
+    const path = '/e/855e5518-3b5a-49cb-b906-69bbd7bac603';
+    const document = await (await app.request('http://localhost' + path)).text();
+    expect(document).toContain('/site.webmanifest?page=' + encodeURIComponent(path));
+    const response = await app.request('http://localhost/site.webmanifest?page=' + encodeURIComponent(path));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toContain('application/manifest+json');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toMatchObject({ id: path, start_url: path, display: 'standalone' });
   });
   it('checks the public HTTPS origin behind a reverse proxy', async () => {
     const app = createApp(database, { publicOrigin: 'https://whenkin.example' });

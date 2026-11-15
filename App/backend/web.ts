@@ -6,6 +6,7 @@ import { createApp, type AppOptions } from './app.js';
 import { errorHandler } from './shared/errors.js';
 import type { Database } from './db/types.js';
 import { pageRoute } from '../shared/routes.js';
+import { documentWithManifest } from './web-manifest.js';
 
 export function createWebApp(database: Database, options: AppOptions & { staticRoot?: string } = {}) {
   const app = createApp(database, options);
@@ -16,7 +17,7 @@ export function createWebApp(database: Database, options: AppOptions & { staticR
   app.get(/.*/, async (req, res) => {
     if (req.path.startsWith('/assets/')) return res.status(404).end();
     document ??= readFile(join(root, 'index.html'), 'utf8');
-    return res.status(pageRoute(req.path).kind === 'not-found' ? 404 : 200).type('html').send(await document);
+    return res.status(pageRoute(req.path).kind === 'not-found' ? 404 : 200).type('html').send(documentWithManifest(await document, req.path));
   });
   app.use(errorHandler);
   return app;

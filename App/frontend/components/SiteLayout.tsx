@@ -7,6 +7,7 @@ import { BRAND } from '../brand';
 import { t } from '../i18n/index';
 import { LEGAL } from '../content/legal';
 import { shortcutCopy } from '../utils/shortcut-instructions';
+import { browserInstall } from '../utils/browser-install';
 export default function SiteLayout({ children, showNewEvent = false }: {
     children: ReactNode;
     showNewEvent?: boolean;
@@ -28,11 +29,18 @@ function Header({ showNewEvent }: { showNewEvent: boolean }) {
 function Footer() {
     const copy = shortcutCopy[useLanguage()];
     const [shortcutOpen, setShortcutOpen] = useState(false);
+    const [installing, setInstalling] = useState(false);
     const closeShortcut = useCallback(() => setShortcutOpen(false), []);
+    async function addShortcut() {
+      setInstalling(true);
+      const result = await browserInstall.prompt();
+      setInstalling(false);
+      if (result === 'unavailable') setShortcutOpen(true);
+    }
     return <><footer className="site-footer">
       <span>{t(BRAND.tagline)}</span>
       <nav aria-label={copy.footer}>
-        <button type="button" className="shortcut-entry" data-tour-shortcut aria-haspopup="dialog" aria-expanded={shortcutOpen} onClick={() => setShortcutOpen(true)}>{copy.title}</button>
+        <button type="button" className="shortcut-entry" data-tour-shortcut aria-haspopup="dialog" aria-expanded={shortcutOpen} aria-busy={installing} disabled={installing} onClick={() => void addShortcut()}>{copy.title}</button>
         <PageLink href="/terms">{t('Terms of Use')}</PageLink>
         <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
       </nav>

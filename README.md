@@ -4,17 +4,19 @@ Whenkin helps a group find a time to meet: create an event, share its link, and 
 
 ## Website shortcuts
 
-Whenkin supplies home-screen icons, a desktop favicon and a browser-mode web manifest from `App/frontend/public`. The icons reuse `favicon.svg`. The manifest deliberately omits a fixed start URL so a browser shortcut can preserve the page being saved, including an event link. Browser display mode keeps the normal browser interface; adding a shortcut is a user action in the browser.
+Whenkin supplies home-screen icons and a desktop favicon from `App/frontend/public`. The icons reuse `favicon.svg`. `App/backend/web-manifest.ts` serves installation metadata at `/site.webmanifest`; the initial HTML declares the manifest for its own page. Known page paths become the launch URL and app identity, preserving event destinations without saving query tokens. Both Node/EC2 and the current Sites adapter use this same metadata.
 
-The **Add a Shortcut** footer button opens localized device instructions and a copy button for the current page link. The sixth Quick Guide step points to this entry. Users can change the detected device/browser; menu wording may vary by browser version. The website does not create a shortcut without the browser or desktop confirmation.
+The **Add a Shortcut** footer button first invokes a browser-supplied `beforeinstallprompt` offer, captured at startup in `App/frontend/utils/browser-install.ts`. It is single-use and requires the user's click and confirmation. If no offer is available or prompting fails, localized instructions open instead. Dismissing the native prompt does not open another popup. Browser eligibility, engagement, installation state and policy decide when an offer is available; browser name alone is not a capability check. The sixth Quick Guide step points to this entry.
 
-- iPhone/iPad Safari: Share → Add to Home Screen. Turn off Open as Web App if that option is shown and you want a browser shortcut.
-- Android Chrome: menu → Install and create shortcut → Create shortcut → Add. Menu wording can vary by version.
-- Desktop Chrome: menu → Cast, save, and share → Create shortcut.
+- iPhone/iPad: Share → Add to Home Screen. Keep Open as Web App enabled if shown.
+- Android Chrome: menu → Add to Home screen / Install app → Install. Menu wording varies by version.
+- Desktop Edge: menu → More tools → Apps → Install this site as an app (some versions expose Apps directly).
+- Desktop Chrome: menu → Cast, save, and share → Install page as app.
+- Safari on supported macOS: File → Add to Dock.
 
-Open the homepage before adding a general Whenkin shortcut, or open an event to save that event's link. Event shortcuts retain the same one-year expiry as their links. These settings do not add an offline cache or a native app package.
+Open the homepage to add a general Whenkin launcher, or an event to save that event's link. The standalone website uses the supplied Whenkin icons, subject to browser/OS presentation; some Android shortcuts retain a browser badge. Ordinary Windows URL shortcuts may continue to show the default browser icon and are not rewritten by website updates. Event shortcuts retain the same one-year expiry as their links. This adds no service worker, offline cache, app-store package, or automatic installation.
 
-Browser instructions: [Apple](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios), [Chrome for Android](https://support.google.com/chrome/answer/15085120?co=GENIE.Platform%3DAndroid&hl=en), [desktop Chrome](https://support.google.com/chrome/answer/15085120?co=GENIE.Platform%3DDesktop&hl=en).
+Browser instructions: [Apple](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios), [Chrome](https://support.google.com/chrome/answer/9658361), [Edge](https://support.microsoft.com/en-gb/edge/install-manage-or-uninstall-apps-in-microsoft-edge), [Safari on Mac](https://support.apple.com/en-us/104996). [Prompt criteria](https://web.dev/articles/install-criteria) and [platform installation differences](https://web.dev/learn/pwa/installation).
 
 ## Run with Docker
 
