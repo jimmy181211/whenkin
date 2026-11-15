@@ -95,13 +95,29 @@ async function checkRuntime(htmlHandling) {
       assert.match(page.text, /id="root"/, route + ' must contain the React document');
       assert.match(page.headers.get('content-type') || '', /text\/html/);
       assert.equal(page.headers.get('location'), null, route + ' must not carry a canonical asset redirect');
+      assert.match(page.text, /href="\/site\.webmanifest"/);
+      assert.match(page.text, /href="\/apple-touch-icon\.png"/);
     }
+    const manifest = await request('/site.webmanifest');
+    assert.equal(manifest.status, 200);
+    assert.equal(manifest.data.display, 'browser');
+    assert.equal(manifest.data.start_url, undefined, 'keep the page being bookmarked as its destination');
+    for (const [asset, size] of [['/icon-192.png', 192], ['/icon-512.png', 512], ['/apple-touch-icon.png', 180]]) {
+      const icon = await mf.dispatchFetch('https://whenkin.test' + asset);
+      assert.equal(icon.status, 200); assert.match(icon.headers.get('content-type'), /^image\/png/);
+      const bytes = Buffer.from(await icon.arrayBuffer());
+      assert.deepEqual([...bytes.subarray(0, 4)], [137, 80, 78, 71]);
+      assert.equal(bytes.readUInt32BE(16), size); assert.equal(bytes.readUInt32BE(20), size);
+    }
+    const favicon = await mf.dispatchFetch('https://whenkin.test/favicon.ico');
+    assert.equal(favicon.status, 200);
+    assert.equal(Buffer.from(await favicon.arrayBuffer()).readUInt16LE(2), 1);
     assert.equal((await request('/e/not-an-id')).status, 404);
     assert.equal((await request('/api/missing')).status, 404);
     const missingAsset = await mf.dispatchFetch('https://whenkin.test/assets/missing.js');
     assert.equal(missingAsset.status, 404);
     assert.equal(missingAsset.headers.get('cache-control'), 'no-store');
-    console.log('PASS (' + htmlHandling + '): built Worker + Express; six endpoints, common times, revision conflicts, expiry, origin/body limits, direct links and static routing. Disposable PostgreSQL; mocked Neon transport; no production access.');
+    console.log('PASS (' + htmlHandling + '): built Worker + Express; six endpoints, common times, revision conflicts, expiry, origin/body limits, direct links, shortcut manifest/icons and static routing. Disposable PostgreSQL; mocked Neon transport; no production access.');
   } finally {
     await mf.dispose();
     await pg.close();

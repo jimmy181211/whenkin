@@ -2,6 +2,18 @@
 
 Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English, Simplified Chinese and Spanish, specific dates and typical weekdays, and automatic time-zone conversion.
 
+## Website shortcuts
+
+Whenkin supplies home-screen icons, a desktop favicon and a browser-mode web manifest from `App/frontend/public`. The icons reuse `favicon.svg`. The manifest deliberately omits a fixed start URL so a browser shortcut can preserve the page being saved, including an event link. Browser display mode keeps the normal browser interface; adding a shortcut is a user action in the browser.
+
+- iPhone/iPad Safari: Share → Add to Home Screen. Turn off Open as Web App if that option is shown and you want a browser shortcut.
+- Android Chrome: menu → Install and create shortcut → Create shortcut → Add. Menu wording can vary by version.
+- Desktop Chrome: menu → Cast, save, and share → Create shortcut.
+
+Open the homepage before adding a general Whenkin shortcut, or open an event to save that event's link. Event shortcuts retain the same one-year expiry as their links. These settings do not add an offline cache or a native app package.
+
+Browser instructions: [Apple](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios), [Chrome for Android](https://support.google.com/chrome/answer/15085120?co=GENIE.Platform%3DAndroid&hl=en), [desktop Chrome](https://support.google.com/chrome/answer/15085120?co=GENIE.Platform%3DDesktop&hl=en).
+
 ## Run with Docker
 
 Install Docker Desktop and start its engine, then run from this directory:
