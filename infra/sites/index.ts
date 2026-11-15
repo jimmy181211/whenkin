@@ -18,6 +18,18 @@ const app = createApp(database, { trustProxy: true });
 app.listen(3000);
 const nodeHandler = httpServerHandler({ port: 3000 });
 
+async function appDocument(request: Request): Promise<Response> {
+  // The hosted asset service canonicalizes index.html to /; local assets can
+  // instead require index.html. Accept only a real HTML response, never a redirect.
+  for (const path of ['/', '/index.html']) {
+    const document = await env.ASSETS.fetch(new Request(new URL(path, request.url), request));
+    if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) return document;
+  }
+  return new Response('The page is temporarily unavailable. Please reload.', {
+    status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
 export default {
   async fetch(request: Request, bindings: unknown, context: unknown): Promise<Response> {
     const url = new URL(request.url);
@@ -28,12 +40,13 @@ export default {
       headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
       return nodeHandler.fetch(new Request(request, { headers }), bindings, context);
     }
-    let response = await env.ASSETS.fetch(request);
-    if (response.status === 404 && !url.pathname.startsWith('/assets/')) {
-      url.pathname = '/index.html';
-      const document = await env.ASSETS.fetch(new Request(url, request));
+    // Keep /e/:id in the browser while serving the complete React document.
+    const appPage = pageRoute(url.pathname).kind !== 'not-found';
+    let response = appPage ? await appDocument(request) : await env.ASSETS.fetch(request);
+    if (!appPage && response.status === 404 && !url.pathname.startsWith('/assets/')) {
+      const document = await appDocument(request);
       response = new Response(document.body, {
-        status: pageRoute(new URL(request.url).pathname).kind === 'not-found' ? 404 : 200,
+        status: document.ok ? 404 : document.status,
         headers: document.headers,
       });
     }

@@ -49,6 +49,8 @@ One Node process is the initial deployment. The write limiter is intentionally p
 
 `wrangler.json` stays at the repository root so existing ignored `.dev.vars` files remain discoverable. Its Site identity and unused storage declarations remain in `.openai/hosting.json`. No credentials are stored in either tracked file. Asset behavior is explicit so direct event URLs return the React document rather than a redirect with an empty body.
 
+The Worker resolves the application document internally using `/` and, when necessary, `/index.html`. It accepts only a successful HTML response because hosted assets can redirect the index file to the root even when local asset settings differ. This keeps the browser on its original event URL; an asset redirect is never rewritten into an empty HTTP 200. Runtime smoke checks cover both canonical HTML handling and the local configuration.
+
 Build output is separated: `dist/client` contains the frontend, `dist/node` contains the Node backend, and `dist/server/index.js` is the current-host Worker artifact. `dist/server/wrangler.json` is generated with paths relative to the build output.
 
 Migration SQL contents are unchanged. `.gitattributes` standardizes SQL line endings, and the migration runner recognizes identical LF/CRLF historical checksums so Windows/Linux checkouts can share the same migration history. Actual SQL edits still fail the checksum check.
