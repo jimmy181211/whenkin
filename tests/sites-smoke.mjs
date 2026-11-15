@@ -55,6 +55,8 @@ async function checkRuntime(htmlHandling) {
       return { status: response.status, text, headers: response.headers, data: response.headers.get('content-type')?.includes('json') ? JSON.parse(text) : undefined };
     };
     assert.equal((await request('/api/health')).data.ready, true);
+    assert.deepEqual((await request('/api/retention')).data, { value: 12, unit: 'month' });
+    assert.equal((await request('/api/retention', 'PUT', { value: 2, unit: 'month' })).status, 404);
     const date = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10);
     const created = await request('/api/events', 'POST', { title: 'Sites compatibility test', timezone: 'UTC', dates: [date], startTime: '09:00', endTime: '10:00' });
     assert.equal(created.status, 201);
@@ -123,7 +125,7 @@ async function checkRuntime(htmlHandling) {
     const missingAsset = await mf.dispatchFetch('https://whenkin.test/assets/missing.js');
     assert.equal(missingAsset.status, 404);
     assert.equal(missingAsset.headers.get('cache-control'), 'no-store');
-    console.log('PASS (' + htmlHandling + '): built Worker + Express; six endpoints, common times, revision conflicts, expiry, origin/body limits, direct links, shortcut manifest/icons and static routing. Disposable PostgreSQL; mocked Neon transport; no production access.');
+    console.log('PASS (' + htmlHandling + '): built Worker + Express; API endpoints, read-only monthly retention, common times, revision conflicts, expiry, origin/body limits, direct links, shortcut manifest/icons and static routing. Disposable PostgreSQL; mocked Neon transport; no production access.');
   } finally {
     await mf.dispose();
     await pg.close();

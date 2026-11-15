@@ -10,7 +10,8 @@ describe('expired and missing event pages', () => {
       setLanguage(language);
       const html = renderToStaticMarkup(<EventUnavailablePage reason={reason}/>);
       expect(html).toContain(t(reason === 'expired' ? 'This event link has expired.' : 'This event has expired or could not be found.'));
-      expect(html).toContain(t('Event links are valid for one year. Expired events and their responses may be removed.'));
+      expect(html).toContain(t('Link expiry follows the retention policy.'));
+      expect(html).toContain(t('Expired events and their responses may be removed.'));
       for (const path of ['/', '/terms', '/privacy']) expect(html).toContain(`href="${path}"`);
       expect(html).not.toContain('404');
       expect(html.includes(t('Check the link with your organizer, or create a new event.'))).toBe(reason === 'missing');

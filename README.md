@@ -89,7 +89,7 @@ pnpm start
 - Revision checks prevent stale saves and deletions from overwriting newer changes.
 - Group Availability supports inspecting individual blocks and highlighting all periods when everyone is free.
 - Date-based ranges remain UTC instants. Typical-week polls retain their existing reference-week encoding and display conversion.
-- Links expire one calendar year after creation. Removal of old database rows remains manual; there is no new cleanup schedule.
+- Link retention is configured in whole calendar months, initially 12. The shared expiry notice, database deadlines and manual cleanup use the same policy. See [retention maintenance](docs/retention.md).
 
 ## Maintenance commands
 
@@ -98,12 +98,15 @@ pnpm start
 | `pnpm db:migrate` | Apply pending schema migrations, with checksums and transactions | Schema changes; existing migration contents are unchanged |
 | `pnpm db:cleanup --dry-run` | Count events eligible for cleanup | No |
 | `pnpm db:cleanup` | Delete eligible old events and their child rows | Yes |
+| `pnpm db:cleanup --months 2 --dry-run` | Preview a proposed two-month cutoff | No |
 | `pnpm db:analyze --output outputs/analytics` | Generate the existing local analysis report | Read-only database query; local report files |
 | `pnpm db:verify-retention` | Test cleanup using simulated dates and disposable PGlite data | Test database only |
 
 Generated reports stay in ignored `outputs/`. Credentials belong in server environment variables or an ignored `.env` file, and are not included in browser code or the Docker build context.
 
 The existing hosted site remains at https://whenkin.j4ouyang.chatgpt.site until a separate production cutover. This source refactor does not itself migrate its database or switch its domain.
+
+The current GitHub workflow tests and builds pushes to `main`; it does **not** automatically deploy the hosted website. Release the configurable retention feature only after applying migration 009 to the target database.
 
 Source: https://github.com/jimmy181211/whenkin
 

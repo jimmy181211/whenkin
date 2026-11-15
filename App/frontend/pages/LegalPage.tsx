@@ -3,9 +3,13 @@ import PageLink from '../components/PageLink';
 import { ArrowLeft, ArrowRight, Mail } from 'lucide-react';
 import { getLanguage, getLocale, t } from '../i18n/index';
 import { LEGAL, legalDocuments, type LegalKind } from '../content/legal';
+import EventLimits from '../components/EventLimits';
 
 function Paragraph({ text }: { text: string }) {
-  return <p>{text.split(LEGAL.email).map((part, index) => <React.Fragment key={index}>{index > 0 && <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>}{part}</React.Fragment>)}</p>;
+  return <p>{text.split('{retention}').map((part, index) => <React.Fragment key={index}>
+    {index > 0 && <EventLimits variant="duration"/>}
+    {part.split(LEGAL.email).map((text, emailIndex) => <React.Fragment key={emailIndex}>{emailIndex > 0 && <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>}{text}</React.Fragment>)}
+  </React.Fragment>)}</p>;
 }
 
 export default function LegalPage({ kind }: { kind: LegalKind }) {

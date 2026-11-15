@@ -16,6 +16,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY App/backend/db ./App/backend/db
 COPY App/backend/tools ./App/backend/tools
+COPY App/shared ./App/shared
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=5 CMD node --input-type=module -e "try { const r = await fetch('http://127.0.0.1:3000/api/health'); process.exit((await r.json()).ready ? 0 : 1); } catch { process.exit(1); }"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link2, LoaderCircle, Users } from 'lucide-react';
+import { Link2, LoaderCircle } from 'lucide-react';
 import ParticipantName from '../components/ParticipantName';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
@@ -12,7 +12,6 @@ import { t } from '../i18n/index';
 import type { MeetingEvent, ResponseData } from '../../shared/types';
 import EventResults from '../components/event/EventResults';
 import ShareEventDialog from '../components/event/ShareEventDialog';
-import EventLimits from '../components/EventLimits';
 import EventTour from '../components/EventTour';
 import Toast from '../components/Toast';
 import type { SlotInspection } from '../components/SlotDetails';
@@ -380,7 +379,6 @@ export default function EventPage({ id }: {
       </> : <><LoaderCircle className="spin"/><p>{t("Finding your shared time…")}</p></>}
     </main>;
     }
-    const responseCount = event.response_count ?? event.responses.length;
     const eventLink = location.origin + `/e/${id}`;
     return <main className="event-page">
       {view === 'group' && inspection && <AvailabilityPopover event={event} zone={zone} inspection={inspection} onClose={() => setInspection(null)}/>}
@@ -395,13 +393,6 @@ export default function EventPage({ id }: {
                 <EventTour/>
               </div>
             </div>
-            <div className="event-summary-details"><p className="event-meta">
-              <span>
-                <Users size={16}/>
-                {t(responseCount === 1 ? '{count} response' : '{count} responses', { count: responseCount })}
-              </span>
-            </p>
-            <EventLimits/></div>
             {event.description && <p className="event-description">{event.description}</p>}
           </header>
           {error && <div className="error-message" role="alert">{t(error)} {saveState === 'error' && !conflict.current && <button type="button" className="text-button" disabled={isSaving} onClick={() => void save()}>{t('Retry')}</button>}</div>}

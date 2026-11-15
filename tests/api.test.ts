@@ -7,7 +7,7 @@ import { createApp as createServerApp } from '../App/backend/app';
 import type { Database } from '../App/backend/db/types';
 import { testClient } from './test-client';
 const createApp = (factory: () => Database) => testClient(createServerApp(factory(), { rateLimit: false }));
-import { cleanupExpiredEvents } from '../App/backend/tools/cleanup.mjs';
+import { EventCleanup } from '../App/backend/tools/cleanup.mjs';
 const pg = new PGlite();
 const query = async <T,>(sql: string, params: unknown[] = []) => (await pg.query<T>(sql, params)).rows;
 const app = createApp(() => ({ query }));
@@ -164,24 +164,24 @@ describe('one-year expiry and manual cleanup', () => {
     const oldPerson = await respond(old.id, (await get(old.id)).windows);
     await respond(young.id, (await get(young.id)).windows);
     await age(old.id); await expire(misconfigured.id);
-    expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 1 });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 1 });
     for (const table of ['events', 'event_windows', 'responses']) {
       expect(await query(`SELECT id FROM ${table} WHERE ${table === 'events' ? 'id' : 'event_id'}=$1`, [old.id])).toEqual([]);
     }
     expect(await query('SELECT id FROM availability WHERE response_id=$1', [oldPerson.id])).toEqual([]);
     expect((await get(young.id)).response_count).toBe(1);
     expect(await query('SELECT id FROM events WHERE id=$1', [misconfigured.id])).toHaveLength(1);
-    expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 0 });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 0 });
     expect((await request('/events/' + old.id)).status).toBe(404);
   });
   it('uses creation age even with an incorrect future expiry', async () => {
     const old = await create();
     await query("UPDATE events SET created_at=now()-interval '1 year'-interval '1 second',expires_at=now()+interval '1 year' WHERE id=$1", [old.id]);
-    expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 1 });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 1 });
   });
   it('cleans the complete backlog across multiple bounded batches', async () => {
     await query(`INSERT INTO events(id,title,organizer_name,timezone,created_at,expires_at) SELECT gen_random_uuid(),'Old','','UTC',now()-interval '1 year'-interval '1 second',now()-interval '1 second' FROM generate_series(1,205)`);
-    expect(await cleanupExpiredEvents(query)).toEqual({ deletedEvents: 205 });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 205 });
   });
 });
 describe('deleting a shared response', () => {

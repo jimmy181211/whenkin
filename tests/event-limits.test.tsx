@@ -4,14 +4,15 @@ import { readFile } from 'node:fs/promises';
 import { sqlStatements } from '../App/backend/tools/sql-statements.mjs';
 import EventLimits from '../App/frontend/components/EventLimits';
 import { setLanguage, t } from '../App/frontend/i18n/index';
+import { retentionDuration } from '../App/frontend/utils/retention-label';
 
 afterEach(() => setLanguage('en'));
 describe('event expiry notice', () => {
   it('shows only the one-year notice in all three languages', () => {
     for (const language of ['en', 'zh', 'es'] as const) {
       setLanguage(language);
-      const html = renderToStaticMarkup(<EventLimits/>);
-      expect(html).toContain(t('Links expire in 1 year'));
+      const html = renderToStaticMarkup(<EventLimits policy={{ value: 12, unit: 'month' }}/>);
+      expect(html).toContain(t('Links expire in {duration}', { duration: retentionDuration({ value: 12, unit: 'month' }) }));
       expect(html).not.toMatch(/1,000|participants|1 month/);
     }
   });

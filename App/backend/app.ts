@@ -10,6 +10,7 @@ import createResponse from './api/create-response.js';
 import updateResponse from './api/update-response.js';
 import deleteResponse from './api/delete-response.js';
 import { webManifest } from './web-manifest.js';
+import getRetention from './api/get-retention.js';
 
 export type AppOptions = {
   publicOrigin?: string;
@@ -45,6 +46,7 @@ export function createApp(database: Database, options: AppOptions = {}) {
   app.use(express.json({ limit: 131072, strict: true, type: () => true }));
   app.get('/site.webmanifest', (req, res) => res.type('application/manifest+json').json(webManifest(req.query.page)));
   app.get('/api/health', health(database));
+  app.get('/api/retention', getRetention(database));
   app.post('/api/events', createEvent(database));
   app.get('/api/events/:id', getEvent(database));
   app.post('/api/events/:id/responses', createResponse(database));

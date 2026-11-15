@@ -18,13 +18,13 @@ beforeAll(async () => { temporary = await mkdtemp(join(tmpdir(), 'whenkin-migrat
 afterAll(async () => { await pg.close(); await rm(temporary, { recursive: true }); });
 
 describe('PostgreSQL migration runner', () => {
-  it('applies all eight original migrations once and preserves checksums', async () => {
+  it('applies nine migrations once and preserves the original migration checksums', async () => {
     await migrate(client, undefined, () => {});
-    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(8);
+    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(9);
     await pg.query("INSERT INTO events(id,title,organizer_name,timezone) VALUES(gen_random_uuid(),'Retained','','UTC')");
     await migrate(client, undefined, () => {});
     expect((await pg.query('SELECT title FROM events')).rows).toEqual([{ title: 'Retained' }]);
-    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(8);
+    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(9);
   });
   it('rolls back failed schema changes together with their migration record', async () => {
     await writeFile(join(temporary, '009_failure.sql'), 'CREATE TABLE rollback_probe(id integer); SELECT missing_function();');

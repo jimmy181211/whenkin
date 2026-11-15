@@ -149,7 +149,7 @@ export default function EventTour() {
 
   const content = definition ? copy[definition.key] : null;
   return <>
-    <button ref={trigger} type="button" className="button secondary compact event-tour-trigger" onClick={() => setStep(-1)}><CircleHelp size={16} aria-hidden="true"/>{copy.guide}</button>
+    <button ref={trigger} type="button" className="button secondary compact quiet-action event-tour-trigger" onClick={() => setStep(-1)}><CircleHelp size={16} aria-hidden="true"/>{copy.guide}</button>
     {active && createPortal(<div className="event-tour-layer" data-moving={moving}>
       <svg className="event-tour-shade" aria-hidden="true" width="100%" height="100%">
         <defs><mask id={id}><rect width="100%" height="100%" fill="white"/>{position && <rect className="event-tour-cutout" x={position.x} y={position.y} width={position.width} height={position.height} rx="12" fill="black"/>}</mask></defs>

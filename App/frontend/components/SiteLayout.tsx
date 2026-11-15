@@ -8,11 +8,14 @@ import { t } from '../i18n/index';
 import { LEGAL } from '../content/legal';
 import { shortcutCopy } from '../utils/shortcut-instructions';
 import { browserInstall } from '../utils/browser-install';
+import EventLimits from './EventLimits';
+import RetentionPolicyProvider from './RetentionPolicyProvider';
+import './site-layout.css';
 export default function SiteLayout({ children, showNewEvent = false }: {
     children: ReactNode;
     showNewEvent?: boolean;
 }) {
-    return <><Header showNewEvent={showNewEvent}/>{children}<Footer /></>;
+    return <RetentionPolicyProvider><Header showNewEvent={showNewEvent}/>{children}<Footer showEventExpiry={showNewEvent}/></RetentionPolicyProvider>;
 }
 function Header({ showNewEvent }: { showNewEvent: boolean }) {
     return <header className="site-header">
@@ -21,12 +24,12 @@ function Header({ showNewEvent }: { showNewEvent: boolean }) {
         <span>{BRAND.name.toLowerCase()}</span>
       </PageLink>
       <nav aria-label={t('Main navigation')}>
-        {showNewEvent && <PageLink className="button secondary compact" href="/"><Plus size={16}/>{t('New Event')}</PageLink>}
+        {showNewEvent && <PageLink className="button secondary compact quiet-action" href="/"><Plus size={16}/>{t('New Event')}</PageLink>}
         <LanguageSelector />
       </nav>
     </header>;
 }
-function Footer() {
+function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
     const copy = shortcutCopy[useLanguage()];
     const [shortcutOpen, setShortcutOpen] = useState(false);
     const [installing, setInstalling] = useState(false);
@@ -38,7 +41,7 @@ function Footer() {
       if (result === 'unavailable') setShortcutOpen(true);
     }
     return <><footer className="site-footer">
-      <span>{t(BRAND.tagline)}</span>
+      {showEventExpiry ? <EventLimits className="footer-expiry"/> : <span>{t(BRAND.tagline)}</span>}
       <nav aria-label={copy.footer}>
         <button type="button" className="shortcut-entry" data-tour-shortcut aria-haspopup="dialog" aria-expanded={shortcutOpen} aria-busy={installing} disabled={installing} onClick={() => void addShortcut()}>{copy.title}</button>
         <PageLink href="/terms">{t('Terms of Use')}</PageLink>

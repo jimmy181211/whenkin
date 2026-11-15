@@ -14,10 +14,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm test
+      - run: pnpm db:verify-retention
       - run: pnpm run build
       - run: pnpm test:sites
       - run: docker compose up --build -d
       - name: Check the full PostgreSQL and HTTP flow
         run: node tests/smoke.mjs http://127.0.0.1:3000
+      - name: Check the packaged manual cleanup command without deleting data
+        run: docker compose exec -T app node App/backend/tools/cleanup.mjs --dry-run
       - if: always()
         run: docker compose down

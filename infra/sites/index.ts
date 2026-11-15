@@ -8,7 +8,7 @@ import { pageRoute } from '../../App/shared/routes.js';
 import { documentWithManifest } from '../../App/backend/web-manifest.js';
 
 // Keep the current Sites/Neon deployment working until the EC2 cutover.
-// All six endpoints use the same Express app and SQL as the Node deployment.
+// The API uses the same Express app and SQL as the Node deployment.
 const database: Database = {
   async query<T>(sql: string, params: unknown[] = []) {
     if (!env.DATABASE_URL) throw new Problem(503, 'Whenkin is not connected to its database yet. Please try again once setup is complete.');
