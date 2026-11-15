@@ -14,6 +14,7 @@ describe('language changes across the website',()=>{
     expect(getLanguage()).toBe('en');
     const html=page();
     expect(html).toContain('Event Name');
+    expect(html).toContain('Add a Shortcut');
     expect(html).not.toContain('What are you planning?');
     expect(html).not.toContain('The Organizer Creates an Event');
     expect(html).not.toContain('Participants Mark When They’re Free');
@@ -29,6 +30,7 @@ describe('language changes across the website',()=>{
   it('renders Chinese forms, instructions, and the selected language',()=>{
     setLanguage('zh');const html=page();
     expect(html).toContain('创建你的活动');
+    expect(html).toContain('添加快捷方式');
     expect(html).not.toContain('组织者创建活动');
     expect(html).not.toContain('参与者标记空闲时间');
     expect(html).toContain('value="zh" selected=""');
@@ -39,6 +41,7 @@ describe('language changes across the website',()=>{
   it('renders Spanish forms, guide, dates, and explanatory errors',()=>{
     setLanguage('es');const html=page();
     expect(html).toContain('Crea tu Evento');
+    expect(html).toContain('Añadir un acceso directo');
     expect(html).not.toContain('Los Participantes Marcan Cuándo Están Libres');
     expect(html).toContain('Fechas del evento');
     expect(page('/how-it-works')).toContain('guide-page');

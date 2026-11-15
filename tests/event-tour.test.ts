@@ -34,9 +34,9 @@ describe('first-visit event guide', () => {
     const saved = storage(); saved.setItem(tour.EVENT_TOUR_KEY, 'started');
     expect(tour.shouldOfferTour(saved)).toBe(true);
   });
-  it('provides five concise localized steps while retaining the personal introduction', async () => {
+  it('provides six concise localized steps while retaining the personal introduction', async () => {
     const { tourCopy, tourSteps } = await import('../App/frontend/utils/event-tour');
-    expect(tourSteps.map(step => step.key)).toEqual(['personal', 'group', 'responders', 'sharedTimes', 'share']);
+    expect(tourSteps.map(step => step.key)).toEqual(['personal', 'group', 'responders', 'sharedTimes', 'share', 'shortcut']);
     for (const copy of Object.values(tourCopy)) {
       expect(copy.start).toBeTruthy(); expect(copy.skip).toBeTruthy();
       for (const step of tourSteps) {

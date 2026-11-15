@@ -1,10 +1,12 @@
-import type { ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
-import LanguageSelector from './LanguageSelector';
+import LanguageSelector, { useLanguage } from './LanguageSelector';
 import PageLink from './PageLink';
+import ShortcutDialog from './ShortcutDialog';
 import { BRAND } from '../brand';
 import { t } from '../i18n/index';
 import { LEGAL } from '../content/legal';
+import { shortcutCopy } from '../utils/shortcut-instructions';
 export default function SiteLayout({ children, showNewEvent = false }: {
     children: ReactNode;
     showNewEvent?: boolean;
@@ -24,14 +26,18 @@ function Header({ showNewEvent }: { showNewEvent: boolean }) {
     </header>;
 }
 function Footer() {
-    return <footer className="site-footer">
+    const copy = shortcutCopy[useLanguage()];
+    const [shortcutOpen, setShortcutOpen] = useState(false);
+    const closeShortcut = useCallback(() => setShortcutOpen(false), []);
+    return <><footer className="site-footer">
       <span>{t(BRAND.tagline)}</span>
-      <nav aria-label={t('Legal Information')}>
+      <nav aria-label={copy.footer}>
+        <button type="button" className="shortcut-entry" data-tour-shortcut aria-haspopup="dialog" aria-expanded={shortcutOpen} onClick={() => setShortcutOpen(true)}>{copy.title}</button>
         <PageLink href="/terms">{t('Terms of Use')}</PageLink>
         <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
       </nav>
       <span>© {new Date().getFullYear()} {LEGAL.operator}<GlobeIcon /></span>
-    </footer>;
+    </footer>{shortcutOpen && <ShortcutDialog onClose={closeShortcut}/>}</>;
 }
 function GlobeIcon() {
     return <span className="footer-dot" aria-hidden="true"/>;

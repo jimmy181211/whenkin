@@ -6,6 +6,8 @@ Whenkin helps a group find a time to meet: create an event, share its link, and 
 
 Whenkin supplies home-screen icons, a desktop favicon and a browser-mode web manifest from `App/frontend/public`. The icons reuse `favicon.svg`. The manifest deliberately omits a fixed start URL so a browser shortcut can preserve the page being saved, including an event link. Browser display mode keeps the normal browser interface; adding a shortcut is a user action in the browser.
 
+The **Add a Shortcut** footer button opens localized device instructions and a copy button for the current page link. The sixth Quick Guide step points to this entry. Users can change the detected device/browser; menu wording may vary by browser version. The website does not create a shortcut without the browser or desktop confirmation.
+
 - iPhone/iPad Safari: Share → Add to Home Screen. Turn off Open as Web App if that option is shown and you want a browser shortcut.
 - Android Chrome: menu → Install and create shortcut → Create shortcut → Add. Menu wording can vary by version.
 - Desktop Chrome: menu → Cast, save, and share → Create shortcut.

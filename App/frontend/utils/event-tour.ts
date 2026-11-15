@@ -24,6 +24,7 @@ export const tourSteps = [
   { target: '[data-tour-responders]', key: 'responders' },
   { target: '[data-tour-shared-times]', key: 'sharedTimes' },
   { target: '[data-tour-share]', key: 'share' },
+  { target: '[data-tour-shortcut]', key: 'shortcut' },
 ] as const;
 
 export const tourCopy = {
@@ -37,6 +38,7 @@ export const tourCopy = {
     responders: ['Responders', 'Click a name to view a response. Click your name to edit yours.'],
     sharedTimes: ['When Everyone Is Free', 'Click to highlight all shared free time.'],
     share: ['Share the event', 'Share the event using this icon or copy the URL.'],
+    shortcut: ['Add a Shortcut', 'Click here for your device’s steps.'],
   },
   zh: {
     guide: '使用指引', welcome: '快速上手',
@@ -48,6 +50,7 @@ export const tourCopy = {
     responders: ['回复者', '点击姓名查看回复，点击自己的姓名修改。'],
     sharedTimes: ['大家都有空的时段', '点击高亮所有共同空闲时段。'],
     share: ['分享活动', '点击此图标分享活动，或复制网址。'],
+    shortcut: ['添加快捷方式', '点击查看添加到主屏幕或桌面的方法。'],
   },
   es: {
     guide: 'Guía Rápida', welcome: 'Para empezar',
@@ -59,5 +62,6 @@ export const tourCopy = {
     responders: ['Participantes que Respondieron', 'Haz clic en un nombre para ver su respuesta y en el tuyo para editarla.'],
     sharedTimes: ['Cuando Todos Están Libres', 'Haz clic para resaltar todos los horarios comunes.'],
     share: ['Comparte el evento', 'Comparte el evento con este icono o copia la URL.'],
+    shortcut: ['Añadir un acceso directo', 'Haz clic aquí para ver los pasos para tu dispositivo.'],
   },
 } as const;
