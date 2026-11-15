@@ -36,7 +36,7 @@ export default function EventResults({ event, editingId, onEditResponse, onDelet
         <div className="sidebar-title"><h2>{t("When Everyone Is Free")}</h2></div>
         <button type="button" className="button primary highlight-shared-times" aria-pressed={highlighted} disabled={!highlighted && !suggestions.length} onClick={onToggleHighlight}>{t(highlighted ? "Cancel Highlight" : "Highlight Everyone’s Free Times")}</button>
         <p className="shared-time-summary" role="status">{t(suggestions.length===1 ? "{count} shared time period" : "{count} shared time periods", {count:suggestions.length})}</p>
-        {!suggestions.length && <p className="field-help">{t(event.responses.length ? "Add more availability to find a time that works." : "Mark your availability, then share the event with your group.")}</p>}
+        {!suggestions.length && event.responses.length > 0 && <p className="field-help">{t("Add more availability to find a time that works.")}</p>}
       </section>
       {deletion && <DeleteResponsePopover anchor={deletion.anchor} name={deletion.response.name} onConfirm={()=>onDeleteResponse(deletion.response)} onClose={()=>setDeletion(null)}/>}
     </aside>;

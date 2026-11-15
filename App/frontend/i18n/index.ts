@@ -250,10 +250,6 @@ export const messages: Record<string, [string, string]> = {
     "多选一些空闲时间，帮助找到合适的时段。",
     "Añade más disponibilidad para encontrar una hora adecuada."
   ],
-  "Mark your availability, then share the event with your group.": [
-    "先标记空闲时间，再把活动分享给大家。",
-    "Marca cuándo estás libre y comparte el evento con el grupo."
-  ],
 
   "Everyone available": [
     "所有人都有空",
