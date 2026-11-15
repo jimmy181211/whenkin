@@ -75,8 +75,8 @@ describe('administrator-controlled retention in calendar months', () => {
     expect(() => parseRetentionPolicy({ value: '2', unit: 'month' })).toThrow();
   });
   it('uses the same component for localized months, years, and singular/plural units', () => {
-    const labels = { en: ['1 month', '2 months', '1 year', '2 years'], zh: ['1 个月', '2 个月', '1 年', '2 年'], es: ['1 mes', '2 meses', '1 año', '2 años'] };
-    for (const language of ['en', 'zh', 'es'] as const) {
+    const labels = { en: ['1 month', '2 months', '1 year', '2 years'], zh: ['1 个月', '2 个月', '1 年', '2 年'], es: ['1 mes', '2 meses', '1 año', '2 años'], pt: ['1 mês', '2 meses', '1 ano', '2 anos'], de: ['1 Monat', '2 Monate', '1 Jahr', '2 Jahre'] };
+    for (const language of ['en', 'zh', 'es', 'pt', 'de'] as const) {
       setLanguage(language);
       [1, 2, 12, 24].forEach((value, index) => expect(renderToStaticMarkup(<EventLimits policy={{ value, unit: 'month' }}/>)).toContain(labels[language][index]));
     }

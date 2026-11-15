@@ -1,7 +1,11 @@
-// English is the default. Chinese uses Simplified Chinese.
-export type Language = 'en' | 'zh' | 'es';
+import pt from './pt';
+import de from './de';
+
+// English is the default; Portuguese uses the Brazilian locale.
+export type Language = 'en' | 'zh' | 'es' | 'pt' | 'de';
 export const languageOptions: { value: Language; label: string }[] = [
   { value: 'en', label: 'English' }, { value: 'zh', label: '简体中文' }, { value: 'es', label: 'Español' },
+  { value: 'pt', label: 'Português' }, { value: 'de', label: 'Deutsch' },
 ];
 export const messages: Record<string, [string, string]> = {
   'month': ['个月', 'mes'],
@@ -642,8 +646,13 @@ export const messages: Record<string, [string, string]> = {
 ,"Provider Information":["服务提供商信息","Información de Proveedores"]
 ,"Contact Us":["联系我们","Contáctanos"]
 };
-const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES' } as const;
-export const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'zh' || value === 'es';
+export const translations: Record<Exclude<Language, 'en'>, Record<string, string>> = {
+  zh: Object.fromEntries(Object.entries(messages).map(([key, values]) => [key, values[0]])),
+  es: Object.fromEntries(Object.entries(messages).map(([key, values]) => [key, values[1]])),
+  pt, de,
+};
+const locales = { en: 'en-US', zh: 'zh-CN', es: 'es-ES', pt: 'pt-BR', de: 'de-DE' } as const;
+export const isLanguage = (value: unknown): value is Language => typeof value === 'string' && Object.hasOwn(locales, value);
 function readLanguage(): Language {
   try { const value = localStorage.getItem('whenkin:language'); return isLanguage(value) ? value : 'en'; } catch { return 'en'; }
 }
@@ -664,6 +673,6 @@ export function subscribeLanguage(listener: () => void) {
   return () => { listeners.delete(listener); if (typeof window !== 'undefined') window.removeEventListener('storage', sync); };
 }
 export function t(message: string, values: Record<string, string | number> = {}) {
-  const translated = language === 'en' ? message : messages[message]?.[language === 'zh' ? 0 : 1] ?? message;
+  const translated = language === 'en' ? message : translations[language][message] ?? message;
   return translated.replace(/\{(\w+)\}/g, (placeholder, key: string) => typeof values[key] === 'number' ? new Intl.NumberFormat(getLocale()).format(values[key]) : String(values[key] ?? placeholder));
 }

@@ -1,6 +1,6 @@
 # Whenkin
 
-Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English, Simplified Chinese and Spanish, specific dates and typical weekdays, and automatic time-zone conversion.
+Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English, Simplified Chinese, Spanish, Brazilian Portuguese and German, specific dates and typical weekdays, and automatic time-zone conversion.
 
 ## Website shortcuts
 
@@ -14,7 +14,7 @@ The **Add a Shortcut** footer button first invokes a browser-supplied `beforeins
 - Desktop Chrome: menu → Cast, save, and share → Install page as app.
 - Safari on supported macOS: File → Add to Dock.
 
-Open the homepage to add a general Whenkin launcher, or an event to save that event's link. The standalone website uses the supplied Whenkin icons, subject to browser/OS presentation; some Android shortcuts retain a browser badge. Ordinary Windows URL shortcuts may continue to show the default browser icon and are not rewritten by website updates. Event shortcuts retain the same one-year expiry as their links. This adds no service worker, offline cache, app-store package, or automatic installation.
+Open the homepage to add a general Whenkin launcher, or an event to save that event's link. The standalone website uses the supplied Whenkin icons, subject to browser/OS presentation; some Android shortcuts retain a browser badge. Ordinary Windows URL shortcuts may continue to show the default browser icon and are not rewritten by website updates. Event shortcuts follow their links' configured expiry (initially 12 months). This adds no service worker, offline cache, app-store package, or automatic installation.
 
 Browser instructions: [Apple](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios), [Chrome](https://support.google.com/chrome/answer/9658361), [Edge](https://support.microsoft.com/en-gb/edge/install-manage-or-uninstall-apps-in-microsoft-edge), [Safari on Mac](https://support.apple.com/en-us/104996). [Prompt criteria](https://web.dev/articles/install-criteria) and [platform installation differences](https://web.dev/learn/pwa/installation).
 
@@ -43,7 +43,7 @@ App/
     components/         Calendar, availability grids, responders and dialogs
     api/                Browser HTTP client and event loading
     utils/              Browser display and interaction helpers
-    i18n/               English, Chinese and Spanish translations
+    i18n/               Interface translations and locale selection (five languages)
     content/            Existing legal documents
     public/             Static assets
     App.tsx             Page selection and shared layout

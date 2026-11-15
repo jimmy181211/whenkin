@@ -2,7 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App/frontend/App';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import { getLanguage, getLocale, setLanguage, t } from '../App/frontend/i18n/index';
+import { getLanguage, getLocale, isLanguage, languageOptions, messages, setLanguage, t, translations } from '../App/frontend/i18n/index';
+import { legalDocuments } from '../App/frontend/content/legal';
+import { exactOption, matchingOptions } from '../App/frontend/utils/editable-options';
+import { shortcutCopy, shortcutDevices } from '../App/frontend/utils/shortcut-instructions';
 import { allSlots, gridModel, localToUTC, slotsToRanges } from '../App/frontend/utils/time';
 import type { MeetingEvent } from '../App/shared/types';
 
@@ -48,6 +51,49 @@ describe('language changes across the website',()=>{
     expect(t('Edit {name}',{name:'Sam'})).toBe('Editar a Sam');
     expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
   });
+  it.each([
+    ['pt', 'pt-BR', 'Crie seu evento', 'Adicionar atalho', 'Editar Sam', '1,5 horas'],
+    ['de', 'de-DE', 'Erstelle deinen Termin', 'Verknüpfung hinzufügen', 'Sam bearbeiten', '1,5 Stunden'],
+  ] as const)('renders complete %s forms and localized numbers', (language, locale, title, shortcut, edit, hours) => {
+    setLanguage(language);
+    const html = page();
+    expect(getLocale()).toBe(locale);
+    expect(html).toContain(title);
+    expect(html).toContain(shortcut);
+    expect(html).toContain(`value="${language}" selected=""`);
+    expect(t('Edit {name}', { name: 'Sam' })).toBe(edit);
+    expect(t('{count} hours', { count: 1.5 })).toBe(hours);
+    expect(page('/how-it-works')).toContain('guide-page');
+  });
+  it('includes every interface key and preserves substitution placeholders in the new languages', () => {
+    const placeholders = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort();
+    for (const language of ['pt', 'de'] as const) {
+      expect(Object.keys(translations[language]).sort()).toEqual(Object.keys(messages).sort());
+      for (const [source, translated] of Object.entries(translations[language])) {
+        expect(translated.trim(), `${language}: ${source}`).not.toBe('');
+        expect(placeholders(translated), `${language}: ${source}`).toEqual(placeholders(source));
+      }
+      for (const device of shortcutDevices) {
+        expect(shortcutCopy[language].devices[device]).toBeTruthy();
+        expect(shortcutCopy[language].steps[device]).toHaveLength(3);
+      }
+      for (const kind of ['terms', 'privacy'] as const) {
+        expect(legalDocuments[language][kind].sections).toHaveLength(legalDocuments.en[kind].sections.length);
+      }
+      const privacy = JSON.stringify(legalDocuments[language].privacy);
+      expect(privacy.match(/\{retention\}/g)).toHaveLength(2);
+    }
+  });
+  it('matches typed Portuguese and German month names without changing their numeric values', () => {
+    for (const [locale, query, expected] of [['pt-BR', 'jan', '1'], ['de-DE', 'mar', '3']] as const) {
+      const months = Array.from({ length: 12 }, (_, index) => ({ value: String(index + 1), label: new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, index, 1))) }));
+      expect(matchingOptions(months, query)[0].value).toBe(expected);
+      expect(exactOption(months, expected)?.value).toBe(expected);
+    }
+    expect(isLanguage('pt')).toBe(true);
+    expect(isLanguage('de')).toBe(true);
+    for (const invalid of ['toString', '__proto__', 'pt-PT', null]) expect(isLanguage(invalid)).toBe(false);
+  });
   it('does not expose a demo route',()=>{
     const html=page('/demo');expect(html).toContain('That Page Is a Little Off-Grid.');
     expect(html).not.toContain('availability-section');
@@ -60,8 +106,8 @@ describe('language changes across the website',()=>{
     setLanguage('es');expect(storage.setItem).toHaveBeenCalledWith('whenkin:language','es');
   });
   it('offers policy links from home and event pages and localizes both documents',()=>{
-    const titles={en:['Terms of Use','Privacy Policy'],zh:['使用条款','隐私政策'],es:['Condiciones de Uso','Política de Privacidad']};
-    for(const language of ['en','zh','es'] as const){
+    const titles={en:['Terms of Use','Privacy Policy'],zh:['使用条款','隐私政策'],es:['Condiciones de Uso','Política de Privacidad'],pt:['Termos de Uso','Política de Privacidade'],de:['Nutzungsbedingungen','Datenschutzerklärung']};
+    for(const { value: language } of languageOptions){
       setLanguage(language);
       for(const path of ['/','/e/855e5518-3b5a-49cb-b906-69bbd7bac603']){
         const html=page(path);
@@ -86,7 +132,7 @@ describe('language is independent of scheduling data',()=>{
     const start=localToUTC('2027-01-15','10:00','America/Los_Angeles');
     const event:MeetingEvent={id:'test',title:'原文 / texto original',description:'',organizer_name:'Ana',timezone:'America/Los_Angeles',windows:[{start,end:'2027-01-15T19:00:00Z'}],responses:[]};
     const selected=new Set(allSlots(event.windows).slice(0,2)),before=slotsToRanges(selected);
-    for(const language of ['en','zh','es'] as const){
+    for(const { value: language } of languageOptions){
       setLanguage(language);
       const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}}/>);
       expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(1);

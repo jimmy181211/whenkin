@@ -8,7 +8,7 @@ import { useLanguage } from './components/LanguageSelector';
 import CreateEventPage from './pages/CreateEventPage';
 import EventPage from './pages/EventPage';
 import HowItWorksPage from './pages/HowItWorksPage';
-import { t } from './i18n/index';
+import { getLocale, t } from './i18n/index';
 import { legalDocuments } from './content/legal';
 export default function App() {
     const language = useLanguage();
@@ -17,7 +17,7 @@ export default function App() {
     const eventId = route.kind === 'event' ? route.id : null;
     const legalKind = route.kind === 'terms' || route.kind === 'privacy' ? route.kind : null;
     useEffect(() => {
-        document.documentElement.lang = language === 'zh' ? 'zh-CN' : language;
+        document.documentElement.lang = getLocale();
         document.title = legalKind ? `${legalDocuments[language][legalKind].title} — Whenkin` : `Whenkin — ${t("Find Your Shared Time.")}`;
     }, [language, legalKind]);
     return <SiteLayout showNewEvent={!!eventId}>
