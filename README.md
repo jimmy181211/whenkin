@@ -44,7 +44,7 @@ App/
 infra/                  Docker image and optional HTTPS proxy
 ```
 
-One repository, one package manifest, one lockfile. React and Vite provide the frontend, Express handles HTTP requests, and PostgreSQL stores events and responses. Docker Compose is the local and self-hosted deployment option. Next.js and Vinext are removed. The current Sites/Workers deployment identity, secrets configuration, Neon connection and a small Express adapter remain available during the transition in `infra/sites/`; their verification must finish before publishing this branch. Both deployment targets use Express.
+One repository, one package manifest, one lockfile. React and Vite provide the frontend, Express handles HTTP requests, and PostgreSQL stores events and responses. Docker Compose is the local and self-hosted deployment option. Next.js and Vinext are removed. The current Sites/Workers deployment identity, secrets configuration, Neon connection and a small Express adapter remain available during the transition in `infra/sites/`; the current-host artifact has a separate runtime verification command. Both deployment targets use Express.
 
 ## Develop without putting the application in Docker
 
@@ -90,3 +90,4 @@ Generated reports stay in ignored `outputs/`. Credentials belong in server envir
 The existing hosted site remains at https://whenkin.j4ouyang.chatgpt.site until a separate production cutover. This source refactor does not itself migrate its database or switch its domain.
 
 Source: https://github.com/jimmy181211/whenkin
+

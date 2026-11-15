@@ -15,6 +15,7 @@ jobs:
       - run: pnpm run check
       - run: pnpm test
       - run: pnpm run build
+      - run: pnpm test:sites
       - run: docker compose up --build -d
       - name: Check the full PostgreSQL and HTTP flow
         run: node tests/smoke.mjs http://127.0.0.1:3000

@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 import { migrate } from '../App/backend/tools/migrate.mjs';
 
 const pg = new PGlite();
@@ -30,6 +31,17 @@ describe('PostgreSQL migration runner', () => {
     await expect(migrate(client, pathToFileURL(temporary + '/'), () => {})).rejects.toThrow();
     expect((await pg.query("SELECT to_regclass('rollback_probe') AS name")).rows).toEqual([{ name: null }]);
     expect((await pg.query("SELECT name FROM schema_migrations WHERE name='009_failure.sql'")).rows).toEqual([]);
+  });
+  it('keeps migration history compatible across Windows and Linux line endings', async () => {
+    const source = 'CREATE TABLE newline_probe(id integer);\n';
+    await writeFile(join(temporary, '009_failure.sql'), source);
+    await migrate(client, pathToFileURL(temporary + '/'), () => {});
+    const legacy = createHash('sha256').update(source.replaceAll('\n', '\r\n')).digest('hex');
+    await pg.query("UPDATE schema_migrations SET checksum=$1 WHERE name='009_failure.sql'", [legacy]);
+    await migrate(client, pathToFileURL(temporary + '/'), () => {});
+    await writeFile(join(temporary, '009_failure.sql'), source.replaceAll('\n', '\r\n'));
+    await migrate(client, pathToFileURL(temporary + '/'), () => {});
+    expect((await pg.query("SELECT to_regclass('newline_probe') AS name")).rows).toEqual([{ name: 'newline_probe' }]);
   });
   it('rejects altered migration history', async () => {
     await pg.query("UPDATE schema_migrations SET checksum='changed' WHERE name='001_initial.sql'");

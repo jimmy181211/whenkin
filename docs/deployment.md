@@ -80,3 +80,5 @@ The next maintainer needs organization-controlled access to:
 - Billing, alerts and the responsible administrator's contact.
 
 Grant individual access through the organization's normal process. No personal shared root key or personal hosting account is required by the application.
+
+The retained current-host build can be checked with `pnpm build:sites` and `pnpm test:sites`; see [setup](setup.md#current-hosting-during-the-transition). Removing this adapter, the Site identity, root `.dev.vars` support or the hosted database transport belongs after the EC2 cutover, not before it.

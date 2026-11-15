@@ -4,6 +4,7 @@ export type PageRoute =
 
 // Shared route recognition keeps direct links and refreshes consistent.
 export function pageRoute(pathname: string): PageRoute {
+  pathname = pathname.length > 1 ? pathname.replace(/\/$/, '') : pathname;
   if (pathname === '/') return { kind: 'home' };
   if (pathname === '/how-it-works') return { kind: 'guide' };
   if (pathname === '/terms' || pathname === '/privacy') return { kind: pathname.slice(1) as 'terms' | 'privacy' };

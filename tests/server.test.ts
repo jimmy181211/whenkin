@@ -23,7 +23,7 @@ afterAll(async () => { await rm(root, { recursive: true }); });
 describe('Node server and browser routes', () => {
   it('serves direct page links and refreshes, including an event UUID', async () => {
     const app = createWebApp(database, { staticRoot: root });
-    for (const path of ['/', '/terms', '/privacy', '/how-it-works', '/e/855e5518-3b5a-49cb-b906-69bbd7bac603']) {
+    for (const path of ['/', '/terms', '/privacy', '/how-it-works', '/terms/', '/privacy/', '/how-it-works/', '/e/855e5518-3b5a-49cb-b906-69bbd7bac603']) {
       const response = await app.request('http://localhost' + path);
       expect(response.status).toBe(200);
       expect(await response.text()).toContain('id="root"');

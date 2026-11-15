@@ -53,3 +53,18 @@ pnpm build
 `pnpm start` runs the compiled Express server and serves the frontend on port 3000. `node tests/smoke.mjs http://127.0.0.1:3000` tests the full API flow against a disposable local database and creates a test event. It refuses non-local server URLs.
 
 The GitHub workflow runs checks and builds, then starts the Docker stack and runs this smoke check against real PostgreSQL. No production database is used by the test suite.
+
+## Current hosting during the transition
+
+The existing Site identity remains in `.openai/hosting.json`. Root `wrangler.json` and `infra/sites/` retain its runtime configuration and the existing Neon HTTP database connection. The root `.dev.vars` convention remains supported. No production secret or database URL was moved into source.
+
+To build and preview that deployment target locally, configure an ignored root `.dev.vars` file using `.dev.vars.example`, then run:
+
+```sh
+pnpm build:sites
+pnpm dev:sites
+```
+
+This uses the same Express endpoints and business logic as the Node server. Only its HTTP and database connection adapters differ. `pnpm build` verifies both build targets; `pnpm build:server` builds only the Node/Docker target. `pnpm test:sites` exercises the built Worker using disposable PostgreSQL data and an intercepted test transport, with no production access.
+
+The current-host adapter and its dependencies should remain until the EC2 migration has been verified. A successful local Docker test does not switch DNS or migrate production data.

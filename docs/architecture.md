@@ -38,3 +38,13 @@ The image includes frontend assets, compiled backend, database connection and ma
 The optional production Compose override supplies Caddy for HTTPS. Existing servers that already run Nginx, Caddy or another ingress should reuse that proxy instead of creating a competing listener on ports 80/443.
 
 One Node process is the initial deployment. The write limiter is intentionally per-process; a deployment with multiple app instances must select a shared limiter or apply the limit at its trusted ingress.
+
+## Existing hosted environment
+
+`infra/sites/index.ts` adapts the same Express application to the current Workers runtime. It retains the existing Neon HTTP transport because the current hosting environment does not provide the ordinary PostgreSQL TCP connection used by EC2. The active framework is Express for both targets.
+
+`wrangler.json` stays at the repository root so existing ignored `.dev.vars` files remain discoverable. Its Site identity and unused storage declarations remain in `.openai/hosting.json`. No credentials are stored in either tracked file. Asset behavior is explicit so direct event URLs return the React document rather than a redirect with an empty body.
+
+Build output is separated: `dist/client` contains the frontend, `dist/node` contains the Node backend, and `dist/server/index.js` is the current-host Worker artifact. `dist/server/wrangler.json` is generated with paths relative to the build output.
+
+Migration SQL contents are unchanged. `.gitattributes` standardizes SQL line endings, and the migration runner recognizes identical LF/CRLF historical checksums so Windows/Linux checkouts can share the same migration history. Actual SQL edits still fail the checksum check.

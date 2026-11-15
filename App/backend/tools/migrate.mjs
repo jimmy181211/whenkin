@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { sqlStatements } from './sql-statements.mjs';
 
+const digest = contents => createHash('sha256').update(contents).digest('hex');
+
 // One checked-out connection owns the lock, statements and checksum transaction.
 export async function migrate(client, directory = new URL('../db/migrations/', import.meta.url), log = console.log) {
   await client.query('SELECT pg_advisory_lock(742051839)');
@@ -11,10 +13,13 @@ export async function migrate(client, directory = new URL('../db/migrations/', i
     await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())');
     for (const name of (await readdir(directory)).filter(n => n.endsWith('.sql')).sort()) {
       const contents = await readFile(new URL(name, directory), 'utf8');
-      const checksum = createHash('sha256').update(contents).digest('hex');
+      const canonical = contents.replaceAll('\r\n', '\n');
+      const checksum = digest(canonical);
       const existing = (await client.query('SELECT checksum FROM schema_migrations WHERE name=$1', [name])).rows;
       if (existing.length) {
-        if (existing[0].checksum !== checksum) throw new Error('A previously applied migration changed.');
+        // Accept the same historical SQL checked out with either OS's line endings.
+        const compatible = [checksum, digest(canonical.replaceAll('\n', '\r\n'))];
+        if (!compatible.includes(existing[0].checksum)) throw new Error('A previously applied migration changed.');
         log('Already applied: ' + name);
         continue;
       }

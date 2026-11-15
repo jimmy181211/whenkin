@@ -43,7 +43,7 @@ export default {
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
-    response.headers.set('Cache-Control', url.pathname.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-store');
+    response.headers.set('Cache-Control', response.ok && url.pathname.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-store');
     return response;
   },
 };

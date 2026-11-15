@@ -4,8 +4,6 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
-  sharp: set this to true or false
-  workerd: set this to true or false
 minimumReleaseAge: 10080
 strictDepBuilds: true
 # Dependency installation is explicit; running a command should not reinstall packages.
