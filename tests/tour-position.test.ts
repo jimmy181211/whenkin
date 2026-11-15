@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tourScrollDelta } from '../src/lib/tour-position';
+import { tourScrollDelta } from '../App/frontend/utils/tour-position';
 
 describe('context-preserving guide scrolling', () => {
   const bounds = { top: 20, bottom: 530 };

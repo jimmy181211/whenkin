@@ -1,19 +1,6 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import tseslint from 'typescript-eslint';
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  globalIgnores([
-    "dist/**",
-    ".vinext/**",
-    ".wrangler/**",
-    ".sites-runtime/**",
-    "outputs/**",
-    "work/**",
-  ]),
-
-]);
-
-export default eslintConfig;
+export default tseslint.config(
+  { ignores: ['dist/**', 'node_modules/**', '.qa-cache/**', 'outputs/**'] },
+  ...tseslint.configs.recommended,
+);

@@ -1,38 +1,23 @@
-# How Whenkin Works
+# How Whenkin works
 
-Everyone uses the same event link. Anyone with the link can view and edit all responses.
-
-## Shared Event Flow
+Everyone uses one shared event link. Anyone with the link can view and edit saved responses.
 
 ```mermaid
 flowchart TD
-  C["Create Event and Share Link"] --> V["Open Shared Event"]
-  V --> N["Start a New Response"]
-  V --> E["Click a Name in The Group"]
-  N --> S["Mark Availability and Save"]
-  E --> S
-  S --> P["Show Periods When Everyone Is Free"]
+  C[Create an event] --> L[Share its link]
+  L --> N[Enter a name and mark availability]
+  L --> E[Select an existing responder to edit]
+  N --> A[Save automatically]
+  E --> A
+  A --> G[View group availability]
+  G --> H[Highlight every period when everyone is free]
+  G --> I[Inspect one block to see who is available]
 ```
 
-There is no meeting-length setting or participant limit. Only saved responses enter the calculation. An empty response counts as unavailable. Common Ground includes only periods when every respondent is free for the whole period; gaps remain separate.
+There is no meeting-length setting or participant cap. Empty saved responses count as unavailable. Everyone-free results include only the intersection of all saved responses, and gaps remain separate. Block inspection remains available independently of the highlight toggle.
 
-## Viewing and Editing
+The browser sends HTTP requests to Express. The endpoint validates input, executes the existing PostgreSQL operation and returns JSON. The browser refreshes the displayed result. Revision checks reject stale edits and deletions.
 
-Your Availability shows the response being edited. Group Availability shows a high-contrast map of how many saved respondents are free at each time. Click a name in The Group to edit that response from any browser. Add Response starts a new blank form. Private edit links are no longer used.
+Date-based ranges remain UTC instants. Typical-week polls keep their reference-week encoding. Language changes affect presentation without changing stored scheduling data.
 
-Enter a name before marking a new response. A brief hint appears above the name field if needed. Changes save automatically, and switching members waits for the current save. The server rejects stale revisions so one visitor cannot accidentally overwrite a newer edit. Select that person again to reload after a conflict.
-
-Times remain UTC instants in PostgreSQL and display in the chosen time zone. Date and weekday modes, English, Chinese, and Spanish keep the same scheduling data.
-
-## Expiry and Manual Cleanup
-
-```mermaid
-flowchart TD
-  C["Event Created"] --> A["Link Works for One Calendar Year"]
-  A --> E["Deadline Reached: Link Stops Working"]
-  E --> W["Data Waits for Manual Cleanup"]
-  W --> M["Administrator Runs Cleanup Method"]
-  M --> D["Delete Old Event, Dates, Responses, and Availability"]
-```
-
-Editing does not extend the deadline. Cleanup removes only events whose creation anniversary is at least one year ago. It processes batches until finished, preserving younger events. There is no scheduled ChatGPT task or automatic backend job.
+Links stop working one calendar year after creation; editing does not extend that deadline. Data remains until an administrator runs the manual cleanup tool. Cleanup deletes eligible event rows and their child rows, preserving younger events. It is not run by visitor requests or an automatic timer.

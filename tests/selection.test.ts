@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clearsSelection, paintSelection } from '../src/lib/selection';
+import { clearsSelection, paintSelection } from '../App/frontend/utils/selection';
 
 describe('drag action follows its starting cell',()=>{
   it('marks a rectangle that starts blank without clearing already marked cells',()=>{

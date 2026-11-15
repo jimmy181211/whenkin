@@ -9,8 +9,8 @@ The API rejects expired event reads and response writes even before cleanup. Sav
 Set the server-only `DATABASE_URL` in a trusted terminal environment, then run:
 
 ```sh
-npm run db:cleanup -- --dry-run
-npm run db:cleanup
+pnpm db:cleanup --dry-run
+pnpm db:cleanup
 ```
 
 The dry run counts eligible events without deleting data. The cleanup command repeatedly calls `public.purge_expired_events(100)` until no eligible events remain. It also verifies the remaining count. If records are locked by another request, it reports that cleanup should be run again.
@@ -18,7 +18,7 @@ The dry run counts eligible events without deleting data. The cleanup command re
 The same method is available in code:
 
 ```js
-import { cleanupExpiredEvents } from './scripts/cleanup.mjs';
+import { cleanupExpiredEvents } from './App/backend/tools/cleanup.mjs';
 await cleanupExpiredEvents((query, params) => database.query(query, params));
 ```
 
@@ -34,4 +34,5 @@ Foreign keys remove the event’s possible dates, responses, and availability in
 
 Apply `007_shared_events.sql` and `008_manual_cleanup_by_age.sql` with the normal migration runner. It extends all existing event deadlines from one month to one year, removes the participant-limit check, and updates the bounded cleanup function. It does not run cleanup or delete event data.
 
-The previous ChatGPT cleanup task is disabled. The unfinished Cloudflare scheduler is not used. Hosting remains on ChatGPT Sites and Neon.
+The previous ChatGPT cleanup task is disabled. The unfinished Cloudflare scheduler is not used. The existing hosted version remains in place until a separate production cutover. The refactored source supports local or hosted PostgreSQL.
+

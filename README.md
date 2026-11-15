@@ -1,72 +1,92 @@
 # Whenkin
 
-**Find your shared time.**
+Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English, Simplified Chinese and Spanish, specific dates and typical weekdays, and automatic time-zone conversion.
 
-Whenkin helps a group find a time to meet. Create an event, share one link, and let everyone mark when they are free. Everyone sees the same event page, group responses, and Common Ground.
+## Run with Docker
 
-![Whenkin logo](docs/whenkin-reference.png)
-
-## What It Does
-
-- Works on computers and phones, in English, Simplified Chinese, and Spanish.
-- Choose specific dates or days of the week. There is no meeting-length setting.
-- Detects your device’s time zone and offers a searchable selector.
-- Drag across empty blocks to mark availability, or marked blocks to clear it. Switch between Your Availability and Group Availability.
-- **Primary Selection:** everyone who has responded is free for the whole period.
-- Shows only periods when every respondent is available.
-- Has no participant limit. Empty saved responses count as unavailable.
-- Everyone uses one event link and can edit any saved response by clicking a name in The Group.
-- Links expire one calendar year after the event is created.
-
-Public website: https://whenkin.j4ouyang.chatgpt.site
-
-## How It Works
-
-```mermaid
-flowchart TD
-  C["Create Event"] --> L["Share One Event Link"]
-  L --> R["Everyone Marks Availability"]
-  R --> P["Primary: Everyone Free"]
-  P --> G["Everyone Sees Common Ground"]
-```
-
-See [the flowchart](docs/flowchart.md) and [project structure](docs/architecture.md) for more detail.
-
-## Time Zones and Storage
-
-React and TypeScript provide the interface. ChatGPT Sites hosts the website and API. Neon PostgreSQL saves events and responses. Date-based availability uses `timestamptz`: PostgreSQL stores real instants, without separate local-time copies. Display-zone changes preserve those instants.
-
-Weekday polls describe a typical week, not recurring appointments. Their shared-clock coordinate week and time-zone conversion remain unchanged. All range comparisons use numeric timestamps. The server calculates Common Ground once; the browser displays it.
-
-Everyone with an event link can see, edit, and delete saved responses. A fresh visit opens a blank form. Click a name in Responders to edit it, or use its trash button and confirm in the small popup to delete it. No account or private edit link is needed. The server checks revisions to prevent old pages from overwriting or deleting newer changes. Availability changes save automatically; navigation is never intercepted by an unsaved-changes dialog.
-
-## Manual Cleanup
-
-There is no automatic cleanup schedule. A link stops working at its one-year deadline even if its data has not yet been removed.
-
-With the server-only `DATABASE_URL` set in your terminal environment:
+Install Docker Desktop and start its engine, then run from this directory:
 
 ```sh
-npm run db:cleanup -- --dry-run
-npm run db:cleanup
+docker compose up --build
 ```
 
-The first command reports how many events are at least one calendar year old. The second deletes all eligible events in small batches, along with their dates, responses, and availability. It leaves younger events intact. `cleanupExpiredEvents(query)` is also exported from `scripts/cleanup.mjs` for manual use in code.
+Open **http://localhost:3000**. Compose starts PostgreSQL, applies the existing migrations, then starts Whenkin. The default database is a new local database; this command does not copy or modify the existing production database. The local password is for development only.
 
-See [retention and cleanup](docs/retention.md). Never put database credentials in GitHub or browser code.
+```sh
+docker compose down
+```
 
-## Development
+The named database volume survives ordinary shutdowns. See [setup](docs/setup.md) for live-reload development and [deployment](docs/deployment.md) for EC2, backups and handoff.
 
-Use Node.js 22.13 or newer. Install dependencies with `npm run install:ci`, configure an ignored local `.dev.vars` file with `DATABASE_URL`, and apply migrations with `npm run db:migrate`. Start the website with `npm run dev`.
+## Code map
 
-Apply migrations `007_shared_events.sql` and `008_manual_cleanup_by_age.sql` before publishing the shared-event version. It extends existing events to one year from their original creation, removes the response cap, and makes cleanup manual. Historical meeting-length and credential columns remain unused for safe deployment compatibility; no current feature reads them.
+```text
+App/
+  frontend/
+    pages/              URL-level screens
+    components/         Calendar, availability grids, responders and dialogs
+    api/                Browser HTTP client and event loading
+    utils/              Browser display and interaction helpers
+    i18n/               English, Chinese and Spanish translations
+    content/            Existing legal documents
+    public/             Static assets
+    App.tsx             Page selection and shared layout
+    main.tsx            React entry point
+  backend/
+    api/                One file per API endpoint
+    shared/             Validation, common-time calculation, errors and rate limit
+    db/                 PostgreSQL connection and unchanged migration history
+    tools/              Explicit build, development and maintenance commands
+    app.ts              Express middleware and API registration
+    web.ts              Static frontend and direct-link handling
+    server.ts           Node.js startup and shutdown
+  shared/               API types, pure time calculations and route recognition
+infra/                  Docker image and optional HTTPS proxy
+```
 
-Run `npm run check`, `npm test`, and `npm run build`. Tests cover shared visibility, shared response editing, everyone-free matches, time zones, weekday polls, unlimited participants, expiry, and manual cleanup.
+One repository, one package manifest, one lockfile. React and Vite provide the frontend, Express handles HTTP requests, and PostgreSQL stores events and responses. Docker Compose is the local and self-hosted deployment option. Next.js and Vinext are removed. The current Sites/Workers deployment identity, secrets configuration, Neon connection and a small Express adapter remain available during the transition in `infra/sites/`; their verification must finish before publishing this branch. Both deployment targets use Express.
 
-[Terms of Use](https://whenkin.j4ouyang.chatgpt.site/terms) and [Privacy Policy](https://whenkin.j4ouyang.chatgpt.site/privacy) describe the shared visibility and retention rules. UCSD CSSA operates Whenkin; contact j4ouyang@ucsd.edu for data requests.
+## Develop without putting the application in Docker
+
+Use Node.js 22.13+ and pnpm 11.25.0. Copy `.env.example` to `.env`, then:
+
+```sh
+pnpm install --frozen-lockfile
+docker compose up -d db
+pnpm db:migrate
+pnpm dev
+```
+
+Open **http://localhost:5173**. Vite reloads the frontend; the Node watcher reloads the API. You may also use an existing local PostgreSQL instance by setting `DATABASE_URL` in `.env`.
+
+```sh
+pnpm check
+pnpm test
+pnpm build
+pnpm start
+```
+
+## Existing behavior
+
+- Changes to availability save automatically. Navigation is not intercepted by an unsaved-changes dialog.
+- Everyone with the event link can view, edit and delete shared responses. Deletion requires the existing small confirmation popup.
+- Revision checks prevent stale saves and deletions from overwriting newer changes.
+- Group Availability supports inspecting individual blocks and highlighting all periods when everyone is free.
+- Date-based ranges remain UTC instants. Typical-week polls retain their existing reference-week encoding and display conversion.
+- Links expire one calendar year after creation. Removal of old database rows remains manual; there is no new cleanup schedule.
+
+## Maintenance commands
+
+| Command | Purpose | Writes application data? |
+| --- | --- | --- |
+| `pnpm db:migrate` | Apply pending schema migrations, with checksums and transactions | Schema changes; existing migration contents are unchanged |
+| `pnpm db:cleanup --dry-run` | Count events eligible for cleanup | No |
+| `pnpm db:cleanup` | Delete eligible old events and their child rows | Yes |
+| `pnpm db:analyze --output outputs/analytics` | Generate the existing local analysis report | Read-only database query; local report files |
+| `pnpm db:verify-retention` | Test cleanup using simulated dates and disposable PGlite data | Test database only |
+
+Generated reports stay in ignored `outputs/`. Credentials belong in server environment variables or an ignored `.env` file, and are not included in browser code or the Docker build context.
+
+The existing hosted site remains at https://whenkin.j4ouyang.chatgpt.site until a separate production cutover. This source refactor does not itself migrate its database or switch its domain.
 
 Source: https://github.com/jimmy181211/whenkin
-
-See [local analytics and cleanup verification](docs/analytics.md) for the
-read-only report generator and reproducible isolated retention test. Generated
-reports stay local; only the reusable code belongs in this repository.

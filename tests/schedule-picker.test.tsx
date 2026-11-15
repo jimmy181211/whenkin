@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import SchedulePicker from '../src/components/SchedulePicker';
-import AvailabilityGrid from '../src/components/AvailabilityGrid';
-import { setLanguage } from '../src/lib/i18n';
-import type { MeetingEvent } from '../src/lib/types';
+import SchedulePicker from '../App/frontend/components/SchedulePicker';
+import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
+import { setLanguage } from '../App/frontend/i18n/index';
+import type { MeetingEvent } from '../App/shared/types';
 
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 describe('date and weekday scheduling modes',()=>{

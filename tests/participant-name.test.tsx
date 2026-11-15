@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import ParticipantName from '../src/components/ParticipantName';
-import AvailabilityGrid from '../src/components/AvailabilityGrid';
-import AvailabilityStatus from '../src/components/AvailabilityStatus';
-import { setLanguage, t } from '../src/lib/i18n';
-import type { MeetingEvent } from '../src/lib/types';
+import ParticipantName from '../App/frontend/components/ParticipantName';
+import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
+import AvailabilityStatus from '../App/frontend/components/AvailabilityStatus';
+import { setLanguage, t } from '../App/frontend/i18n/index';
+import type { MeetingEvent } from '../App/shared/types';
 
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 describe('name before availability editing',()=>{

@@ -1,35 +1,40 @@
-# Project Structure
+# Architecture
 
-| Location | Purpose |
-| --- | --- |
-| `src/App.tsx` | Routes, language, and shared layout. |
-| `src/screens/` | Creation, shared event page, and guide. |
-| `src/screens/event/` | Shared results and the shared link dialog. |
-| `src/components/` | Calendar, grid, time-zone selector, name field, and shared controls. |
-| `src/lib/` | Time-zone conversion, selection, group counts, wheel scrolling, response selection, types, and translations. |
-| `lib/whenkin-api.ts` | Event creation, shared reads, and shared response writes. |
-| `lib/server/event-queries.ts` | Reads public event data, checks expiry, and keeps response writes scoped to their event. |
-| `lib/server/common-ground.ts` | Calculates variable-length everyone-free intersections on the server. |
-| `lib/server/validation.ts` | Validates event details and availability ranges. |
-| `migrations/` | PostgreSQL schema history. |
-| `scripts/cleanup.mjs` | Manually invoked cleanup method and command. |
+Whenkin is a single application with a React/Vite browser frontend, an Express/Node.js HTTP backend and PostgreSQL. Production serves the frontend and API from one origin. Development uses Vite's `/api` proxy.
 
-## Matching
+## Boundaries
 
-Common Ground sweeps range boundaries once and emits only intervals where every respondent is free. Overlapping ranges from one person count once. Touching common intervals merge, while true gaps remain separate. There is no secondary-match calculation or duration setting. The HTTP response retains an always-empty `missing` array so already-open older pages keep working until refreshed; current code does not read it.
+- `App/frontend/pages`: complete pages selected by URL. Components used inside pages belong in `components`.
+- `App/frontend/api`: browser requests. The browser never imports a database connection or backend implementation.
+- `App/backend/api`: each file owns one endpoint's processing and SQL. There is no extra controller/service/repository hierarchy.
+- `App/backend/shared`: genuinely reused backend validation, event loading, common-time calculation and error handling.
+- `App/backend/db`: PostgreSQL connection pool and the original eight migrations. SQL history is preserved.
+- `App/shared`: request/response types, pure time/date rules and route recognition. It imports neither frontend translations nor backend connections.
+- `infra`: container and deployment configuration. These are independent from business rules.
 
-## Availability Grid
+## HTTP endpoints
 
-The personal view paints or clears from the starting cell. The group view counts distinct saved respondents per UTC slot, with separate colors for both 15-minute halves of each 30-minute display row. View changes never alter a selection. Wheel scrolling handles fractional trackpad deltas, preserves browser zoom, and allows page scrolling at grid edges. Touch selection is unchanged.
+| Method | URL | Handler |
+| --- | --- | --- |
+| GET | `/api/health` | `App/backend/api/health.ts` |
+| POST | `/api/events` | `App/backend/api/create-event.ts` |
+| GET | `/api/events/:id` | `App/backend/api/get-event.ts` |
+| POST | `/api/events/:id/responses` | `App/backend/api/create-response.ts` |
+| PUT | `/api/events/:id/responses/:responseId` | `App/backend/api/update-response.ts` |
+| DELETE | `/api/events/:id/responses/:responseId` | `App/backend/api/delete-response.ts` |
 
-## Access and Retention
+Each handler receives the database explicitly. Endpoint URLs and response shapes are retained. JSON request bodies are limited to 128 KiB. Public errors do not expose database connection details. Write-origin checks and the bounded write limiter remain in `app.ts`.
 
-All event links return group responses and Common Ground. Anyone with the link can edit a saved response by selecting its ID in The Group. PUT checks that the response belongs to the event, validates ranges, checks expiry, and uses an optimistic revision. It never updates a response from a different event. The browser saves the current form before switching members and can reload a conflicted response by selecting that member again. Legacy organizer and private fragments are ignored. Private tokens are no longer generated or checked.
+## Data consistency
 
-The database checks response writes against expiry. Migration 007 retains historical meeting-length and credential columns solely for deployment compatibility. Current UI, API, and matching code do not use them. The old finalize and calendar endpoints have been removed with their meeting-length dependency.
+Response create/update/delete operations keep their original single-statement SQL, event locking, schedule revision and response revision checks. Deleting a response cascades only to its availability. The backend computes everyone-free intersections; the frontend displays and highlights them.
 
-Manual cleanup calls the existing database function in bounded transactions, then checks that no eligible events remain. No scheduler is required. See [Retention](retention.md).
+The Node PostgreSQL adapter uses one bounded connection pool. Migrations use a checked-out connection for their advisory lock and each migration transaction, so schema changes and their checksum commit together. Re-running migrations skips unchanged files and rejects altered history.
 
-## Verification
+## Deployment
 
-Run `npm run check`, `npm test`, and `npm run build`. The tests cover range boundaries, everyone-free intersections, shared access and edits, cross-event isolation, more than 1,000 responses, leap-year expiry, and manual cascade deletion. UI tests render the existing card classes in all three languages.
+The image includes frontend assets, compiled backend, database connection and maintenance tools. PostgreSQL runs separately with a named data volume. Compose waits for PostgreSQL readiness and successful migrations before starting the application. The application health check verifies database access.
+
+The optional production Compose override supplies Caddy for HTTPS. Existing servers that already run Nginx, Caddy or another ingress should reuse that proxy instead of creating a competing listener on ports 80/443.
+
+One Node process is the initial deployment. The write limiter is intentionally per-process; a deployment with multiple app instances must select a shared limiter or apply the limit at its trusted ingress.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { groupSharedTimes } from '../src/lib/shared-time-groups';
-import { projectWeekly } from '../src/lib/weekly';
-import type { Candidate } from '../src/lib/types';
+import { groupSharedTimes } from '../App/frontend/utils/shared-time-groups';
+import { projectWeekly } from '../App/shared/weekly';
+import type { Candidate } from '../App/shared/types';
 const candidate=(start:string,end:string):Candidate=>({start,end,available:['A','B']});
 describe('shared times grouped by displayed day',()=>{
   it('groups disjoint ranges without merging them and keeps each original selection',()=>{

@@ -9,9 +9,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: corepack enable
+          node-version: '24'
+      - run: npm install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm test
       - run: pnpm run build
+      - run: docker compose up --build -d
+      - name: Check the full PostgreSQL and HTTP flow
+        run: node tests/smoke.mjs http://127.0.0.1:3000
+      - if: always()
+        run: docker compose down

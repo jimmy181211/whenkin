@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import AvailabilityGrid from '../src/components/AvailabilityGrid';
-import SlotDetails from '../src/components/SlotDetails';
-import Toast from '../src/components/Toast';
-import { groupAvailability, availabilityColor, inspectAvailability } from '../src/lib/group-availability';
-import { setLanguage, t } from '../src/lib/i18n';
-import type { MeetingEvent } from '../src/lib/types';
+import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
+import SlotDetails from '../App/frontend/components/SlotDetails';
+import Toast from '../App/frontend/components/Toast';
+import { groupAvailability, availabilityColor, inspectAvailability } from '../App/frontend/utils/group-availability';
+import { setLanguage, t } from '../App/frontend/i18n/index';
+import type { MeetingEvent } from '../App/shared/types';
 const stamp=Date.parse('2027-01-15T09:00:00Z');
 const range=(from:number,to:number)=>({start:new Date(stamp+from*60000).toISOString(),end:new Date(stamp+to*60000).toISOString()});
 const event:MeetingEvent={id:'test',title:'Event',organizer_name:'',description:'',timezone:'UTC',windows:[range(0,60)],responses:[

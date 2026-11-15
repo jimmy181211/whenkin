@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anchoredPanelPosition } from '../src/lib/anchored-panel-position';
+import { anchoredPanelPosition } from '../App/frontend/utils/anchored-panel-position';
 const rect=(left:number,top:number,width:number,height:number)=>({left,top,width,height,right:left+width,bottom:top+height});
 describe('contextual panel placement',()=>{
   it('keeps panels inside phone and desktop viewports for blocks near every edge',()=>{

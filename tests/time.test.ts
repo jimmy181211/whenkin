@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { allSlots, contains, gridModel, localDate, localToUTC, SLOT, slotsToRanges } from '../src/lib/time';
-import { validateRanges } from '../lib/whenkin-api';
+import { allSlots, contains, gridModel, localDate, localToUTC, SLOT, slotsToRanges } from '../App/frontend/utils/time';
+import { validateRanges } from '../App/backend/shared/validation';
 const span=(start:string,end:string)=>({start,end});
 describe('time zones and real moments',()=>{
   it('matches Los Angeles and New York without separate local-time copies',()=>{

@@ -1,0 +1,54 @@
+name: whenkin
+
+x-app: &app-image
+  image: whenkin:local
+  build:
+    context: .
+    dockerfile: infra/Dockerfile
+  environment: &database-env
+    PGHOST: db
+    PGPORT: 5432
+    PGUSER: whenkin
+    PGPASSWORD: ${DB_PASSWORD:-whenkin_local_only}
+    PGDATABASE: whenkin
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: whenkin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-whenkin_local_only}
+      POSTGRES_DB: whenkin
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whenkin -d whenkin"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *app-image
+    command: ["node", "App/backend/tools/migrate.mjs"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    <<: *app-image
+    environment:
+      <<: *database-env
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

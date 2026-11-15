@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
-import AvailabilityStatus from '../src/components/AvailabilityStatus';
-import { setLanguage, t } from '../src/lib/i18n';
+import AvailabilityStatus from '../App/frontend/components/AvailabilityStatus';
+import { setLanguage, t } from '../App/frontend/i18n/index';
 
 afterEach(()=>setLanguage('en'));
 describe('participant response status',()=>{

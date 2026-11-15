@@ -2,9 +2,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { Temporal } from '@js-temporal/polyfill';
-import type { MeetingEvent, TimeRange } from '../src/lib/types';
-import { createApp } from '../lib/whenkin-api';
-import { cleanupExpiredEvents } from '../scripts/cleanup.mjs';
+import type { MeetingEvent, TimeRange } from '../App/shared/types';
+import { createApp as createServerApp } from '../App/backend/app';
+import type { Database } from '../App/backend/db/types';
+import { testClient } from './test-client';
+const createApp = (factory: () => Database) => testClient(createServerApp(factory(), { rateLimit: false }));
+import { cleanupExpiredEvents } from '../App/backend/tools/cleanup.mjs';
 const pg = new PGlite();
 const query = async <T,>(sql: string, params: unknown[] = []) => (await pg.query<T>(sql, params)).rows;
 const app = createApp(() => ({ query }));
@@ -27,8 +30,8 @@ async function respond(id: string, ranges: TimeRange[], name = 'Sam') {
   return await result.json() as { id: string; revision: number };
 }
 beforeAll(async () => {
-  for (const name of (await readdir(new URL('../migrations/', import.meta.url))).filter(n => n.endsWith('.sql')).sort()) {
-    await pg.exec(await readFile(new URL('../migrations/' + name, import.meta.url), 'utf8'));
+  for (const name of (await readdir(new URL('../App/backend/db/migrations/', import.meta.url))).filter(n => n.endsWith('.sql')).sort()) {
+    await pg.exec(await readFile(new URL('../App/backend/db/migrations/' + name, import.meta.url), 'utf8'));
   }
 }, 30000);
 beforeEach(async () => { await pg.exec('TRUNCATE events CASCADE'); });

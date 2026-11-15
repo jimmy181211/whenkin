@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import Calendar, { clampCalendarMonth } from '../src/components/Calendar';
-import { setLanguage, t } from '../src/lib/i18n';
-import { isEventDateAllowed } from '../src/lib/date-limits';
+import Calendar, { clampCalendarMonth } from '../App/frontend/components/Calendar';
+import { setLanguage, t } from '../App/frontend/i18n/index';
+import { isEventDateAllowed } from '../App/shared/date-limits';
 
 afterEach(()=>{setLanguage('en');vi.useRealTimers();});
 describe('calendar month and year navigation',()=>{

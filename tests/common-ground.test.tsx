@@ -1,11 +1,11 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { commonGround } from '../lib/server/common-ground';
-import type { MeetingEvent, ResponseData, TimeRange } from '../src/lib/types';
-import { setLanguage, t } from '../src/lib/i18n';
-import { slotsToRanges } from '../src/lib/time';
-import EventResults from '../src/screens/event/EventResults';
-import ShareEventDialog from '../src/screens/event/ShareEventDialog';
+import { commonGround } from '../App/backend/shared/common-ground';
+import type { MeetingEvent, ResponseData, TimeRange } from '../App/shared/types';
+import { setLanguage, t } from '../App/frontend/i18n/index';
+import { slotsToRanges } from '../App/frontend/utils/time';
+import EventResults from '../App/frontend/components/event/EventResults';
+import ShareEventDialog from '../App/frontend/components/event/ShareEventDialog';
 const base = Date.parse('2027-01-15T09:00:00Z');
 const range = (a: number, b: number): TimeRange => ({ start: new Date(base + a * 60000).toISOString(), end: new Date(base + b * 60000).toISOString() });
 const person = (id: string, ranges: TimeRange[]): ResponseData => ({ id, name: id, ranges, timezone: 'UTC', revision: 1 });

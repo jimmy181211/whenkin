@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFile,readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { commonGround } from '../lib/server/common-ground';
-import { analyzeSnapshot } from '../scripts/analyze-events.mjs';
-import { slotsToRanges } from '../src/lib/time';
+import { commonGround } from '../App/backend/shared/common-ground';
+import { analyzeSnapshot } from '../App/backend/tools/analyze-events.mjs';
+import { slotsToRanges } from '../App/frontend/utils/time';
 const pg=new PGlite();
 const query=async(sql:string,p:unknown[]=[]) => (await pg.query(sql,p)).rows;
-beforeAll(async()=>{for(const name of (await readdir(new URL('../migrations/',import.meta.url))).filter(n=>n.endsWith('.sql')).sort())await pg.exec(await readFile(new URL('../migrations/'+name,import.meta.url),'utf8'));},30000);
+beforeAll(async()=>{for(const name of (await readdir(new URL('../App/backend/db/migrations/',import.meta.url))).filter(n=>n.endsWith('.sql')).sort())await pg.exec(await readFile(new URL('../App/backend/db/migrations/'+name,import.meta.url),'utf8'));},30000);
 afterAll(async()=>{await pg.close();});
 describe('read-only analytics',()=>{
   it('reconciles anonymous SQL metrics with the app intersection across empty, partial, overlapping and disjoint data',async()=>{
@@ -29,7 +29,7 @@ describe('read-only analytics',()=>{
       }
       const shared=commonGround(windows,people);expected.push({response_count:people.length,shared_period_count:shared.length,shared_minutes:people.length?shared.reduce((n,r)=>n+(Date.parse(r.end)-Date.parse(r.start))/60000,0):null,longest_shared_minutes:people.length?Math.max(0,...shared.map(r=>(Date.parse(r.end)-Date.parse(r.start))/60000)):null});
     }
-    const sql=await readFile(new URL('../scripts/analytics-extract.sql',import.meta.url),'utf8');
+    const sql=await readFile(new URL('../App/backend/tools/analytics-extract.sql',import.meta.url),'utf8');
     const snapshot=(await query(sql))[0] as {snapshot:{events:Record<string,unknown>[];source_counts:{events:number;responses:number}}};
     expect(snapshot.snapshot.events).toHaveLength(16);
     for(let i=0;i<16;i++){

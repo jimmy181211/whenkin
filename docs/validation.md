@@ -1,11 +1,11 @@
 # Validation
 
-Run TypeScript, the test suite, and the production build before publishing.
+The original baseline passed 110 tests and TypeScript checks before refactoring.
 
-The shared-event tests verify that normal links and legacy organizer fragments use the same group view. Shared edits are allowed without credentials, responses stay scoped to their event, and stale revisions cannot overwrite a saved response.
+The Express refactor passed 118 tests, TypeScript checks and the Node/Vite production build before the current-host compatibility adapter was added. The suite includes the original scheduling, language, autosave-client and database behavior checks, plus real HTTP route tests and isolated migration-runner checks.
 
-Common Ground tests cover short and long intersections, gaps, touching and overlapping intervals, the rejection of partial-group matches, empty responses, and more than 1,000 respondents. A deterministic cell-by-cell reference checks many changing schedules independently of the boundary-sweep implementation.
+The manual retention verifier passed both its simulated one-calendar-year and ten-day scenarios using disposable PGlite data. Each scenario deleted exactly the expected 207 event rows and their child rows, preserved all younger data, and left no orphaned rows. Production data and retention policy were not changed.
 
-Retention tests verify a calendar-year deadline, leap-day handling, expiry checks during writes, manual deletion across batches, cascading child deletion, and preservation of younger events. The database migration is checked on an isolated Neon branch before production.
+Browser verification of the compiled Express application used a disposable local PGlite database. It verified event creation, navigation to the new event URL, automatic saving of a named response, the everyone-free highlight toggle, and per-block availability details. The Chinese layout was inspected at a 390px viewport with no horizontal page overflow. The screenshot is a local ignored QA artifact.
 
-The public interface keeps the existing colors, typography, controls, cards, and responsive layouts. Only removed controls, shared results, match-category headings, and the short expiry notice change.
+Before this branch is released, finish the retained Sites/Workers Express adapter build and runtime checks, rerun the full suite and both build targets, and verify Docker Compose against PostgreSQL after the local Docker engine is available. No production deployment or database migration has been performed by this refactor so far.

@@ -8,10 +8,10 @@ dashboard, or database schema changes to Whenkin.
 With the owner's authorization, use the server-only `DATABASE_URL` and run:
 
 ```sh
-node scripts/analyze-events.mjs --output outputs/analytics
+pnpm db:analyze --output outputs/analytics
 ```
 
-The query in `scripts/analytics-extract.sql` computes statistics inside PostgreSQL
+The query in `App/backend/tools/analytics-extract.sql` computes statistics inside PostgreSQL
 in one consistent statement. It exports event titles for topic classification,
 anonymous event-level statistics, overall time-zone counts, and aggregated free
 time histograms. Names, event links, response IDs, personal ranges, and exact
@@ -21,7 +21,7 @@ creation timestamps are not exported. Generated data belongs in ignored local
 An already authorized snapshot can be processed offline:
 
 ```sh
-node scripts/analyze-events.mjs --input outputs/analytics/snapshot.json --output outputs/analytics
+pnpm db:analyze --input outputs/analytics/snapshot.json --output outputs/analytics
 ```
 
 Outputs: `analysis.html`, `events.csv`, and `summary.json`. The HTML is standalone
@@ -52,7 +52,7 @@ response events separately from genuinely multi-response coordination.
 ## Reproducible cleanup evidence
 
 ```sh
-node scripts/verify-retention.mjs outputs/retention-verification
+pnpm db:verify-retention outputs/retention-verification
 ```
 
 This uses disposable in-memory PGlite PostgreSQL, never `DATABASE_URL`. It loads
@@ -68,3 +68,4 @@ one millisecond newer. It checks past-expiry young events, future-expiry old
 events, idempotence and leap-year calendar arithmetic. JSON and HTML evidence
 record the actual outcome. This proves the tested SQL behavior, not the existence
 or execution of an automatic scheduler; the site has no automatic cleanup job.
+

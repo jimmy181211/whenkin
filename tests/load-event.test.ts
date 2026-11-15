@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadEvent } from '../src/lib/load-event';
+import { loadEvent } from '../App/frontend/api/load-event';
 const event={id:'event',responses:[],candidates:[]};
 afterEach(()=>vi.unstubAllGlobals());
 describe('one shared event request',()=>{

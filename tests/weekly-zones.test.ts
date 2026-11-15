@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { projectWeekly } from '../src/lib/weekly';
-import { allSlots, SLOT } from '../src/lib/time';
+import { projectWeekly } from '../App/shared/weekly';
+import { allSlots, SLOT } from '../App/frontend/utils/time';
 
 const event={timezone:'America/Los_Angeles',created_at:'2026-10-22T18:00:00Z',windows:[{start:'2000-01-03T09:00:00Z',end:'2000-01-03T11:00:00Z'}]};
 describe('date-free weekly display conversion',()=>{

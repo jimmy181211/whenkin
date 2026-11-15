@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
-import { sqlStatements } from '../scripts/sql-statements.mjs';
-import EventLimits from '../src/components/EventLimits';
-import { setLanguage, t } from '../src/lib/i18n';
+import { sqlStatements } from '../App/backend/tools/sql-statements.mjs';
+import EventLimits from '../App/frontend/components/EventLimits';
+import { setLanguage, t } from '../App/frontend/i18n/index';
 
 afterEach(() => setLanguage('en'));
 describe('event expiry notice', () => {
@@ -31,7 +31,7 @@ describe('SQL migration statements', () => {
     expect(() => sqlStatements('SELECT $$unfinished;')).toThrow('Unterminated SQL');
   });
   it('keeps the capacity trigger and cleanup function intact in the migration', async () => {
-    const migration = await readFile(new URL('../migrations/006_event_lifetime.sql', import.meta.url), 'utf8');
+    const migration = await readFile(new URL('../App/backend/db/migrations/006_event_lifetime.sql', import.meta.url), 'utf8');
     const statements = sqlStatements(migration);
     expect(statements).toHaveLength(9);
     expect(statements.find(s => s.includes('CREATE FUNCTION check_response_limit'))).toContain("ERRCODE = 'WK002'");

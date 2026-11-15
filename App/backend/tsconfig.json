@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "..",
+    "outDir": "../../dist/node",
+    "noEmit": false,
+    "sourceMap": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "db/*.mjs",
+    "../shared/**/*.ts"
+  ],
+  "exclude": [
+    "tools",
+    "node_modules"
+  ]
+}

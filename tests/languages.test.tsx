@@ -1,12 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import App from '../src/App';
-import AvailabilityGrid from '../src/components/AvailabilityGrid';
-import { getLanguage, getLocale, setLanguage, t } from '../src/lib/i18n';
-import { allSlots, gridModel, localToUTC, slotsToRanges } from '../src/lib/time';
-import type { MeetingEvent } from '../src/lib/types';
+import App from '../App/frontend/App';
+import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
+import { getLanguage, getLocale, setLanguage, t } from '../App/frontend/i18n/index';
+import { allSlots, gridModel, localToUTC, slotsToRanges } from '../App/frontend/utils/time';
+import type { MeetingEvent } from '../App/shared/types';
 
-vi.mock('next/navigation',()=>({usePathname:()=>window.location.pathname,useRouter:()=>({push:vi.fn()})}));
 
 afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
 const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path,href:'http://localhost'+path,origin:'http://localhost'},innerWidth:390});return renderToStaticMarkup(<App/>);};
