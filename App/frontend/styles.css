@@ -165,7 +165,7 @@ html[lang=zh-CN] .eyebrow{letter-spacing:.8px}html[lang=zh-CN] .intro h1{letter-
 /* Shared expiry and capacity notice on desktop and mobile. */
 .event-limits{display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.65;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}
 .event-limits svg{margin-top:2px}
-.create-card .event-limits{margin:24px 0 16px}
+.create-card .event-limits{margin:12px 0 8px}
 .event-summary .event-limits{margin:12px 0 0}
 
 /* Reuse the form and result styles for the simplified controls. */

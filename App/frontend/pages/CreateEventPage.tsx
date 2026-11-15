@@ -10,6 +10,7 @@ import { getLocale, t } from '../i18n/index';
 import Toast from '../components/Toast';
 import { useNotice } from '../utils/use-notice';
 const times = Array.from({ length: 97 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String(i % 4 * 15).padStart(2, '0')}`);
+const scheduleErrors = { dates: 'Choose at least one date on the calendar.', weekdays: 'Choose at least one day of the week.' } as const;
 function labelTime(value: string) {
     if (value === '24:00') {
         return t('Midnight (next day)');
@@ -68,7 +69,7 @@ export default function CreateEventPage() {
             return;
         }
         if (scheduleMode === 'weekdays' ? !weekdays.length : !dates.length) {
-            setError(scheduleMode === 'weekdays' ? 'Choose at least one day of the week.' : 'Choose at least one date on the calendar.');
+            setError(scheduleErrors[scheduleMode]);
             return;
         }
         if (start >= end) {
@@ -110,7 +111,13 @@ export default function CreateEventPage() {
           <SchedulePicker mode={scheduleMode} onModeChange={mode => {
         setScheduleMode(mode);
         setError('');
-    }} dates={dates} onDatesChange={setDates} weekdays={weekdays} onWeekdaysChange={setWeekdays} timezone={zone}/>
+    }} dates={dates} onDatesChange={next => {
+        setDates(next);
+        if (next.length) setError(current => current === scheduleErrors.dates ? '' : current);
+    }} weekdays={weekdays} onWeekdaysChange={next => {
+        setWeekdays(next);
+        if (next.length) setError(current => current === scheduleErrors.weekdays ? '' : current);
+    }} timezone={zone}/>
           <div className="fields-row two-fields">
             <label className="field">
               {t("From")}
