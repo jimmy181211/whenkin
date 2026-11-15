@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, CalendarDays, Info, LoaderCircle, Users, Plus, RefreshCw } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
@@ -7,6 +7,8 @@ import EventLimits from '../components/EventLimits';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
 import { getLocale, t } from '../i18n/index';
+import Toast from '../components/Toast';
+import { useNotice } from '../utils/use-notice';
 const times = Array.from({ length: 97 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String(i % 4 * 15).padStart(2, '0')}`);
 function labelTime(value: string) {
     if (value === '24:00') {
@@ -31,6 +33,8 @@ export default function CreateEventPage() {
     const [zone, setZone] = useState(deviceTimezone);
     const [dates, setDates] = useState<string[]>([]);
     const [title, setTitle] = useState('');
+    const titleInput = useRef<HTMLInputElement>(null);
+    const { notice, notify, dismissNotice } = useNotice();
     const [description, setDescription] = useState('');
     const [notes, setNotes] = useState(false);
     const [start, setStart] = useState('09:00');
@@ -56,6 +60,12 @@ export default function CreateEventPage() {
     async function create(e: React.FormEvent) {
         e.preventDefault();
         setError('');
+        if (!title.trim()) {
+            notify('Enter an event name before creating your event.', titleInput.current);
+            titleInput.current?.focus();
+            titleInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return;
+        }
         if (connection !== 'ready') {
             return;
         }
@@ -80,6 +90,7 @@ export default function CreateEventPage() {
         }
     }
     return <main className="create-page">
+      {notice && <Toast key={notice.id} message={notice.message} anchor={notice.anchor} onDismiss={dismissNotice}/>}
       <section className="intro">
         <PageLink className="mobile-guide-link" href="/how-it-works">{t("How It Works")} <ArrowRight size={16}/></PageLink>
       </section>
@@ -88,10 +99,10 @@ export default function CreateEventPage() {
           <div><h2>{t("Create Your Event")}</h2></div>
           <div className="heading-icon"><CalendarDays size={22}/></div>
         </div>
-        <form onSubmit={create}>
+        <form noValidate onSubmit={create}>
           <label className="field">
             {t("Event Name")}
-            <input autoComplete="off" required maxLength={100} value={title} onChange={e => setTitle(e.target.value)}/>
+            <input ref={titleInput} autoComplete="off" required aria-invalid={!title.trim() && !!notice} maxLength={100} value={title} onChange={e => { setTitle(e.target.value); dismissNotice(); }}/>
           </label>
           {notes ? <label className="field">
             <span>{t("Note")} <span className="optional">{t("optional")}</span></span>

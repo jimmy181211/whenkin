@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { anchoredPanelPosition } from '../utils/anchored-panel-position';
+import PopupSurface from './PopupSurface';
 
 type Props={anchor:HTMLElement;label:string;onClose:()=>void;children:ReactNode;className?:string;focusOnOpen?:boolean};
 export default function AnchoredPanel({anchor,label,onClose,children,className='',focusOnOpen=false}:Props){
@@ -29,5 +30,5 @@ export default function AnchoredPanel({anchor,label,onClose,children,className='
     document.addEventListener('keydown',escape);document.addEventListener('pointerdown',outside,true);
     return()=>{document.removeEventListener('keydown',escape);document.removeEventListener('pointerdown',outside,true);if(focusOnOpen&&node?.contains(document.activeElement)&&previous instanceof HTMLElement&&previous.isConnected)previous.focus({preventScroll:true});};
   },[anchor,focusOnOpen]);
-  return createPortal(<div ref={panel} className={'anchored-panel '+className} style={position} role="dialog" aria-label={label} aria-modal="false">{children}</div>,document.body);
+  return createPortal(<PopupSurface ref={panel} className={'anchored-panel '+className} style={position} role="dialog" aria-label={label} aria-modal="false">{children}</PopupSurface>,document.body);
 }

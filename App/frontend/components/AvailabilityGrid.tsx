@@ -8,6 +8,7 @@ import { groupAvailability, availabilityColor } from '../utils/group-availabilit
 import { scrollGrid } from '../utils/grid-scroll';
 import type { SlotInspection } from './SlotDetails';
 import { projectWeekly } from '../../shared/weekly';
+import PopupSurface from './PopupSurface';
 
 type Props={inspection?:SlotInspection|null;onInspect?:(value:SlotInspection|null)=>void;event:MeetingEvent;zone:string;selected:Set<number>;onChange:(v:Set<number>)=>void;highlights?:TimeRange[];canEdit?:boolean;onEditBlocked?:()=>void;status?:ReactNode;view?:'personal'|'group';onViewChange?:(view:'personal'|'group')=>void};
 type Gesture={base:Set<number>;row:number;col:number;endRow:number;endCol:number;remove:boolean};
@@ -100,7 +101,7 @@ export default function AvailabilityGrid({event,zone,selected,onChange,highlight
         </GridRow>)}
       </div>
     </div>
-    {guide&&<div className="selection-guide" role="status" style={{left:guide.x,top:guide.y}}><ArrowDownUp size={15}/>{guide.text}</div>}
+    {guide&&<PopupSurface className="selection-guide" role="status" style={{left:guide.x,top:guide.y}}><ArrowDownUp size={15}/>{guide.text}</PopupSurface>}
   </section>;
 }
 function GridRow({children}:{children:React.ReactNode}){return <div className="grid-row">{children}</div>;}

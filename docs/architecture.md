@@ -12,6 +12,10 @@ Whenkin is a single application with a React/Vite browser frontend, an Express/N
 - `App/shared`: request/response types, pure time/date rules and route recognition. It imports neither frontend translations nor backend connections.
 - `infra`: container and deployment configuration. These are independent from business rules.
 
+## Popup components
+
+Use `App/frontend/components/PopupSurface.tsx` for new popup surfaces. Its stylesheet owns the shared white background, teal border, rounded corners and shadow; individual components only define layout and interaction. `Toast` and `useNotice` provide the anchored, automatically dismissed field reminders used for both event names and responder names. `AnchoredPanel` adds positioning for availability inspection and the small deletion confirmation. Sharing, time-zone menus and Quick Guide cards reuse the same surface while retaining their existing behavior.
+
 ## HTTP endpoints
 
 | Method | URL | Handler |

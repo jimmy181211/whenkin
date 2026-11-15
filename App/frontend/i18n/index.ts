@@ -54,6 +54,7 @@ export const messages: Record<string, [string, string]> = {
   'Unsaved': ['未保存', 'Sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],
   'Enter your name before editing availability.': ['请先输入姓名，再编辑空闲时间。', 'Escribe tu nombre antes de editar tu disponibilidad.'],
+  'Enter an event name before creating your event.': ['请先输入活动名称，再创建活动。', 'Escribe un nombre para el evento antes de crearlo.'],
   'Event Name': ['活动名称', 'Nombre del evento'],
   'Calendar mode': ['日历模式', 'Modo de calendario'],
   'Specific Dates': ['具体日期', 'Fechas específicas'],

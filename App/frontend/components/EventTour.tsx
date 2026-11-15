@@ -5,6 +5,7 @@ import { useLanguage } from './LanguageSelector';
 import { browserTourStorage, finishTour, shouldOfferTour, tourCopy, tourSteps } from '../utils/event-tour';
 import { tourScrollDelta } from '../utils/tour-position';
 import './event-tour.css';
+import PopupSurface from './PopupSurface';
 
 type Position = { x: number; y: number; width: number; height: number; cardX: number; cardY: number };
 export default function EventTour() {
@@ -91,13 +92,20 @@ export default function EventTour() {
       if (rect && rect.width && rect.height) {
         const fitsRight = rect.right + 16 + width <= left + vw - 16;
         const fitsLeft = rect.left - 16 - width >= left + 16;
-        if (vw < 700 || (!fitsRight && !fitsLeft)) { cardX = vw < 700 ? left + 12 : left + (vw - width) / 2; cardY = top + vh - height - 12; }
+        const stacked = vw < 700 || (!fitsRight && !fitsLeft);
+        if (stacked) {
+          cardX = vw < 700 ? left + 12 : left + (vw - width) / 2;
+          cardY = top + vh - height - 12;
+          // At the end of the page scrolling may stop before the target clears the card.
+          if (rect.bottom + 6 > cardY - 12 && rect.top >= top + height + 28) cardY = top + 12;
+        }
         else {
           cardX = fitsRight ? rect.right + 16 : rect.left - 16 - width;
           cardY = Math.max(top + 16, Math.min(top + vh - height - 16, rect.top));
         }
         x = Math.max(left + 8, rect.left - 6); y = Math.max(top + 8, rect.top - 6);
-        const bottom = vw < 700 || (!fitsRight && !fitsLeft) ? Math.min(rect.bottom + 6, cardY - 12) : Math.min(rect.bottom + 6, top + vh - 8);
+        const cardBelowTarget = stacked && cardY >= rect.top;
+        const bottom = Math.min(rect.bottom + 6, cardBelowTarget ? cardY - 12 : top + vh - 8);
         w = Math.max(0, Math.min(rect.right + 6, left + vw - 8) - x); h = Math.max(0, bottom - y);
       }
       const next = { x, y, width: w, height: h, cardX, cardY };
@@ -148,7 +156,7 @@ export default function EventTour() {
         <rect width="100%" height="100%" fill="#102e28" fillOpacity=".20" mask={`url(#${id})`}/>
         {position && position.height > 0 && <rect className="event-tour-ring" x={position.x} y={position.y} width={position.width} height={position.height} rx="12" fill="none" stroke="#238d80" strokeWidth="2"/>}
       </svg>
-      <div ref={panel} className="event-tour-panel" data-welcome={welcome} role="dialog" aria-modal="true" aria-busy={moving} aria-labelledby={`${id}-title`} aria-describedby={`${id}-body`} tabIndex={-1} style={position ? { left: position.cardX, top: position.cardY } : undefined}>
+      <PopupSurface ref={panel} className="event-tour-panel" data-welcome={welcome} role="dialog" aria-modal="true" aria-busy={moving} aria-labelledby={`${id}-title`} aria-describedby={`${id}-body`} tabIndex={-1} style={position ? { left: position.cardX, top: position.cardY } : undefined}>
         <div className="event-tour-content">
         {!welcome && <p className="event-tour-progress">{copy.progress.replace('{step}', String((step ?? 0) + 1)).replace('{total}', String(tourSteps.length))}</p>}
         <h2 id={`${id}-title`}>{welcome ? copy.welcome : content?.[0]}</h2>
@@ -161,7 +169,7 @@ export default function EventTour() {
             <button type="button" className="button primary compact" onClick={() => step === tourSteps.length - 1 ? close('completed') : setStep(value => (value ?? -1) + 1)}>{welcome ? copy.start : step === tourSteps.length - 1 ? copy.done : copy.next}</button>
           </div>
         </div>
-      </div>
+      </PopupSurface>
     </div>, document.body)}
   </>;
 }

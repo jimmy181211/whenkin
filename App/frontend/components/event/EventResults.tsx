@@ -17,7 +17,7 @@ type Props = {
 export default function EventResults({ event, editingId, onEditResponse, onDeleteResponse, switching, highlighted, suggestions, onToggleHighlight }: Props) {
     const [deletion,setDeletion] = useState<{response:ResponseData;anchor:HTMLElement}|null>(null);
     return <aside className="results-sidebar">
-      <section className="people-card" aria-busy={switching}>
+      <section className="people-card" data-tour-responders aria-busy={switching}>
         <div className="sidebar-title">
           <h3>{t("Responders")} <span>{event.responses.length}</span></h3>
         </div>
@@ -32,7 +32,7 @@ export default function EventResults({ event, editingId, onEditResponse, onDelet
           {t("Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.")}
         </p>}
       </section>
-      <section className="suggestions-card">
+      <section className="suggestions-card" data-tour-shared-times>
         <div className="sidebar-title"><h2>{t("When Everyone Is Free")}</h2></div>
         <button type="button" className="button primary highlight-shared-times" aria-pressed={highlighted} disabled={!highlighted && !suggestions.length} onClick={onToggleHighlight}>{t(highlighted ? "Cancel Highlight" : "Highlight Everyone’s Free Times")}</button>
         <p className="shared-time-summary" role="status">{t(suggestions.length===1 ? "{count} shared time period" : "{count} shared time periods", {count:suggestions.length})}</p>

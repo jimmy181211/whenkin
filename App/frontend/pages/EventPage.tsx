@@ -19,6 +19,7 @@ import type { SlotInspection } from '../components/SlotDetails';
 import AvailabilityPopover from '../components/AvailabilityPopover';
 import { ApiError } from '../api/client';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits';
+import { useNotice } from '../utils/use-notice';
 export default function EventPage({ id }: {
     id: string;
 }) {
@@ -32,10 +33,7 @@ export default function EventPage({ id }: {
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [editNotice, setEditNotice] = useState(false);
-    const [notice, setNotice] = useState<{ message: string; id: number; anchor: HTMLElement | null } | null>(null);
-    const noticeId = useRef(0);
-    const dismissNotice = useCallback(() => setNotice(null), []);
-    const notify = useCallback((message: string, anchor: HTMLElement | null) => setNotice({ message, anchor, id: ++noticeId.current }), []);
+    const { notice, notify, dismissNotice } = useNotice();
     const nameInput = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
     const [unavailable, setUnavailable] = useState(false);
