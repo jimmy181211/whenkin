@@ -21,16 +21,14 @@ export default function EventResults({ event, editingId, onEditResponse, onDelet
         <div className="sidebar-title">
           <h3>{t("Responders")} <span>{event.responses.length}</span></h3>
         </div>
-        {event.responses.length ? event.responses.map((r, i) => <div className="person-row" key={r.id}><button type="button" className="person" aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
+        {event.responses.map((r, i) => <div className="person-row" key={r.id}><button type="button" className="person" aria-label={t('Edit {name}', { name: r.name })} aria-pressed={r.id === editingId} disabled={switching} onClick={() => onEditResponse(r.id)}>
           <span className={`avatar avatar-${i % 3}`}>{r.name.slice(0, 1).toUpperCase()}</span>
           <span>
             <strong>{r.name}</strong>
             <small>{zoneLabel(r.timezone)}</small>
           </span>
           <Pencil size={14}/>
-        </button><button type="button" id={'delete-response-'+r.id} className="icon-button delete-response" aria-label={t('Delete {name}',{name:r.name})} title={t('Delete {name}',{name:r.name})} disabled={switching} onClick={e=>setDeletion({response:r,anchor:e.currentTarget})}><Trash2 size={16}/></button></div>) : <p className="field-help">
-          {t("Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.")}
-        </p>}
+        </button><button type="button" id={'delete-response-'+r.id} className="icon-button delete-response" aria-label={t('Delete {name}',{name:r.name})} title={t('Delete {name}',{name:r.name})} disabled={switching} onClick={e=>setDeletion({response:r,anchor:e.currentTarget})}><Trash2 size={16}/></button></div>)}
       </section>
       <section className="suggestions-card" data-tour-shared-times>
         <div className="sidebar-title"><h2>{t("When Everyone Is Free")}</h2></div>

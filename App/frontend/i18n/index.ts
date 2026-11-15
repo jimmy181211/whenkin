@@ -275,10 +275,6 @@ export const messages: Record<string, [string, string]> = {
     "（你）",
     "(tú)"
   ],
-  "Responses will appear here. Anyone who hasn’t responded is not counted as unavailable.": [
-    "回复会显示在这里。未回复的人不会被算作没空。",
-    "Las respuestas aparecerán aquí. Quienes aún no responden no se cuentan como no disponibles."
-  ],
   "Close sharing": [
     "关闭分享窗口",
     "Cerrar ventana para compartir"
