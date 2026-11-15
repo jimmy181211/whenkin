@@ -34,7 +34,7 @@ describe('first-visit event guide', () => {
     const saved = storage(); saved.setItem(tour.EVENT_TOUR_KEY, 'started');
     expect(tour.shouldOfferTour(saved)).toBe(true);
   });
-  it('introduces responders and shared-time highlighting before the unchanged sharing step', async () => {
+  it('provides five concise localized steps while retaining the personal introduction', async () => {
     const { tourCopy, tourSteps } = await import('../App/frontend/utils/event-tour');
     expect(tourSteps.map(step => step.key)).toEqual(['personal', 'group', 'responders', 'sharedTimes', 'share']);
     for (const copy of Object.values(tourCopy)) {
@@ -45,8 +45,8 @@ describe('first-visit event guide', () => {
         expect(copy[step.key][1].length).toBeLessThan(200);
       }
     }
-    expect(tourCopy.en.share).toEqual(['Share the event', 'Copy the link through Share Event, or copy the URL from your browser’s address bar. Both open the same event.']);
-    expect(tourCopy.zh.share).toEqual(['分享活动', '在“分享活动”中复制链接，或直接复制浏览器地址栏的网址，效果一样。']);
-    expect(tourCopy.es.share).toEqual(['Comparte el evento', 'Copia el enlace desde Compartir Evento o la URL de la barra de direcciones. Ambos abren el mismo evento.']);
+    expect(tourCopy.en.personal[1]).toBe('View or edit your current response.');
+    expect(tourCopy.zh.personal[1]).toBe('查看或修改你正在填写的空闲时间。');
+    expect(tourCopy.es.personal[1]).toBe('Consulta o edita tu respuesta actual.');
   });
 });

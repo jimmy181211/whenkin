@@ -46,10 +46,18 @@ export const messages: Record<string, [string, string]> = {
 
 
   'This event has expired.': ['此活动已过期。', 'Este evento ha caducado.'],
+  'This event link has expired.': ['此活动链接已过期。', 'Este enlace de evento ha caducado.'],
+  'This event has expired or could not be found.': ['活动已过期或无法找到。', 'El evento ha caducado o no se encuentra.'],
+  'Event links are valid for one year. Expired events and their responses may be removed.': ['活动链接有效期为一年。过期活动及其回复可能已被清理。', 'Los enlaces son válidos durante un año. Los eventos caducados y sus respuestas pueden eliminarse.'],
+  'Check the link with your organizer, or create a new event.': ['请向组织者确认链接，或新建一个活动。', 'Confirma el enlace con quien organiza o crea un nuevo evento.'],
+  'For details about data retention, see our policies.': ['有关数据保留的详情，请查看以下政策。', 'Consulta los detalles sobre conservación de datos en nuestras políticas.'],
   'This event could not be found. It may have expired.': ['找不到此活动，可能已过期。', 'No se encontró este evento. Puede que haya caducado.'],
 
   'Month': ['月份', 'Mes'],
   'Year': ['年份', 'Año'],
+  'No matching options.': ['没有匹配项。', 'No hay coincidencias.'],
+  'Choose a valid month.': ['请选择有效月份。', 'Elige un mes válido.'],
+  'Choose a year from {first} to {last}.': ['请输入 {first} 至 {last} 之间的年份。', 'Elige un año entre {first} y {last}.'],
   'Saved': ['已保存', 'Guardado'],
   'Unsaved': ['未保存', 'Sin guardar'],
   'Not Started': ['尚未开始', 'Sin empezar'],

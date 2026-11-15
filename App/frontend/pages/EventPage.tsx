@@ -20,6 +20,7 @@ import AvailabilityPopover from '../components/AvailabilityPopover';
 import { ApiError } from '../api/client';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits';
 import { useNotice } from '../utils/use-notice';
+import EventUnavailablePage from './EventUnavailablePage';
 export default function EventPage({ id }: {
     id: string;
 }) {
@@ -33,10 +34,11 @@ export default function EventPage({ id }: {
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
     const [editNotice, setEditNotice] = useState(false);
-    const { notice, notify, dismissNotice } = useNotice();
+    const { notice, notify, notifyRequired, dismissNotice } = useNotice();
     const nameInput = useRef<HTMLInputElement>(null);
     const [error, setError] = useState('');
-    const [unavailable, setUnavailable] = useState(false);
+    const [unavailableReason, setUnavailableReason] = useState<'expired' | 'missing' | null>(null);
+    const unavailable = unavailableReason !== null;
     const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
     const [view, setView] = useState<'personal' | 'group'>('personal');
     const [share, setShare] = useState(false);
@@ -96,6 +98,7 @@ export default function EventPage({ id }: {
             }
             catch (e) {
                 if (alive) {
+                    if (e instanceof ApiError && (e.status === 410 || e.status === 404)) setUnavailableReason(e.status === 410 ? 'expired' : 'missing');
                     setError(e instanceof Error ? e.message : 'Could not load this event.');
                 }
             }
@@ -105,8 +108,8 @@ export default function EventPage({ id }: {
         };
     }, [id, load, applyEvent]);
     const hasEvent = event !== null && !unavailable;
-    const expire = useCallback(() => {
-        setUnavailable(true);
+    const expire = useCallback((reason: 'expired' | 'missing' = 'expired') => {
+        setUnavailableReason(reason);
         eventRef.current = null;
         dirty.current = false;
         setSaveState('saved');
@@ -129,7 +132,7 @@ export default function EventPage({ id }: {
             return;
         }
         const refreshError = (error: unknown) => {
-            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire();
+            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire(error.status === 404 ? 'missing' : 'expired');
         };
         const timer = setInterval(() => {
             if (document.visibilityState === 'visible') {
@@ -151,9 +154,7 @@ export default function EventPage({ id }: {
     }, [hasEvent, load, applyEvent, expire]);
     function requestEditing() {
         setEditNotice(true);
-        notify('Enter your name before editing availability.', nameInput.current);
-        nameInput.current?.focus();
-        nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        void notifyRequired('Enter your name before editing availability.', nameInput.current);
     }
     function mark(next: Set<number>) {
         if (switchingRef.current) return;
@@ -185,8 +186,7 @@ export default function EventPage({ id }: {
         const value = latest.current;
         if (!value.name.trim()) {
             setEditNotice(true);
-            notify('Enter your name before editing availability.', nameInput.current);
-            nameInput.current?.focus();
+            void notifyRequired('Enter your name before editing availability.', nameInput.current);
             return false;
         }
         saving.current = true;
@@ -229,7 +229,7 @@ export default function EventPage({ id }: {
             saving.current = false;
             setIsSaving(false);
         }
-    }, [id, load, applyEvent, unavailable, expire, notify]);
+    }, [id, load, applyEvent, unavailable, expire, notifyRequired]);
     const save = useCallback(() => {
         if (savingTask.current) return savingTask.current;
         const task = persist();
@@ -270,7 +270,7 @@ export default function EventPage({ id }: {
             setResponseSession(value => value + 1);
             nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         } catch (error) {
-            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire();
+            if (error instanceof ApiError && (error.status === 410 || error.status === 404)) expire(error.status === 404 ? 'missing' : 'expired');
             else setError(error instanceof Error ? error.message : 'Could not load this event.');
         } finally {
             switchingRef.current = false;
@@ -370,6 +370,7 @@ export default function EventPage({ id }: {
         }
     }
     const weeklyView = useMemo(() => event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null, [event, zone]);
+    if (unavailableReason) return <EventUnavailablePage reason={unavailableReason}/>;
     if (!event || unavailable) {
         return <main className="loading-page">
       {error ? <>
@@ -408,6 +409,7 @@ export default function EventPage({ id }: {
             <ParticipantName name={name} disabled={switching} inputRef={nameInput} editNotice={editNotice} onChange={value => {
         setName(value);
         setEditNotice(false);
+        dismissNotice();
         changeDraft({ name: value });
     }}/>
             <TimezonePicker value={zone} onChange={changeZone} at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}/>

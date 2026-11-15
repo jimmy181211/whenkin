@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, CalendarDays, Info, LoaderCircle, Users, Plus, RefreshCw } from 'lucide-react';
+import { ArrowRight, CalendarDays, Info, LoaderCircle, Plus, RefreshCw } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import PageLink from '../components/PageLink';
@@ -34,7 +34,7 @@ export default function CreateEventPage() {
     const [dates, setDates] = useState<string[]>([]);
     const [title, setTitle] = useState('');
     const titleInput = useRef<HTMLInputElement>(null);
-    const { notice, notify, dismissNotice } = useNotice();
+    const { notice, notifyRequired, dismissNotice } = useNotice();
     const [description, setDescription] = useState('');
     const [notes, setNotes] = useState(false);
     const [start, setStart] = useState('09:00');
@@ -61,9 +61,7 @@ export default function CreateEventPage() {
         e.preventDefault();
         setError('');
         if (!title.trim()) {
-            notify('Enter an event name before creating your event.', titleInput.current);
-            titleInput.current?.focus();
-            titleInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            void notifyRequired('Enter an event name before creating your event.', titleInput.current);
             return;
         }
         if (connection !== 'ready') {
@@ -147,7 +145,6 @@ export default function CreateEventPage() {
           <button disabled={busy || connection !== 'ready'} className="button primary create-submit" type="submit">
             {busy ? <><LoaderCircle className="spin" size={18}/> {t("Creating your event…")}</> : connection === 'checking' ? <><LoaderCircle className="spin" size={18}/> {t("Checking connection…")}</> : <>{t("Create Event & Get a Link")} <ArrowRight size={18}/></>}
           </button>
-          <p className="privacy-note mobile-hide"><Users size={12}/> {t("Everyone with the link can view and edit all responses.")}</p>
         </form>
       </section>
     </main>;

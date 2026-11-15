@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Temporal } from '@js-temporal/polyfill';
 import { FIRST_EVENT_DATE, LAST_EVENT_DATE, isEventDateAllowed } from '../../shared/date-limits';
+import EditableSelect from './EditableSelect';
 export function clampCalendarMonth(value:Temporal.PlainDate) {
   const first=FIRST_EVENT_DATE,last=LAST_EVENT_DATE.with({day:1}),month=value.with({day:1});
   return Temporal.PlainDate.compare(month,first)<0?first:Temporal.PlainDate.compare(month,last)>0?last:month;
@@ -16,8 +17,8 @@ export default function Calendar({value,onChange,timezone}:{value:string[];onCha
   const years=Array.from({length:last.year-first.year+1},(_,i)=>first.year+i);
   return <div className="calendar" role="group" aria-label={t("Event dates")}>
     <div className="calendar-heading"><div className="calendar-selects">
-      <select aria-label={t('Month')} value={month.month} onChange={e=>setMonth(month.with({month:Number(e.target.value)}))}>{monthNames.map((name,i)=><option key={i} value={i+1}>{name}</option>)}</select>
-      <select aria-label={t('Year')} value={month.year} onChange={e=>setMonth(month.with({year:Number(e.target.value)}))}>{years.map(year=><option key={year} value={year}>{year}</option>)}</select>
+      <EditableSelect label={t('Month')} value={String(month.month)} options={monthNames.map((label,i)=>({label,value:String(i+1),keywords:[new Intl.DateTimeFormat('en',{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2000,i,1)))]}))} onChange={value=>setMonth(month.with({month:Number(value)}))} invalidMessage={t('Choose a valid month.')}/>
+      <EditableSelect label={t('Year')} value={String(month.year)} options={years.map(year=>({label:String(year),value:String(year)}))} onChange={value=>setMonth(month.with({year:Number(value)}))} numeric invalidMessage={t('Choose a year from {first} to {last}.',{first:String(first.year),last:String(last.year)})}/>
     </div><div className="calendar-navigation"><button className="icon-button" type="button" aria-label={t("Previous month")} disabled={month.equals(first)} onClick={()=>setMonth(month.subtract({months:1}))}><ChevronLeft size={19}/></button><button className="icon-button" type="button" aria-label={t("Next month")} disabled={month.equals(last)} onClick={()=>setMonth(month.add({months:1}))}><ChevronRight size={19}/></button></div></div>
     <div className="calendar-grid">{Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(getLocale(),{weekday:'narrow',timeZone:'UTC'}).format(new Date(Date.UTC(2023,0,1+i)))).map((d,i)=><span className="weekday" key={i}>{d}</span>)}{dates.map(d=>{
       const key=d.toString(),selected=value.includes(key),disabled=!isEventDateAllowed(d,today);

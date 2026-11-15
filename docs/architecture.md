@@ -16,6 +16,8 @@ Whenkin is a single application with a React/Vite browser frontend, an Express/N
 
 Use `App/frontend/components/PopupSurface.tsx` for new popup surfaces. Its stylesheet owns the shared white background, teal border, rounded corners and shadow; individual components only define layout and interaction. `Toast` and `useNotice` provide the anchored, automatically dismissed field reminders used for both event names and responder names. `AnchoredPanel` adds positioning for availability inspection and the small deletion confirmation. Sharing, time-zone menus and Quick Guide cards reuse the same surface while retaining their existing behavior.
 
+Required-field reminders use `useNotice().notifyRequired(message, field)`: it scrolls to the empty field, waits for movement to stop, focuses with `preventScroll`, then shows the reminder. It cancels pending feedback when dismissed or unmounted and respects reduced-motion settings. New required fields should use this shared flow. `EditableSelect` provides the month/year comboboxes; only an allowed option can be committed. `pages/EventUnavailablePage.tsx` handles expired and missing event states inside the existing event route, with policy and recovery links. Network/server failures retain their separate error state.
+
 ## HTTP endpoints
 
 | Method | URL | Handler |

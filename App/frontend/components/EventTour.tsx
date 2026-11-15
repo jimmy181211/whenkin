@@ -161,7 +161,7 @@ export default function EventTour() {
         {!welcome && <p className="event-tour-progress">{copy.progress.replace('{step}', String((step ?? 0) + 1)).replace('{total}', String(tourSteps.length))}</p>}
         <h2 id={`${id}-title`}>{welcome ? copy.welcome : content?.[0]}</h2>
         <p id={`${id}-body`}>{welcome ? copy.intro : content?.[1]}</p>
-        {!welcome && position?.height === 0 && <p className="event-tour-unavailable">{copy.unavailable}</p>}
+        {!welcome && !moving && position?.height === 0 && <p className="event-tour-unavailable">{copy.unavailable}</p>}
         </div>
         <div className="event-tour-actions">
           <button type="button" className="text-button event-tour-skip" onClick={() => close('skipped')}>{copy.skip}</button>

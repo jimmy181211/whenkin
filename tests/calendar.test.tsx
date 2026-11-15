@@ -18,16 +18,15 @@ describe('calendar month and year navigation',()=>{
     for(const date of ['2026-10-23','2028-02-29','2050-12-31'])expect(isEventDateAllowed(Temporal.PlainDate.from(date),today)).toBe(true);
     for(const date of ['2026-10-22','2025-12-31','2051-01-01'])expect(isEventDateAllowed(Temporal.PlainDate.from(date),today)).toBe(false);
   });
-  it('renders all 25 years and localized month choices without blocking past-month browsing',()=>{
+  it('renders editable localized month and year controls without blocking past-month browsing',()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
     for(const [language,october] of [['en','October'],['zh','十月'],['es','octubre']] as const){
       setLanguage(language);
       const html=renderToStaticMarkup(<Calendar timezone="UTC" value={['2026-10-25']} onChange={()=>{}}/>);
       expect(html).toContain(`aria-label="${t('Month')}"`);expect(html).toContain(`aria-label="${t('Year')}"`);
-      expect(html).toContain(`<option value="10" selected="">${october}</option>`);
-      expect(html).toContain('<option value="2026" selected="">2026</option>');expect(html).toContain('<option value="2027">2027</option>');
-      expect(html).toContain('<option value="2028">2028</option>');expect(html).toContain('<option value="2050">2050</option>');
-      expect(html).not.toContain('2051');expect(html).not.toMatch(/<option[^>]*disabled/);
+      expect(html.match(/role="combobox"/g)).toHaveLength(2);
+      expect(html).toContain(`value="${october}"`);
+      expect(html).toContain('value="2026"');expect(html).toContain('inputMode="numeric"');
       expect(html).toMatch(/aria-label="2026-10-21" aria-pressed="false" disabled=""/);
       expect(html).toMatch(/aria-label="2026-10-25" aria-pressed="true"/);
     }
