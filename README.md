@@ -36,6 +36,9 @@ The named database volume survives ordinary shutdowns. See [setup](docs/setup.md
 
 ## Code map
 
+See [code readability](docs/code-style.md) for formatting commands, naming and
+responsibility boundaries. Use `pnpm format` before submitting changes.
+
 ```text
 App/
   frontend/

@@ -6,10 +6,10 @@ The administrator-controlled duration is a positive whole number of **calendar m
 
 ## Class and configuration
 
-`App/backend/tools/cleanup.mjs` exports `EventCleanup`. Its constructor accepts a database query callback and `time = 12`. The constructor validates the duration and performs no database writes. `getTime()` returns months. `setTime(months)` validates and persists the policy, and updates existing deadlines from each event's original creation time in the same database transaction. It does not delete records.
+`App/backend/tools/cleanup.js` exports `EventCleanup`. Its constructor accepts a database query callback and `time = 12`. The constructor validates the duration and performs no database writes. `getTime()` returns months. `setTime(months)` validates and persists the policy, and updates existing deadlines from each event's original creation time in the same database transaction. It does not delete records.
 
 ```js
-import { EventCleanup } from './App/backend/tools/cleanup.mjs';
+import { EventCleanup } from './App/backend/tools/cleanup.js';
 const query = (sql, params) => database.query(sql, params);
 
 const cleanup = await EventCleanup.load(query); // Load the persisted policy.

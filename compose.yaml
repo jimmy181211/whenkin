@@ -32,7 +32,7 @@ services:
 
   migrate:
     <<: *app-image
-    command: ["node", "App/backend/tools/migrate.mjs"]
+    command: ["node", "App/backend/tools/migrate.js"]
     depends_on:
       db:
         condition: service_healthy

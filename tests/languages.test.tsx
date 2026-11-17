@@ -1,21 +1,61 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import App from '../App/frontend/App';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import { getLanguage, getLocale, isLanguage, languageOptions, messages, setLanguage, t, translations } from '../App/frontend/i18n/index';
+import {
+  getLanguage,
+  getLocale,
+  isLanguage,
+  languageOptions,
+  messages,
+  setLanguage,
+  t,
+  translations,
+} from '../App/frontend/i18n/index';
 import { legalDocuments } from '../App/frontend/content/legal';
-import { exactOption, matchingOptions } from '../App/frontend/utils/editable-options';
-import { shortcutCopy, shortcutDevices } from '../App/frontend/utils/shortcut-instructions';
-import { allSlots, gridModel, localToUTC, slotsToRanges } from '../App/frontend/utils/time';
+import {
+  exactOption,
+  matchingOptions,
+} from '../App/frontend/utils/editable-options';
+import {
+  shortcutCopy,
+  shortcutDevices,
+} from '../App/frontend/utils/shortcut-instructions';
+import {
+  allSlots,
+  gridModel,
+  localToUTC,
+  slotsToRanges,
+} from '../App/frontend/utils/time';
 import type { MeetingEvent } from '../App/shared/types';
 
+afterEach(() => {
+  setLanguage('en');
+  vi.unstubAllGlobals();
+});
 
-afterEach(()=>{setLanguage('en');vi.unstubAllGlobals();});
-const page=(path='/')=>{vi.stubGlobal('window',{location:{pathname:path,href:'http://localhost'+path,origin:'http://localhost'},innerWidth:390});return renderToStaticMarkup(<App/>);};
-describe('language changes across the website',()=>{
-  it('starts in English with a compact guide entry on every screen',()=>{
+const page = (path = '/') => {
+  vi.stubGlobal('window', {
+    location: {
+      pathname: path,
+      href: 'http://localhost' + path,
+      origin: 'http://localhost',
+    },
+    innerWidth: 390,
+  });
+  return renderToStaticMarkup(<App />);
+};
+
+describe('language changes across the website', () => {
+  it('starts in English with a compact guide entry on every screen', () => {
     expect(getLanguage()).toBe('en');
-    const html=page();
+    const html = page();
     expect(html).toContain('Event Name');
     expect(html).toContain('Add a Shortcut');
     expect(html).not.toContain('What are you planning?');
@@ -28,10 +68,13 @@ describe('language changes across the website',()=>{
     expect(html).toMatch(/autoComplete="off" required=""/);
     expect(html).not.toContain('autoComplete="given-name"');
     expect(html).not.toContain('Your Name');
-    expect(page('/e/855e5518-3b5a-49cb-b906-69bbd7bac603')).toMatch(/<nav[^>]*>[\s\S]*?New Event[\s\S]*?English/);
+    expect(page('/e/855e5518-3b5a-49cb-b906-69bbd7bac603')).toMatch(
+      /<nav[^>]*>[\s\S]*?New Event[\s\S]*?English/,
+    );
   });
-  it('renders Chinese forms, instructions, and the selected language',()=>{
-    setLanguage('zh');const html=page();
+  it('renders Chinese forms, instructions, and the selected language', () => {
+    setLanguage('zh');
+    const html = page();
     expect(html).toContain('创建你的活动');
     expect(html).toContain('添加快捷方式');
     expect(html).not.toContain('组织者创建活动');
@@ -41,82 +84,175 @@ describe('language changes across the website',()=>{
     expect(page('/how-it-works')).toContain('guide-page');
     expect(getLocale()).toBe('zh-CN');
   });
-  it('renders Spanish forms, guide, dates, and explanatory errors',()=>{
-    setLanguage('es');const html=page();
+  it('renders Spanish forms, guide, dates, and explanatory errors', () => {
+    setLanguage('es');
+    const html = page();
     expect(html).toContain('Crea tu Evento');
     expect(html).toContain('Añadir un acceso directo');
     expect(html).not.toContain('Los Participantes Marcan Cuándo Están Libres');
     expect(html).toContain('Fechas del evento');
     expect(page('/how-it-works')).toContain('guide-page');
-    expect(t('Edit {name}',{name:'Sam'})).toBe('Editar a Sam');
-    expect(t('{count} hours',{count:1.5})).toBe('1,5 horas');
+    expect(t('Edit {name}', { name: 'Sam' })).toBe('Editar a Sam');
+    expect(t('{count} hours', { count: 1.5 })).toBe('1,5 horas');
   });
   it.each([
-    ['pt', 'pt-BR', 'Crie seu evento', 'Adicionar atalho', 'Editar Sam', '1,5 horas'],
-    ['de', 'de-DE', 'Erstelle deinen Termin', 'Verknüpfung hinzufügen', 'Sam bearbeiten', '1,5 Stunden'],
-  ] as const)('renders complete %s forms and localized numbers', (language, locale, title, shortcut, edit, hours) => {
-    setLanguage(language);
-    const html = page();
-    expect(getLocale()).toBe(locale);
-    expect(html).toContain(title);
-    expect(html).toContain(shortcut);
-    expect(html).toContain(`value="${language}" selected=""`);
-    expect(t('Edit {name}', { name: 'Sam' })).toBe(edit);
-    expect(t('{count} hours', { count: 1.5 })).toBe(hours);
-    expect(page('/how-it-works')).toContain('guide-page');
-  });
+    [
+      'pt',
+      'pt-BR',
+      'Crie seu evento',
+      'Adicionar atalho',
+      'Editar Sam',
+      '1,5 horas',
+    ],
+    [
+      'de',
+      'de-DE',
+      'Erstelle deinen Termin',
+      'Verknüpfung hinzufügen',
+      'Sam bearbeiten',
+      '1,5 Stunden',
+    ],
+  ] as const)(
+    'renders complete %s forms and localized numbers',
+    (language, locale, title, shortcut, edit, hours) => {
+      setLanguage(language);
+      const html = page();
+      expect(getLocale()).toBe(locale);
+      expect(html).toContain(title);
+      expect(html).toContain(shortcut);
+      expect(html).toContain(`value="${language}" selected=""`);
+      expect(t('Edit {name}', { name: 'Sam' })).toBe(edit);
+      expect(t('{count} hours', { count: 1.5 })).toBe(hours);
+      expect(page('/how-it-works')).toContain('guide-page');
+    },
+  );
   it('includes every interface key and preserves substitution placeholders in the new languages', () => {
-    const placeholders = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort();
-    for (const language of ['pt', 'de'] as const) {
-      expect(Object.keys(translations[language]).sort()).toEqual(Object.keys(messages).sort());
-      for (const [source, translated] of Object.entries(translations[language])) {
+    const placeholders = (text: string) =>
+      (text.match(/\{\w+\}/g) ?? []).sort();
+
+    for (const language of [
+      'pt',
+      'de',
+    ] as const) {
+      expect(Object.keys(translations[language]).sort()).toEqual(
+        Object.keys(messages).sort(),
+      );
+      for (const [source, translated] of Object.entries(
+        translations[language],
+      )) {
         expect(translated.trim(), `${language}: ${source}`).not.toBe('');
-        expect(placeholders(translated), `${language}: ${source}`).toEqual(placeholders(source));
+        expect(placeholders(translated), `${language}: ${source}`).toEqual(
+          placeholders(source),
+        );
       }
       for (const device of shortcutDevices) {
         expect(shortcutCopy[language].devices[device]).toBeTruthy();
         expect(shortcutCopy[language].steps[device]).toHaveLength(3);
       }
-      for (const kind of ['terms', 'privacy'] as const) {
-        expect(legalDocuments[language][kind].sections).toHaveLength(legalDocuments.en[kind].sections.length);
+      for (const kind of [
+        'terms',
+        'privacy',
+      ] as const) {
+        expect(legalDocuments[language][kind].sections).toHaveLength(
+          legalDocuments.en[kind].sections.length,
+        );
       }
       const privacy = JSON.stringify(legalDocuments[language].privacy);
       expect(privacy.match(/\{retention\}/g)).toHaveLength(2);
     }
   });
   it('matches typed Portuguese and German month names without changing their numeric values', () => {
-    for (const [locale, query, expected] of [['pt-BR', 'jan', '1'], ['de-DE', 'mar', '3']] as const) {
-      const months = Array.from({ length: 12 }, (_, index) => ({ value: String(index + 1), label: new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, index, 1))) }));
+    for (const [locale, query, expected] of [
+      [
+        'pt-BR',
+        'jan',
+        '1',
+      ],
+      [
+        'de-DE',
+        'mar',
+        '3',
+      ],
+    ] as const) {
+      const months = Array.from({ length: 12 }, (_, index) => ({
+        value: String(index + 1),
+        label: new Intl.DateTimeFormat(locale, {
+          month: 'long',
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(2000, index, 1))),
+      }));
       expect(matchingOptions(months, query)[0].value).toBe(expected);
       expect(exactOption(months, expected)?.value).toBe(expected);
     }
     expect(isLanguage('pt')).toBe(true);
     expect(isLanguage('de')).toBe(true);
-    for (const invalid of ['toString', '__proto__', 'pt-PT', null]) expect(isLanguage(invalid)).toBe(false);
+    for (const invalid of [
+      'toString',
+      '__proto__',
+      'pt-PT',
+      null,
+    ]) {
+      expect(isLanguage(invalid)).toBe(false);
+    }
   });
-  it('does not expose a demo route',()=>{
-    const html=page('/demo');expect(html).toContain('That Page Is a Little Off-Grid.');
+  it('does not expose a demo route', () => {
+    const html = page('/demo');
+    expect(html).toContain('That Page Is a Little Off-Grid.');
     expect(html).not.toContain('availability-section');
   });
-  it('preserves typed text when translating templates',()=>{
-    setLanguage('zh');expect(t('ORGANIZED BY {name}',{name:'Ana & 李'})).toBe('组织者：Ana & 李');
+  it('preserves typed text when translating templates', () => {
+    setLanguage('zh');
+    expect(t('ORGANIZED BY {name}', { name: 'Ana & 李' })).toBe(
+      '组织者：Ana & 李',
+    );
   });
-  it('remembers the explicit language preference on this device',()=>{
-    const storage={setItem:vi.fn()};vi.stubGlobal('localStorage',storage);
-    setLanguage('es');expect(storage.setItem).toHaveBeenCalledWith('whenkin:language','es');
+  it('remembers the explicit language preference on this device', () => {
+    const storage = { setItem: vi.fn() };
+    vi.stubGlobal('localStorage', storage);
+    setLanguage('es');
+    expect(storage.setItem).toHaveBeenCalledWith('whenkin:language', 'es');
   });
-  it('offers policy links from home and event pages and localizes both documents',()=>{
-    const titles={en:['Terms of Use','Privacy Policy'],zh:['使用条款','隐私政策'],es:['Condiciones de Uso','Política de Privacidad'],pt:['Termos de Uso','Política de Privacidade'],de:['Nutzungsbedingungen','Datenschutzerklärung']};
-    for(const { value: language } of languageOptions){
+  it('offers policy links from home and event pages and localizes both documents', () => {
+    const titles = {
+      en: [
+        'Terms of Use',
+        'Privacy Policy',
+      ],
+      zh: [
+        '使用条款',
+        '隐私政策',
+      ],
+      es: [
+        'Condiciones de Uso',
+        'Política de Privacidad',
+      ],
+      pt: [
+        'Termos de Uso',
+        'Política de Privacidade',
+      ],
+      de: [
+        'Nutzungsbedingungen',
+        'Datenschutzerklärung',
+      ],
+    };
+    for (const { value: language } of languageOptions) {
       setLanguage(language);
-      for(const path of ['/','/e/855e5518-3b5a-49cb-b906-69bbd7bac603']){
-        const html=page(path);
+      for (const path of [
+        '/',
+        '/e/855e5518-3b5a-49cb-b906-69bbd7bac603',
+      ]) {
+        const html = page(path);
         expect(html).toContain('href="/terms"');
         expect(html).toContain('href="/privacy"');
       }
-      for(const [index,path] of ['/terms','/privacy'].entries()){
-        const html=page(path);
-        expect(html).toContain(`<h1 id="legal-title">${titles[language][index]}</h1>`);
+      for (const [index, path] of [
+        '/terms',
+        '/privacy',
+      ].entries()) {
+        const html = page(path);
+        expect(html).toContain(
+          `<h1 id="legal-title">${titles[language][index]}</h1>`,
+        );
         expect(html).toContain('UCSD CSSA');
         expect(html).toContain('href="mailto:j4ouyang@ucsd.edu"');
         expect(html).toMatch(/<time datetime="2026-10-24"/i);
@@ -126,18 +262,45 @@ describe('language changes across the website',()=>{
     }
   });
 });
-describe('language is independent of scheduling data',()=>{
-  it('keeps selected instants and UTC ranges unchanged in every language',()=>{
-    vi.stubGlobal('window',{innerWidth:390});
-    const start=localToUTC('2027-01-15','10:00','America/Los_Angeles');
-    const event:MeetingEvent={id:'test',title:'原文 / texto original',description:'',organizer_name:'Ana',timezone:'America/Los_Angeles',windows:[{start,end:'2027-01-15T19:00:00Z'}],responses:[]};
-    const selected=new Set(allSlots(event.windows).slice(0,2)),before=slotsToRanges(selected);
-    for(const { value: language } of languageOptions){
+describe('language is independent of scheduling data', () => {
+  it('keeps selected instants and UTC ranges unchanged in every language', () => {
+    vi.stubGlobal('window', { innerWidth: 390 });
+    const start = localToUTC('2027-01-15', '10:00', 'America/Los_Angeles');
+    const event: MeetingEvent = {
+      id: 'test',
+      title: '原文 / texto original',
+      description: '',
+      organizer_name: 'Ana',
+      timezone: 'America/Los_Angeles',
+      windows: [
+        {
+          start,
+          end: '2027-01-15T19:00:00Z',
+        },
+      ],
+      responses: [],
+    };
+    const selected = new Set(allSlots(event.windows).slice(0, 2));
+    const before = slotsToRanges(selected);
+    for (const { value: language } of languageOptions) {
       setLanguage(language);
-      const html=renderToStaticMarkup(<AvailabilityGrid event={event} zone="America/New_York" selected={selected} onChange={()=>{}}/>);
-      expect((html.match(/aria-pressed="true" class="time-cell/g)||[]).length).toBe(1);
+      const html = renderToStaticMarkup(
+        <AvailabilityGrid
+          event={event}
+          zone="America/New_York"
+          selected={selected}
+          onChange={() => {}}
+        />,
+      );
+      expect(
+        (html.match(/aria-pressed="true" class="time-cell/g) || []).length,
+      ).toBe(1);
       expect(slotsToRanges(selected)).toEqual(before);
-      expect(gridModel(event.windows,'America/New_York').days[0][1].map(c=>c.stamp)).toEqual(allSlots(event.windows));
+      expect(
+        gridModel(event.windows, 'America/New_York').days[0][1].map(
+          (c) => c.stamp,
+        ),
+      ).toEqual(allSlots(event.windows));
     }
   });
 });

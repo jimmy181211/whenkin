@@ -1,67 +1,89 @@
 // German. Message keys and placeholders match the English UI.
 const de: Record<string, string> = {
-  'month': 'Monat',
-  'months': 'Monate',
-  'year': 'Jahr',
-  'years': 'Jahre',
+  month: 'Monat',
+  months: 'Monate',
+  year: 'Jahr',
+  years: 'Jahre',
   'Links expire in {duration}': 'Link-Gültigkeit: {duration}',
-  'Event links are valid for {duration}.': 'Gültigkeitsdauer der Terminlinks: {duration}.',
+  'Event links are valid for {duration}.':
+    'Gültigkeitsdauer der Terminlinks: {duration}.',
   'the configured retention period': 'der festgelegte Aufbewahrungszeitraum',
-  'Link expiry follows the retention policy.': 'Für Links gilt die festgelegte Aufbewahrungsfrist.',
-  'Expired events and their responses may be removed.': 'Abgelaufene Termine und ihre Antworten können entfernt werden.',
+  'Link expiry follows the retention policy.':
+    'Für Links gilt die festgelegte Aufbewahrungsfrist.',
+  'Expired events and their responses may be removed.':
+    'Abgelaufene Termine und ihre Antworten können entfernt werden.',
   'Highlight Everyone’s Free Times': 'Alle gemeinsamen freien Zeiten markieren',
   'Cancel Highlight': 'Markierung aufheben',
   '{count} shared time period': '{count} gemeinsames Zeitfenster',
   '{count} shared time periods': '{count} gemeinsame Zeitfenster',
   'Delete {name}': '{name} löschen',
   'Delete response?': 'Antwort löschen?',
-  'Delete {name} and their availability?': 'Die Antwort und Verfügbarkeit von {name} löschen?',
-  'Cancel': 'Abbrechen',
-  'Delete': 'Löschen',
+  'Delete {name} and their availability?':
+    'Die Antwort und Verfügbarkeit von {name} löschen?',
+  Cancel: 'Abbrechen',
+  Delete: 'Löschen',
   'Deleting…': 'Wird gelöscht…',
-  'Please reload this response before deleting it.': 'Lade diese Antwort vor dem Löschen neu.',
-  'This response changed. Review it before deleting.': 'Diese Antwort wurde geändert. Prüfe sie vor dem Löschen.',
-  'Could not delete this response. Please try again.': 'Diese Antwort konnte nicht gelöscht werden. Bitte versuche es erneut.',
-  'Response deleted. Results will refresh shortly.': 'Antwort gelöscht. Die Ergebnisse werden gleich aktualisiert.',
+  'Please reload this response before deleting it.':
+    'Lade diese Antwort vor dem Löschen neu.',
+  'This response changed. Review it before deleting.':
+    'Diese Antwort wurde geändert. Prüfe sie vor dem Löschen.',
+  'Could not delete this response. Please try again.':
+    'Diese Antwort konnte nicht gelöscht werden. Bitte versuche es erneut.',
+  'Response deleted. Results will refresh shortly.':
+    'Antwort gelöscht. Die Ergebnisse werden gleich aktualisiert.',
   'Who Is Available?': 'Wer hat Zeit?',
-  'Hover over or tap a block in Group Availability to see who is free.': 'Bewege den Zeiger über einen Block in der Gruppenverfügbarkeit oder tippe darauf, um zu sehen, wer Zeit hat.',
+  'Hover over or tap a block in Group Availability to see who is free.':
+    'Bewege den Zeiger über einen Block in der Gruppenverfügbarkeit oder tippe darauf, um zu sehen, wer Zeit hat.',
   'When Everyone Is Free': 'Wenn alle Zeit haben',
-  'Responders': 'Antwortende',
+  Responders: 'Antwortende',
   'Availability at This Time': 'Verfügbarkeit zu dieser Zeit',
-  'No responders available.': 'Niemand ist während des gesamten Blocks verfügbar.',
+  'No responders available.':
+    'Niemand ist während des gesamten Blocks verfügbar.',
   'No unavailable responders.': 'Alle sind verfügbar.',
-  'Availability is for the entire selected block.': 'Die Verfügbarkeit gilt für den gesamten ausgewählten Block.',
-  'Retry': 'Erneut versuchen',
+  'Availability is for the entire selected block.':
+    'Die Verfügbarkeit gilt für den gesamten ausgewählten Block.',
+  Retry: 'Erneut versuchen',
   'Edit {name}': '{name} bearbeiten',
-  'Everyone with the link can view and edit all responses.': 'Alle mit dem Link können sämtliche Antworten sehen und bearbeiten.',
-  'This response could not be found. Refresh the group and try again.': 'Diese Antwort wurde nicht gefunden. Aktualisiere die Gruppe und versuche es erneut.',
-  'This response changed. Select the person again to load the latest version before saving.': 'Diese Antwort wurde geändert. Wähle die Person erneut aus, um vor dem Speichern die neueste Version zu laden.',
+  'Everyone with the link can view and edit all responses.':
+    'Alle mit dem Link können sämtliche Antworten sehen und bearbeiten.',
+  'This response could not be found. Refresh the group and try again.':
+    'Diese Antwort wurde nicht gefunden. Aktualisiere die Gruppe und versuche es erneut.',
+  'This response changed. Select the person again to load the latest version before saving.':
+    'Diese Antwort wurde geändert. Wähle die Person erneut aus, um vor dem Speichern die neueste Version zu laden.',
   'Dismiss notification': 'Hinweis schließen',
   'Your Availability': 'Deine Verfügbarkeit',
   'Group Availability': 'Verfügbarkeit der Gruppe',
   'Availability View': 'Verfügbarkeitsansicht',
   'People Available': 'Verfügbare Personen',
-  'Could not save. Please keep this page open and try again.': 'Speichern nicht möglich. Lass diese Seite geöffnet und versuche es erneut.',
+  'Could not save. Please keep this page open and try again.':
+    'Speichern nicht möglich. Lass diese Seite geöffnet und versuche es erneut.',
   'Event Link': 'Terminlink',
   'Primary Selection': 'Bevorzugte Auswahl',
-  'Everyone': 'Alle',
+  Everyone: 'Alle',
   'Use Event’s Zone': 'Zeitzone des Termins nutzen',
   'This event has expired.': 'Dieser Termin ist abgelaufen.',
   'This event link has expired.': 'Dieser Terminlink ist abgelaufen.',
-  'This event has expired or could not be found.': 'Dieser Termin ist abgelaufen oder wurde nicht gefunden.',
-  'Check the link with your organizer, or create a new event.': 'Frage die organisierende Person nach dem Link oder erstelle einen neuen Termin.',
-  'For details about data retention, see our policies.': 'Einzelheiten zur Datenaufbewahrung findest du in unseren Richtlinien.',
-  'This event could not be found. It may have expired.': 'Dieser Termin wurde nicht gefunden. Er ist möglicherweise abgelaufen.',
-  'Month': 'Monat',
-  'Year': 'Jahr',
+  'This event has expired or could not be found.':
+    'Dieser Termin ist abgelaufen oder wurde nicht gefunden.',
+  'Check the link with your organizer, or create a new event.':
+    'Frage die organisierende Person nach dem Link oder erstelle einen neuen Termin.',
+  'For details about data retention, see our policies.':
+    'Einzelheiten zur Datenaufbewahrung findest du in unseren Richtlinien.',
+  'This event could not be found. It may have expired.':
+    'Dieser Termin wurde nicht gefunden. Er ist möglicherweise abgelaufen.',
+  Month: 'Monat',
+  Year: 'Jahr',
   'No matching options.': 'Keine passenden Optionen.',
   'Choose a valid month.': 'Wähle einen gültigen Monat.',
-  'Choose a year from {first} to {last}.': 'Wähle ein Jahr von {first} bis {last}.',
-  'Saved': 'Gespeichert',
-  'Unsaved': 'Nicht gespeichert',
+  'Choose a year from {first} to {last}.':
+    'Wähle ein Jahr von {first} bis {last}.',
+  Saved: 'Gespeichert',
+  Unsaved: 'Nicht gespeichert',
   'Not Started': 'Noch nicht begonnen',
-  'Enter your name before editing availability.': 'Gib deinen Namen ein, bevor du deine Verfügbarkeit bearbeitest.',
-  'Enter an event name before creating your event.': 'Gib einen Namen für den Termin ein, bevor du ihn erstellst.',
+  'Enter your name before editing availability.':
+    'Gib deinen Namen ein, bevor du deine Verfügbarkeit bearbeitest.',
+  'Enter an event name before creating your event.':
+    'Gib einen Namen für den Termin ein, bevor du ihn erstellst.',
   'Event Name': 'Name des Termins',
   'Calendar mode': 'Kalendermodus',
   'Specific Dates': 'Bestimmte Daten',
@@ -70,18 +92,22 @@ const de: Record<string, string> = {
   '{count} day selected': '{count} Tag ausgewählt',
   '{count} days selected': '{count} Tage ausgewählt',
   'Choose at least one day of the week.': 'Wähle mindestens einen Wochentag.',
-  'Choose specific dates or days of the week.': 'Wähle bestimmte Daten oder Wochentage.',
-  'Week': 'Woche',
+  'Choose specific dates or days of the week.':
+    'Wähle bestimmte Daten oder Wochentage.',
+  Week: 'Woche',
   'Find your shared time.': 'Findet eure gemeinsame Zeit.',
-  'Language': 'Sprache',
+  Language: 'Sprache',
   'Main navigation': 'Hauptnavigation',
   'Whenkin home': 'Whenkin-Startseite',
   'New Event': 'Neuer Termin',
   'Create an Event': 'Termin erstellen',
-  'Choose possible dates and hours, then share the link.': 'Wähle mögliche Tage und Uhrzeiten und teile dann den Link.',
-  'Open the link and drag across the time grid. No account needed.': 'Öffne den Link und markiere Zeiten durch Ziehen im Raster. Ein Konto ist nicht nötig.',
+  'Choose possible dates and hours, then share the link.':
+    'Wähle mögliche Tage und Uhrzeiten und teile dann den Link.',
+  'Open the link and drag across the time grid. No account needed.':
+    'Öffne den Link und markiere Zeiten durch Ziehen im Raster. Ein Konto ist nicht nötig.',
   'Midnight (next day)': 'Mitternacht (nächster Tag)',
-  'LESS BACK-AND-FORTH. MORE TOGETHER.': 'WENIGER ABSTIMMUNG. MEHR ZEIT ZUSAMMEN.',
+  'LESS BACK-AND-FORTH. MORE TOGETHER.':
+    'WENIGER ABSTIMMUNG. MEHR ZEIT ZUSAMMEN.',
   'your time': 'deine Zeit',
   'their time': 'ihre Zeit',
   'a little common ground': 'ein wenig gemeinsame Zeit',
@@ -89,19 +115,23 @@ const de: Record<string, string> = {
   'What are you planning?': 'Was planst du?',
   'How It Works': 'So funktioniert es',
   'Your Name': 'Dein Name',
-  'Note': 'Notiz',
-  'optional': 'optional',
+  Note: 'Notiz',
+  optional: 'optional',
   'Add a Note': 'Notiz hinzufügen',
   'Event dates': 'Termindaten',
-  'From': 'Von',
-  'Until': 'Bis',
+  From: 'Von',
+  Until: 'Bis',
   '{count} min': '{count} Min.',
   '{count} hour': '{count} Stunde',
   '{count} hours': '{count} Stunden',
-  'Event creation is still being set up.': 'Die Terminerstellung wird noch eingerichtet.',
-  'We can’t reach event saving right now.': 'Der Speicherdienst für Termine ist gerade nicht erreichbar.',
-  'Shareable links will be available when setup is complete.': 'Links zum Teilen sind nach Abschluss der Einrichtung verfügbar.',
-  'Your form is still here. Please retry the connection.': 'Dein Formular bleibt erhalten. Versuche erneut, eine Verbindung herzustellen.',
+  'Event creation is still being set up.':
+    'Die Terminerstellung wird noch eingerichtet.',
+  'We can’t reach event saving right now.':
+    'Der Speicherdienst für Termine ist gerade nicht erreichbar.',
+  'Shareable links will be available when setup is complete.':
+    'Links zum Teilen sind nach Abschluss der Einrichtung verfügbar.',
+  'Your form is still here. Please retry the connection.':
+    'Dein Formular bleibt erhalten. Versuche erneut, eine Verbindung herzustellen.',
   'Retry Connection': 'Verbindung erneut versuchen',
   'Creating your event…': 'Termin wird erstellt…',
   'Checking connection…': 'Verbindung wird geprüft…',
@@ -115,32 +145,37 @@ const de: Record<string, string> = {
   'Times shown in {zone}': 'Zeiten in {zone}',
   'No Shared Times Yet': 'Noch keine gemeinsamen Zeiten',
   'The Possibilities Start With You.': 'Die Möglichkeiten beginnen mit dir.',
-  'Add more availability to find a time that works.': 'Trage weitere freie Zeiten ein, um einen passenden Termin zu finden.',
+  'Add more availability to find a time that works.':
+    'Trage weitere freie Zeiten ein, um einen passenden Termin zu finden.',
   'Everyone available': 'Alle verfügbar',
   '{count} of {total} available': '{count} von {total} verfügbar',
-  'Available': 'Verfügbar',
-  'Unavailable': 'Nicht verfügbar',
+  Available: 'Verfügbar',
+  Unavailable: 'Nicht verfügbar',
   'Refresh responses': 'Antworten aktualisieren',
   '(you)': '(du)',
   'Close sharing': 'Teilen schließen',
   'Link Copied': 'Link kopiert',
   'Copy Event Link': 'Terminlink kopieren',
-  'Copied': 'Kopiert',
+  Copied: 'Kopiert',
   'Back to Home': 'Zur Startseite',
   'Finding your shared time…': 'Gemeinsame Zeiten werden gesucht…',
-  'Choose at least one date on the calendar.': 'Wähle mindestens ein Datum im Kalender.',
-  'Choose an end time after the start time.': 'Wähle eine Endzeit nach der Startzeit.',
-  'Could not create your event. Please try again.': 'Dein Termin konnte nicht erstellt werden. Bitte versuche es erneut.',
+  'Choose at least one date on the calendar.':
+    'Wähle mindestens ein Datum im Kalender.',
+  'Choose an end time after the start time.':
+    'Wähle eine Endzeit nach der Startzeit.',
+  'Could not create your event. Please try again.':
+    'Dein Termin konnte nicht erstellt werden. Bitte versuche es erneut.',
   'Could not load this event.': 'Dieser Termin konnte nicht geladen werden.',
-  'Copy did not work. Select the link in the sharing panel and copy it manually.': 'Kopieren nicht möglich. Markiere den Link im Teilen-Fenster und kopiere ihn manuell.',
+  'Copy did not work. Select the link in the sharing panel and copy it manually.':
+    'Kopieren nicht möglich. Markiere den Link im Teilen-Fenster und kopiere ihn manuell.',
   'Your availability grid': 'Dein Verfügbarkeitsraster',
-  'Clear': 'Leeren',
+  Clear: 'Leeren',
   'Undo selection': 'Auswahl rückgängig machen',
   'Smaller time slots': 'Kleinere Zeitblöcke',
   'Larger time slots': 'Größere Zeitblöcke',
   'Previous days': 'Vorherige Tage',
   'Next days': 'Nächste Tage',
-  'again': 'erneut',
+  again: 'erneut',
   'not selected': 'nicht ausgewählt',
   'Previous month': 'Vorheriger Monat',
   'Next month': 'Nächster Monat',
@@ -153,48 +188,75 @@ const de: Record<string, string> = {
   'Search a city or time zone': 'Stadt oder Zeitzone suchen',
   'Close time zones': 'Zeitzonen schließen',
   'Use Device Time Zone': 'Zeitzone des Geräts nutzen',
-  'No time zones found. Try a nearby major city.': 'Keine Zeitzone gefunden. Versuche eine größere Stadt in der Nähe.',
+  'No time zones found. Try a nearby major city.':
+    'Keine Zeitzone gefunden. Versuche eine größere Stadt in der Nähe.',
   'Los Angeles': 'Los Angeles',
   'New York': 'New York',
-  'Chicago': 'Chicago',
-  'Denver': 'Denver',
-  'London': 'London',
-  'Paris': 'Paris',
-  'Shanghai': 'Shanghai',
-  'Tokyo': 'Tokio',
-  'Kolkata': 'Kolkata',
-  'Sydney': 'Sydney',
-  'We couldn’t reach Whenkin. Please check your connection and try again.': 'Whenkin ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.',
-  'Event saving is not available at this address yet. Please try again once setup is complete.': 'Unter dieser Adresse können noch keine Termine gespeichert werden. Versuche es nach Abschluss der Einrichtung erneut.',
-  'Something went wrong. Please try again.': 'Etwas ist schiefgegangen. Bitte versuche es erneut.',
-  'This event or response could not be found.': 'Dieser Termin oder diese Antwort wurde nicht gefunden.',
-  'Please enter an event name (100 characters or fewer).': 'Gib einen Terminnamen mit höchstens 100 Zeichen ein.',
-  'Please enter your name (60 characters or fewer).': 'Gib deinen Namen mit höchstens 60 Zeichen ein.',
-  'Please enter a description (1000 characters or fewer).': 'Gib eine Beschreibung mit höchstens 1000 Zeichen ein.',
-  'Please include your event information.': 'Gib die Informationen zu deinem Termin an.',
-  'This request is too large. Please choose fewer dates.': 'Diese Anfrage ist zu groß. Wähle weniger Daten.',
-  'The information could not be read. Please try again.': 'Die Informationen konnten nicht gelesen werden. Bitte versuche es erneut.',
+  Chicago: 'Chicago',
+  Denver: 'Denver',
+  London: 'London',
+  Paris: 'Paris',
+  Shanghai: 'Shanghai',
+  Tokyo: 'Tokio',
+  Kolkata: 'Kolkata',
+  Sydney: 'Sydney',
+  'We couldn’t reach Whenkin. Please check your connection and try again.':
+    'Whenkin ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.',
+  'Event saving is not available at this address yet. Please try again once setup is complete.':
+    'Unter dieser Adresse können noch keine Termine gespeichert werden. Versuche es nach Abschluss der Einrichtung erneut.',
+  'Something went wrong. Please try again.':
+    'Etwas ist schiefgegangen. Bitte versuche es erneut.',
+  'This event or response could not be found.':
+    'Dieser Termin oder diese Antwort wurde nicht gefunden.',
+  'Please enter an event name (100 characters or fewer).':
+    'Gib einen Terminnamen mit höchstens 100 Zeichen ein.',
+  'Please enter your name (60 characters or fewer).':
+    'Gib deinen Namen mit höchstens 60 Zeichen ein.',
+  'Please enter a description (1000 characters or fewer).':
+    'Gib eine Beschreibung mit höchstens 1000 Zeichen ein.',
+  'Please include your event information.':
+    'Gib die Informationen zu deinem Termin an.',
+  'This request is too large. Please choose fewer dates.':
+    'Diese Anfrage ist zu groß. Wähle weniger Daten.',
+  'The information could not be read. Please try again.':
+    'Die Informationen konnten nicht gelesen werden. Bitte versuche es erneut.',
   'Please choose a valid time zone.': 'Wähle eine gültige Zeitzone.',
-  'Choose between 1 and 31 different dates.': 'Wähle zwischen 1 und 31 verschiedene Daten.',
-  'The end time must be after the start time on the same day.': 'Die Endzeit muss nach der Startzeit am selben Tag liegen.',
+  'Choose between 1 and 31 different dates.':
+    'Wähle zwischen 1 und 31 verschiedene Daten.',
+  'The end time must be after the start time on the same day.':
+    'Die Endzeit muss nach der Startzeit am selben Tag liegen.',
   'Please choose valid dates.': 'Wähle gültige Daten.',
-  'Choose dates from today through December 31, 2050.': 'Wähle Daten zwischen heute und dem 31. Dezember 2050.',
-  'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.': 'Eine gewählte Zeit ist ungültig oder kommt bei der Zeitumstellung zweimal vor. Wähle eine andere Start- oder Endzeit.',
+  'Choose dates from today through December 31, 2050.':
+    'Wähle Daten zwischen heute und dem 31. Dezember 2050.',
+  'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.':
+    'Eine gewählte Zeit ist ungültig oder kommt bei der Zeitumstellung zweimal vor. Wähle eine andere Start- oder Endzeit.',
   'Please choose valid availability.': 'Wähle gültige Verfügbarkeitszeiten.',
-  'Availability needs a date, time, and time-zone offset.': 'Für die Verfügbarkeit werden Datum, Uhrzeit und Zeitzonenversatz benötigt.',
-  'Please select complete 15-minute intervals.': 'Wähle vollständige 15-Minuten-Intervalle.',
-  'Too many overlapping selections. Please reload and try again.': 'Zu viele überlappende Auswahlen. Lade die Seite neu und versuche es erneut.',
-  'Some selected times are outside this event. Reload the event and try again.': 'Einige gewählte Zeiten liegen außerhalb dieses Termins. Lade ihn neu und versuche es erneut.',
-  'Whenkin is not connected to its database yet. Please try again once setup is complete.': 'Whenkin ist noch nicht mit der Datenbank verbunden. Versuche es nach Abschluss der Einrichtung erneut.',
-  'Please make changes from the Whenkin website.': 'Nimm Änderungen über die Whenkin-Website vor.',
-  'Too many changes at once. Please wait a minute and try again.': 'Zu viele Änderungen auf einmal. Warte eine Minute und versuche es erneut.',
-  'This event could not be found. Check the link with its organizer.': 'Dieser Termin wurde nicht gefunden. Frage die organisierende Person nach dem Link.',
-  'Please reload this response and choose a valid time zone.': 'Lade diese Antwort neu und wähle eine gültige Zeitzone.',
-  'Choose a meeting time within the event dates.': 'Wähle eine Uhrzeit innerhalb der Termindaten.',
+  'Availability needs a date, time, and time-zone offset.':
+    'Für die Verfügbarkeit werden Datum, Uhrzeit und Zeitzonenversatz benötigt.',
+  'Please select complete 15-minute intervals.':
+    'Wähle vollständige 15-Minuten-Intervalle.',
+  'Too many overlapping selections. Please reload and try again.':
+    'Zu viele überlappende Auswahlen. Lade die Seite neu und versuche es erneut.',
+  'Some selected times are outside this event. Reload the event and try again.':
+    'Einige gewählte Zeiten liegen außerhalb dieses Termins. Lade ihn neu und versuche es erneut.',
+  'Whenkin is not connected to its database yet. Please try again once setup is complete.':
+    'Whenkin ist noch nicht mit der Datenbank verbunden. Versuche es nach Abschluss der Einrichtung erneut.',
+  'Please make changes from the Whenkin website.':
+    'Nimm Änderungen über die Whenkin-Website vor.',
+  'Too many changes at once. Please wait a minute and try again.':
+    'Zu viele Änderungen auf einmal. Warte eine Minute und versuche es erneut.',
+  'This event could not be found. Check the link with its organizer.':
+    'Dieser Termin wurde nicht gefunden. Frage die organisierende Person nach dem Link.',
+  'Please reload this response and choose a valid time zone.':
+    'Lade diese Antwort neu und wähle eine gültige Zeitzone.',
+  'Choose a meeting time within the event dates.':
+    'Wähle eine Uhrzeit innerhalb der Termindaten.',
   'This action could not be found.': 'Diese Aktion wurde nicht gefunden.',
-  'Your change could not be saved. Please try again in a moment.': 'Deine Änderung konnte nicht gespeichert werden. Versuche es gleich erneut.',
+  'Your change could not be saved. Please try again in a moment.':
+    'Deine Änderung konnte nicht gespeichert werden. Versuche es gleich erneut.',
   'Partly available': 'Teilweise verfügbar',
-  'We compare availability. The organizer shares the chosen time.': 'Wir vergleichen die Verfügbarkeit. Die organisierende Person teilt die gewählte Zeit mit.',
+  'We compare availability. The organizer shares the chosen time.':
+    'Wir vergleichen die Verfügbarkeit. Die organisierende Person teilt die gewählte Zeit mit.',
   'Find a Time.': 'Finde eine Zeit.',
   'Make It Happen.': 'Mach es möglich.',
   'Create Your Event': 'Erstelle deinen Termin',
@@ -204,11 +266,14 @@ const de: Record<string, string> = {
   'That Page Is a Little Off-Grid.': 'Diese Seite wurde nicht gefunden.',
   'We Couldn’t Open That Event.': 'Dieser Termin konnte nicht geöffnet werden.',
   'Find Your Shared Time.': 'Findet eure gemeinsame Zeit.',
-  'The Organizer Creates an Event': 'Die organisierende Person erstellt einen Termin',
-  'Participants Mark When They’re Free': 'Teilnehmende tragen ihre freien Zeiten ein',
+  'The Organizer Creates an Event':
+    'Die organisierende Person erstellt einen Termin',
+  'Participants Mark When They’re Free':
+    'Teilnehmende tragen ihre freien Zeiten ein',
   'Whenkin Suggests the Best Times': 'Whenkin schlägt passende Zeiten vor',
   'Share Event': 'Termin teilen',
-  'The event schedule changed. Reload before saving your changes.': 'Der Terminplan wurde geändert. Lade die Seite neu, bevor du deine Änderungen speicherst.',
+  'The event schedule changed. Reload before saving your changes.':
+    'Der Terminplan wurde geändert. Lade die Seite neu, bevor du deine Änderungen speicherst.',
   'Terms of Use': 'Nutzungsbedingungen',
   'Privacy Policy': 'Datenschutzerklärung',
   'Legal Information': 'Rechtliche Informationen',

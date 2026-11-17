@@ -12,6 +12,7 @@ jobs:
           node-version: '24'
       - run: npm install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
       - run: pnpm run check
       - run: pnpm test
       - run: pnpm db:verify-retention
@@ -19,8 +20,8 @@ jobs:
       - run: pnpm test:sites
       - run: docker compose up --build -d
       - name: Check the full PostgreSQL and HTTP flow
-        run: node tests/smoke.mjs http://127.0.0.1:3000
+        run: node tests/smoke.js http://127.0.0.1:3000
       - name: Check the packaged manual cleanup command without deleting data
-        run: docker compose exec -T app node App/backend/tools/cleanup.mjs --dry-run
+        run: docker compose exec -T app node App/backend/tools/cleanup.js --dry-run
       - if: always()
         run: docker compose down

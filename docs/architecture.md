@@ -8,11 +8,18 @@ Whenkin is a single application with a React/Vite browser frontend, an Express/N
 - `App/frontend/api`: browser requests. The browser never imports a database connection or backend implementation.
 - `App/backend/api`: each file owns one endpoint's processing and SQL. There is no extra controller/service/repository hierarchy.
 - `App/backend/shared`: genuinely reused backend validation, event loading, common-time calculation and error handling.
-- `App/backend/db`: PostgreSQL connection pool and the original eight migrations. SQL history is preserved.
+- `App/backend/db`: PostgreSQL connection pool and checked migration history. Applied SQL files are preserved.
 - `App/shared`: request/response types, pure time/date rules and route recognition. It imports neither frontend translations nor backend connections.
 - `infra`: container and deployment configuration. These are independent from business rules.
 
 ## Popup components
+
+The event page composes display controls. `useEventResponse` keeps drafts,
+autosave, revision checks, responder switching and deletion coordinated;
+`useEventSync` handles loading, refresh and expiry. `AvailabilityGrid` manages
+layout/gestures and delegates single-block rendering to `AvailabilityCell`.
+These hooks remain in the existing frontend `utils` directory. See
+[code readability](code-style.md) for the full directory conventions.
 
 Use `App/frontend/components/PopupSurface.tsx` for new popup surfaces. Its stylesheet owns the shared white background, teal border, rounded corners and shadow; individual components only define layout and interaction. `Toast` and `useNotice` provide the anchored, automatically dismissed field reminders used for both event names and responder names. `AnchoredPanel` adds positioning for availability inspection and the small deletion confirmation. Sharing, time-zone menus and Quick Guide cards reuse the same surface while retaining their existing behavior.
 
@@ -23,6 +30,7 @@ Required-field reminders use `useNotice().notifyRequired(message, field)`: it an
 | Method | URL | Handler |
 | --- | --- | --- |
 | GET | `/api/health` | `App/backend/api/health.ts` |
+| GET | `/api/retention` | `App/backend/api/get-retention.ts` |
 | POST | `/api/events` | `App/backend/api/create-event.ts` |
 | GET | `/api/events/:id` | `App/backend/api/get-event.ts` |
 | POST | `/api/events/:id/responses` | `App/backend/api/create-response.ts` |

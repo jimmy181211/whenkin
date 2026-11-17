@@ -5,7 +5,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 COPY App ./App
 COPY tsconfig.json vite.config.ts ./
-COPY infra/build.mjs ./infra/build.mjs
+COPY infra/build.js ./infra/build.js
 RUN pnpm run build:server && pnpm prune --prod
 
 FROM node:24-bookworm-slim AS runtime

@@ -1,4 +1,8 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Plus } from 'lucide-react';
 import LanguageSelector, { useLanguage } from './LanguageSelector';
 import PageLink from './PageLink';
@@ -11,45 +15,93 @@ import { browserInstall } from '../utils/browser-install';
 import EventLimits from './EventLimits';
 import RetentionPolicyProvider from './RetentionPolicyProvider';
 import './site-layout.css';
-export default function SiteLayout({ children, showNewEvent = false }: {
-    children: ReactNode;
-    showNewEvent?: boolean;
+
+export default function SiteLayout({
+  children,
+  showNewEvent = false,
+}: {
+  children: ReactNode;
+  showNewEvent?: boolean;
 }) {
-    return <RetentionPolicyProvider><Header showNewEvent={showNewEvent}/>{children}<Footer showEventExpiry={showNewEvent}/></RetentionPolicyProvider>;
+  return (
+    <RetentionPolicyProvider>
+      <Header showNewEvent={showNewEvent} />
+      {children}
+      <Footer showEventExpiry={showNewEvent} />
+    </RetentionPolicyProvider>
+  );
 }
+
 function Header({ showNewEvent }: { showNewEvent: boolean }) {
-    return <header className="site-header">
+  return (
+    <header className="site-header">
       <PageLink className="brand" href="/" aria-label={t('Whenkin home')}>
-        <img src="/favicon.svg" alt="" width={40} height={40}/>
+        <img src="/favicon.svg" alt="" width={40} height={40} />
         <span>{BRAND.name.toLowerCase()}</span>
       </PageLink>
       <nav aria-label={t('Main navigation')}>
-        {showNewEvent && <PageLink className="button secondary compact quiet-action" href="/"><Plus size={16}/>{t('New Event')}</PageLink>}
+        {showNewEvent && (
+          <PageLink className="button secondary compact quiet-action" href="/">
+            <Plus size={16} />
+            {t('New Event')}
+          </PageLink>
+        )}
         <LanguageSelector />
       </nav>
-    </header>;
+    </header>
+  );
 }
+
 function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
-    const copy = shortcutCopy[useLanguage()];
-    const [shortcutOpen, setShortcutOpen] = useState(false);
-    const [installing, setInstalling] = useState(false);
-    const closeShortcut = useCallback(() => setShortcutOpen(false), []);
-    async function addShortcut() {
-      setInstalling(true);
-      const result = await browserInstall.prompt();
-      setInstalling(false);
-      if (result === 'unavailable') setShortcutOpen(true);
+  const copy = shortcutCopy[useLanguage()];
+  const [shortcutOpen, setShortcutOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  const closeShortcut = useCallback(() => setShortcutOpen(false), []);
+
+  async function addShortcut() {
+    setInstalling(true);
+    const result = await browserInstall.prompt();
+    setInstalling(false);
+    if (result === 'unavailable') {
+      setShortcutOpen(true);
     }
-    return <><footer className="site-footer">
-      {showEventExpiry ? <EventLimits className="footer-expiry"/> : <span>{t(BRAND.tagline)}</span>}
-      <nav aria-label={copy.footer}>
-        <button type="button" className="shortcut-entry" data-tour-shortcut aria-haspopup="dialog" aria-expanded={shortcutOpen} aria-busy={installing} disabled={installing} onClick={() => void addShortcut()}>{copy.title}</button>
-        <PageLink href="/terms">{t('Terms of Use')}</PageLink>
-        <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
-      </nav>
-      <span>© {new Date().getFullYear()} {LEGAL.operator}<GlobeIcon /></span>
-    </footer>{shortcutOpen && <ShortcutDialog onClose={closeShortcut}/>}</>;
+  }
+
+  return (
+    <>
+      <footer className="site-footer">
+        {showEventExpiry ? (
+          <EventLimits className="footer-expiry" />
+        ) : (
+          <span>{t(BRAND.tagline)}</span>
+        )}
+        <nav aria-label={copy.footer}>
+          <button
+            type="button"
+            className="shortcut-entry"
+            data-tour-shortcut
+            aria-haspopup="dialog"
+            aria-expanded={shortcutOpen}
+            aria-busy={installing}
+            disabled={installing}
+            onClick={() => void addShortcut()}
+          >
+            {copy.title}
+          </button>
+          <PageLink href="/terms">{t('Terms of Use')}</PageLink>
+          <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
+        </nav>
+        <span>
+          © {new Date().getFullYear()} {LEGAL.operator}
+          <GlobeIcon />
+        </span>
+      </footer>
+      {shortcutOpen && <ShortcutDialog onClose={closeShortcut} />}
+    </>
+  );
 }
+
 function GlobeIcon() {
-    return <span className="footer-dot" aria-hidden="true"/>;
+  return <span className="footer-dot" aria-hidden="true" />;
 }
