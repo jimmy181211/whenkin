@@ -11,8 +11,13 @@ import { documentWithManifest } from '../../App/backend/web-manifest.js';
 // The API uses the same Express app and SQL as the Node deployment.
 const database: Database = {
   async query<T>(sql: string, params: unknown[] = []) {
-    if (!env.DATABASE_URL) throw new Problem(503, 'Whenkin is not connected to its database yet. Please try again once setup is complete.');
-    return await neon(env.DATABASE_URL).query(sql, params) as T[];
+    if (!env.DATABASE_URL) {
+      throw new Problem(
+        503,
+        'Whenkin is not connected to its database yet. Please try again once setup is complete.',
+      );
+    }
+    return (await neon(env.DATABASE_URL).query(sql, params)) as T[];
   },
 };
 const app = createApp(database, { trustProxy: true });
@@ -22,35 +27,74 @@ const nodeHandler = httpServerHandler({ port: 3000 });
 async function appDocument(request: Request): Promise<Response> {
   // The hosted asset service canonicalizes index.html to /; local assets can
   // instead require index.html. Accept only a real HTML response, never a redirect.
-  for (const path of ['/', '/index.html']) {
-    const document = await env.ASSETS.fetch(new Request(new URL(path, request.url), request));
-    if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) {
+  for (const path of [
+    '/',
+    '/index.html',
+  ]) {
+    const document = await env.ASSETS.fetch(
+      new Request(new URL(path, request.url), request),
+    );
+    if (
+      document.ok &&
+      document.headers.get('Content-Type')?.includes('text/html')
+    ) {
       const headers = new Headers(document.headers);
       headers.delete('Content-Length');
       headers.delete('Content-Encoding');
       headers.delete('ETag');
-      return new Response(documentWithManifest(await document.text(), new URL(request.url).pathname), { status: document.status, headers });
+      return new Response(
+        documentWithManifest(
+          await document.text(),
+          new URL(request.url).pathname,
+        ),
+        {
+          status: document.status,
+          headers,
+        },
+      );
     }
   }
   return new Response('The page is temporarily unavailable. Please reload.', {
-    status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    status: 503,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
 }
 
 export default {
-  async fetch(request: Request, bindings: unknown, context: unknown): Promise<Response> {
+  async fetch(
+    request: Request,
+    bindings: unknown,
+    context: unknown,
+  ): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === '/api' || url.pathname.startsWith('/api/') || url.pathname === '/site.webmanifest') {
+    if (
+      url.pathname === '/api' ||
+      url.pathname.startsWith('/api/') ||
+      url.pathname === '/site.webmanifest'
+    ) {
       const headers = new Headers(request.headers);
       headers.set('Host', url.host);
       headers.set('X-Forwarded-Proto', url.protocol.slice(0, -1));
-      headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
-      return nodeHandler.fetch(new Request(request, { headers }), bindings, context);
+      headers.set(
+        'X-Forwarded-For',
+        request.headers.get('CF-Connecting-IP') || 'unknown',
+      );
+      return nodeHandler.fetch(
+        new Request(request, { headers }),
+        bindings,
+        context,
+      );
     }
     // Keep /e/:id in the browser while serving the complete React document.
     const appPage = pageRoute(url.pathname).kind !== 'not-found';
-    let response = appPage ? await appDocument(request) : await env.ASSETS.fetch(request);
-    if (!appPage && response.status === 404 && !url.pathname.startsWith('/assets/')) {
+    let response = appPage
+      ? await appDocument(request)
+      : await env.ASSETS.fetch(request);
+    if (
+      !appPage &&
+      response.status === 404 &&
+      !url.pathname.startsWith('/assets/')
+    ) {
       const document = await appDocument(request);
       response = new Response(document.body, {
         status: document.ok ? 404 : document.status,
@@ -61,9 +105,20 @@ export default {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'no-referrer');
     response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
-    response.headers.set('Cache-Control', response.ok && url.pathname.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-store');
+    response.headers.set(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=()',
+    );
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    );
+    response.headers.set(
+      'Cache-Control',
+      response.ok && url.pathname.startsWith('/assets/')
+        ? 'public, max-age=31536000, immutable'
+        : 'no-store',
+    );
     return response;
   },
 };

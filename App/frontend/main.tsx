@@ -13,6 +13,10 @@ import '@fontsource/manrope/800.css';
 
 browserInstall.listen(window);
 // Also use the current page in Vite development, where HTML is served directly.
-const manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-if (manifest) manifest.href = shortcutManifestHref(window.location.pathname);
+const manifest = document.querySelector<HTMLLinkElement>(
+  'link[rel="manifest"]',
+);
+if (manifest) {
+  manifest.href = shortcutManifestHref(window.location.pathname);
+}
 createRoot(document.getElementById('root')!).render(<App />);

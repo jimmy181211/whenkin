@@ -50,7 +50,7 @@ pnpm test
 pnpm build
 ```
 
-`pnpm start` runs the compiled Express server and serves the frontend on port 3000. `node tests/smoke.mjs http://127.0.0.1:3000` tests the full API flow against a disposable local database and creates a test event. It refuses non-local server URLs.
+`pnpm start` runs the compiled Express server and serves the frontend on port 3000. `node tests/smoke.js http://127.0.0.1:3000` tests the full API flow against a disposable local database and creates a test event. It refuses non-local server URLs.
 
 The GitHub workflow runs checks and builds, then starts the Docker stack and runs this smoke check against real PostgreSQL. No production database is used by the test suite.
 

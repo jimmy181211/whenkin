@@ -1,9 +1,64 @@
-.event-unavailable-page{min-height:65vh;display:grid;place-items:center;padding:56px 24px}
-.event-unavailable-card{width:min(100%,530px);background:#fff;border:1px solid var(--line);border-radius:20px;padding:36px;text-align:center}
-.event-unavailable-icon{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--soft);color:var(--primary);margin-bottom:20px}
-.event-unavailable-card h1{font-size:28px;line-height:1.35;letter-spacing:-.6px;margin:0 0 18px;overflow-wrap:anywhere}
-.event-unavailable-card p{font-size:14px;color:var(--muted);line-height:1.75;margin:0 0 16px}
-.event-unavailable-card .button{margin:8px 0 24px}
-.event-unavailable-card .event-unavailable-policy{font-size:12px;margin-bottom:10px}
-.event-unavailable-card nav{display:flex;justify-content:center;flex-wrap:wrap;gap:10px 22px;font-size:13px;color:var(--primary);line-height:1.6}
-@media(max-width:699px){.event-unavailable-page{padding:32px 18px}.event-unavailable-card{padding:28px 22px}.event-unavailable-card h1{font-size:24px}}
+.event-unavailable-page {
+  min-height: 65vh;
+  display: grid;
+  place-items: center;
+  padding: 56px 24px;
+}
+.event-unavailable-card {
+  width: min(100%, 530px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 36px;
+  text-align: center;
+}
+.event-unavailable-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--soft);
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+.event-unavailable-card h1 {
+  font-size: 28px;
+  line-height: 1.35;
+  letter-spacing: -0.6px;
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+.event-unavailable-card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.75;
+  margin: 0 0 16px;
+}
+.event-unavailable-card .button {
+  margin: 8px 0 24px;
+}
+.event-unavailable-card .event-unavailable-policy {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.event-unavailable-card nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  font-size: 13px;
+  color: var(--primary);
+  line-height: 1.6;
+}
+@media (max-width: 699px) {
+  .event-unavailable-page {
+    padding: 32px 18px;
+  }
+  .event-unavailable-card {
+    padding: 28px 22px;
+  }
+  .event-unavailable-card h1 {
+    font-size: 24px;
+  }
+}
