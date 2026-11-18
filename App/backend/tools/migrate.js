@@ -8,10 +8,19 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { sqlStatements } from './sql-statements.js';
 
+/**
+ * Hash migration contents to detect edits to previously applied SQL.
+ * @returns The content's SHA-256 digest as hexadecimal text.
+ */
 const digest = (contents) =>
   createHash('sha256').update(contents).digest('hex');
 
-// One checked-out connection owns the lock, statements and checksum transaction.
+/**
+ * Apply unapplied SQL files in filename order and check previously saved checksums.
+ * Keep each migration and its history entry in one transaction; rollback on failure.
+ * Only the failing file is rolled back; earlier successful migrations remain applied.
+ * @param client - One checked-out connection that owns the lock for the whole run.
+ */
 export async function migrate(
   client,
   directory = new URL('../db/migrations/', import.meta.url),
@@ -23,9 +32,13 @@ export async function migrate(
       'CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',
     );
     for (const name of (await readdir(directory))
-      .filter((n) => n.endsWith('.sql'))
+      .filter(
+        /* Select only SQL files from the migration directory. */
+        (n) => n.endsWith('.sql'),
+      )
       .sort()) {
       const contents = await readFile(new URL(name, directory), 'utf8');
+      // Normalize only line endings; actual edits to applied SQL remain an error.
       const canonical = contents.replaceAll('\r\n', '\n');
       const checksum = digest(canonical);
       const existing = (

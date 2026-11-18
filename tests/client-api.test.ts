@@ -7,8 +7,16 @@ import {
 } from 'vitest';
 import { api } from '../App/frontend/api/client';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(
+  /* Restore browser globals replaced by API transport tests. */
+  () => vi.unstubAllGlobals(),
+);
+/** Group the connection failures explain the next step checks. */
 describe('connection failures explain the next step', () => {
+  /**
+   * Replaces the browser’s raw failed-to-fetch error with a useful
+   * message.
+   */
   it('replaces the browser’s raw failed-to-fetch error with a useful message', async () => {
     vi.stubGlobal(
       'fetch',
@@ -18,6 +26,10 @@ describe('connection failures explain the next step', () => {
       'We couldn’t reach Whenkin.',
     );
   });
+  /**
+   * Rejects a static HTML fallback instead of treating it as a saved
+   * event.
+   */
   it('rejects a static HTML fallback instead of treating it as a saved event', async () => {
     vi.stubGlobal(
       'fetch',
@@ -32,6 +44,7 @@ describe('connection failures explain the next step', () => {
       'Event saving is not available at this address yet.',
     );
   });
+  /** Preserves the server’s setup message. */
   it('preserves the server’s setup message', async () => {
     vi.stubGlobal(
       'fetch',
@@ -48,6 +61,7 @@ describe('connection failures explain the next step', () => {
       'Database setup is not complete.',
     );
   });
+  /** Returns readiness without inventing a successful event. */
   it('returns readiness without inventing a successful event', async () => {
     vi.stubGlobal(
       'fetch',

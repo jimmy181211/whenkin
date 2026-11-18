@@ -8,20 +8,38 @@ import {
   matchingOptions,
 } from '../App/frontend/utils/editable-options';
 
-const months = Array.from({ length: 12 }, (_, index) => ({
-  value: String(index + 1),
-  label: new Intl.DateTimeFormat('en', {
-    month: 'long',
-    timeZone: 'UTC',
-  }).format(new Date(Date.UTC(2000, index, 1))),
-}));
-const years = Array.from({ length: 25 }, (_, index) => ({
-  value: String(2026 + index),
-  label: String(2026 + index),
-}));
+const months = Array.from(
+  { length: 12 },
+  /* Build month dropdown fixtures with English display labels. */
+  (_, index) => ({
+    value: String(index + 1),
+    label: new Intl.DateTimeFormat('en', {
+      month: 'long',
+      timeZone: 'UTC',
+    }).format(new Date(Date.UTC(2000, index, 1))),
+  }),
+);
+const years = Array.from(
+  { length: 25 },
+  /* Build numeric year choices for typed-input validation. */
+  (_, index) => ({
+    value: String(2026 + index),
+    label: String(2026 + index),
+  }),
+);
+/** Group the editable calendar options checks. */
 describe('editable calendar options', () => {
+  /**
+   * Offers January first for J and supports complete case-insensitive
+   * month names.
+   */
   it('offers January first for J and supports complete case-insensitive month names', () => {
-    expect(matchingOptions(months, 'J').map((option) => option.label)).toEqual([
+    expect(
+      matchingOptions(months, 'J').map(
+        /* Compare displayed month labels in the prefix-search result. */
+        (option) => option.label,
+      ),
+    ).toEqual([
       'January',
       'June',
       'July',
@@ -29,6 +47,10 @@ describe('editable calendar options', () => {
     expect(exactOption(months, ' november ')?.value).toBe('11');
     expect(exactOption(months, 'Not a month')).toBeUndefined();
   });
+  /**
+   * Accepts only allowed years, rejecting malformed and out-of-range
+   * values.
+   */
   it('accepts only allowed years, rejecting malformed and out-of-range values', () => {
     for (const year of [
       '2026',
@@ -48,15 +70,19 @@ describe('editable calendar options', () => {
     ]) {
       expect(exactOption(years, year)).toBeUndefined();
     }
-    expect(matchingOptions(years, '202').map((option) => option.value)).toEqual(
-      [
-        '2026',
-        '2027',
-        '2028',
-        '2029',
-      ],
-    );
+    expect(
+      matchingOptions(years, '202').map(
+        /* Compare allowed year values rather than their labels. */
+        (option) => option.value,
+      ),
+    ).toEqual([
+      '2026',
+      '2027',
+      '2028',
+      '2029',
+    ]);
   });
+  /** Allows English month input with localized display labels. */
   it('allows English month input with localized display labels', () => {
     expect(
       matchingOptions(

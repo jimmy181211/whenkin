@@ -1,4 +1,8 @@
-// Move only as far as needed to reveal the target, preserving nearby context.
+/**
+ * Choose the smallest vertical move needed to reveal a guide target.
+ * @returns A signed pixel delta: negative scrolls up, positive scrolls down,
+ * and zero means enough of the target is already visible or no space is available.
+ */
 export function tourScrollDelta(
   target: { top: number;
     bottom: number },

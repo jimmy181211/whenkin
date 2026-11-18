@@ -1,3 +1,7 @@
+/**
+ * Viewport rectangle used to position a panel without reading the DOM
+ * here.
+ */
 export type PanelRect = {
   left: number;
   right: number;
@@ -7,6 +11,11 @@ export type PanelRect = {
   height: number;
 };
 
+/**
+ * Choose a position beside the trigger, flipping sides if space is limited.
+ * @param viewport - Visible bounds in CSS pixels, including any mobile offset.
+ * @returns Viewport coordinates clamped to leave padding around the panel.
+ */
 export function anchoredPanelPosition(
   anchor: PanelRect,
   box: { width: number;
@@ -16,10 +25,12 @@ export function anchoredPanelPosition(
     width: number;
     height: number },
 ) {
+  // Leave space at viewport edges (pad) and between the trigger and panel (gap).
   const pad = 12;
   const gap = 10;
   const minX = viewport.left + pad;
   const minY = viewport.top + pad;
+  // Bounds apply to the panel's top-left corner, accounting for its own size.
   const maxX = Math.max(minX, viewport.left + viewport.width - box.width - pad);
   const maxY = Math.max(
     minY,

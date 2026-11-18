@@ -6,6 +6,11 @@ import {
 } from 'vitest';
 import { scrollGrid } from '../App/frontend/utils/grid-scroll';
 
+/**
+ * Build a scroller fixture whose vertical offset is bounded like a real
+ * element.
+ * @returns An element-like fixture whose assigned vertical scroll position is clamped from 0 to 1000.
+ */
 function scroller(top = 0) {
   let current = top;
   return {
@@ -13,15 +18,22 @@ function scroller(top = 0) {
     clientWidth: 700,
     scrollWidth: 700,
     scrollLeft: 0,
+    /** Read the fixture's current scroll position. */
     get scrollTop() {
       return current;
     },
+    /** Clamp assigned scroll positions to the fixture's scrollable range. */
     set scrollTop(value: number) {
       current = Math.min(1000, Math.max(0, value));
     },
   } as HTMLElement;
 }
 
+/**
+ * Build wheel input with observable default-prevention and optional
+ * overrides.
+ * @returns Wheel input with an observable preventDefault mock and the supplied overrides.
+ */
 function wheel(deltaY: number, extra = {}) {
   return {
     deltaY,
@@ -34,7 +46,9 @@ function wheel(deltaY: number, extra = {}) {
   } as unknown as WheelEvent;
 }
 
+/** Group the laptop trackpad and mouse wheel grid scrolling checks. */
 describe('laptop trackpad and mouse wheel grid scrolling', () => {
+  /** Handles fractional pixel and diagonal trackpad movement once. */
   it('handles fractional pixel and diagonal trackpad movement once', () => {
     const element = scroller();
     const event = wheel(12.5, { deltaX: 2 });
@@ -42,6 +56,7 @@ describe('laptop trackpad and mouse wheel grid scrolling', () => {
     expect(element.scrollTop).toBe(12.5);
     expect(event.preventDefault).toHaveBeenCalledOnce();
   });
+  /** Normalizes mouse wheel lines and pages. */
   it('normalizes mouse wheel lines and pages', () => {
     const element = scroller();
     scrollGrid(element, wheel(3, { deltaMode: 1 }));
@@ -49,6 +64,7 @@ describe('laptop trackpad and mouse wheel grid scrolling', () => {
     scrollGrid(element, wheel(1, { deltaMode: 2 }));
     expect(element.scrollTop).toBe(548);
   });
+  /** Leaves browser pinch zoom and page scrolling at a boundary alone. */
   it('leaves browser pinch zoom and page scrolling at a boundary alone', () => {
     const element = scroller();
     const pinch = wheel(50, { ctrlKey: true });

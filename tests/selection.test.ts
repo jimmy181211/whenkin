@@ -8,7 +8,12 @@ import {
   paintSelection,
 } from '../App/frontend/utils/selection';
 
+/** Group the drag action follows its starting cell checks. */
 describe('drag action follows its starting cell', () => {
+  /**
+   * Marks a rectangle that starts blank without clearing already marked
+   * cells.
+   */
   it('marks a rectangle that starts blank without clearing already marked cells', () => {
     const base = new Set([
       3,
@@ -36,6 +41,7 @@ describe('drag action follows its starting cell', () => {
       8,
     ]);
   });
+  /** Clears a rectangle that starts marked without filling its blank cells. */
   it('clears a rectangle that starts marked without filling its blank cells', () => {
     const base = new Set([
       1,
@@ -54,6 +60,10 @@ describe('drag action follows its starting cell', () => {
       4,
     ], clear)]).toEqual([5]);
   });
+  /**
+   * Clears a partially marked block and recomputes a shrinking drag from
+   * its original selection.
+   */
   it('clears a partially marked block and recomputes a shrinking drag from its original selection', () => {
     const base = new Set([
       1,

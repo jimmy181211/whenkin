@@ -2,6 +2,11 @@ import type { ErrorRequestHandler } from 'express';
 import { Problem } from './validation.js';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits.js';
 
+/**
+ * Turn known validation, expiry, and JSON parser errors into safe API responses.
+ * Hide unexpected error details; delegate to Express if headers were already sent.
+ * @returns The sent JSON error response, or no value after delegating to Express.
+ */
 export const errorHandler: ErrorRequestHandler = (
   error: unknown,
   _req,

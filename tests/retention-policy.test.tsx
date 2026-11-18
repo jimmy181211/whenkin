@@ -26,25 +26,52 @@ import { setLanguage } from '../App/frontend/i18n/index';
 
 const pg = new PGlite();
 
+/**
+ * Return retention fixture query rows through the application interface.
+ * @returns Fixture-query rows, or a rejected promise when the SQL fails.
+ */
 const query = async <T,>(sql: string, params: unknown[] = []) =>
   (await pg.query<T>(sql, params)).rows;
 
 const app = testClient(createApp({ query }, { rateLimit: false }));
-beforeAll(async () => {
-  for (const name of (await readdir('App/backend/db/migrations')).sort()) {
-    await pg.exec(await readFile('App/backend/db/migrations/' + name, 'utf8'));
-  }
-}, 30000);
-beforeEach(async () => {
-  await pg.exec('TRUNCATE events CASCADE');
-  await query('SELECT * FROM set_event_retention_months(12)');
-});
-afterEach(() => setLanguage('en'));
-afterAll(async () => {
-  await pg.close();
-});
+beforeAll(
+  /* Apply migrations before this suite uses its isolated fixture database. */
+  async () => {
+    for (const name of (await readdir('App/backend/db/migrations')).sort()) {
+      await pg.exec(
+        await readFile('App/backend/db/migrations/' + name, 'utf8'),
+      );
+    }
+  },
+  30000,
+);
+beforeEach(
+  /* Clear event fixtures so each test starts without another test's data. */
+  async () => {
+    await pg.exec('TRUNCATE events CASCADE');
+    await query('SELECT * FROM set_event_retention_months(12)');
+  },
+);
+afterEach(
+  /* Restore English after localized retention-policy checks. */
+  () => setLanguage('en'),
+);
+afterAll(
+  /* Close the fixture database after this suite finishes. */
+  async () => {
+    await pg.close();
+  },
+);
 
+/**
+ * Group the administrator-controlled retention in calendar months
+ * checks.
+ */
 describe('administrator-controlled retention in calendar months', () => {
+  /**
+   * Parses maintenance options without mistaking a misspelled dry run for
+   * permission to delete.
+   */
   it('parses maintenance options without mistaking a misspelled dry run for permission to delete', () => {
     expect(cleanupOptions([])).toEqual({
       months: undefined,
@@ -77,9 +104,13 @@ describe('administrator-controlled retention in calendar months', () => {
         '3',
       ],
     ]) {
-      expect(() => cleanupOptions(args)).toThrow();
+      expect(
+        /* Parse invalid cleanup arguments so their errors can be asserted. */
+        () => cleanupOptions(args),
+      ).toThrow();
     }
   });
+  /** Defaults to 12 months without constructor database side effects. */
   it('defaults to 12 months without constructor database side effects', () => {
     const execute = vi.fn();
     expect(new EventCleanup(execute).getTime()).toBe(12);
@@ -95,12 +126,23 @@ describe('administrator-controlled retention in calendar months', () => {
       '2',
       null,
     ]) {
-      expect(() => new EventCleanup(execute, value as number)).toThrow();
+      expect(
+        /* Construct cleanup with an invalid duration to verify validation happens early. */
+        () => new EventCleanup(execute, value as number),
+      ).toThrow();
     }
   });
+  /**
+   * Persists setter changes, updates existing deadlines, and supplies
+   * future event defaults.
+   */
   it('persists setter changes, updates existing deadlines, and supplies future event defaults', async () => {
     const cleaner = new EventCleanup(query);
 
+    /**
+     * Insert one event fixture for retention-deadline comparisons.
+     * @returns A promise resolving to the single inserted fixture event id in a result row.
+     */
     const insert = () =>
       query<{ id: string }>(
         "INSERT INTO events(id,title,organizer_name,timezone) VALUES(gen_random_uuid(),'Fixture','','UTC') RETURNING id",
@@ -115,7 +157,12 @@ describe('administrator-controlled retention in calendar months', () => {
       'SELECT expires_at=event_retention_deadline(created_at,2) AS matches FROM events',
     );
     expect(rows).toHaveLength(2);
-    expect(rows.every((row) => row.matches)).toBe(true);
+    expect(
+      rows.every(
+        /* Confirm every stored expiry matches the expected database deadline. */
+        (row) => row.matches,
+      ),
+    ).toBe(true);
     await expect(cleaner.setTime(0)).rejects.toThrow();
     expect(cleaner.getTime()).toBe(2);
     expect(await query('SELECT * FROM get_event_retention_policy()')).toEqual([
@@ -128,6 +175,10 @@ describe('administrator-controlled retention in calendar months', () => {
       query('SELECT * FROM set_event_retention_months(-1)'),
     ).rejects.toMatchObject({ code: '22023' });
   });
+  /**
+   * Keeps a proposed dry run read-only and applies the duration before
+   * explicit manual deletion.
+   */
   it('keeps a proposed dry run read-only and applies the duration before explicit manual deletion', async () => {
     await query(
       "INSERT INTO events(id,title,organizer_name,timezone,created_at) VALUES(gen_random_uuid(),'Old','','UTC',now()-interval '3 months'),(gen_random_uuid(),'Young','','UTC',now()-interval '1 month')",
@@ -145,6 +196,7 @@ describe('administrator-controlled retention in calendar months', () => {
     expect((await EventCleanup.load(query)).getTime()).toBe(2);
     expect(await cleaner.run()).toEqual({ deletedEvents: 0 });
   });
+  /** Uses calendar month-end and leap-year arithmetic in UTC. */
   it('uses calendar month-end and leap-year arithmetic in UTC', async () => {
     const rows = await query<{ month_end: string;
       leap: string }>(
@@ -153,6 +205,7 @@ describe('administrator-controlled retention in calendar months', () => {
     expect(rows[0].month_end).toContain('2027-02-28 12:00:00');
     expect(rows[0].leap).toContain('2029-02-28 12:00:00');
   });
+  /** Exposes read-only public metadata and restricts the database setter. */
   it('exposes read-only public metadata and restricts the database setter', async () => {
     const response = await app.request('http://localhost/api/retention');
     expect(response.status).toBe(200);
@@ -174,6 +227,7 @@ describe('administrator-controlled retention in calendar months', () => {
     );
     expect(rights[0].count).toBe(0);
   });
+  /** Returns immutable month metadata and rejects invalid units. */
   it('returns immutable month metadata and rejects invalid units', () => {
     expect(
       Object.isFrozen(
@@ -183,19 +237,27 @@ describe('administrator-controlled retention in calendar months', () => {
         }),
       ),
     ).toBe(true);
-    expect(() =>
-      parseRetentionPolicy({
-        value: 1,
-        unit: 'year',
-      }),
+    expect(
+      /* Reject a policy using a year unit instead of the required month unit. */
+      () =>
+        parseRetentionPolicy({
+          value: 1,
+          unit: 'year',
+        }),
     ).toThrow();
-    expect(() =>
-      parseRetentionPolicy({
-        value: '2',
-        unit: 'month',
-      }),
+    expect(
+      /* Reject a string month count instead of a validated number. */
+      () =>
+        parseRetentionPolicy({
+          value: '2',
+          unit: 'month',
+        }),
     ).toThrow();
   });
+  /**
+   * Uses the same component for localized months, years, and
+   * singular/plural units.
+   */
   it('uses the same component for localized months, years, and singular/plural units', () => {
     const labels = {
       en: [
@@ -242,17 +304,19 @@ describe('administrator-controlled retention in calendar months', () => {
         2,
         12,
         24,
-      ].forEach((value, index) =>
-        expect(
-          renderToStaticMarkup(
-            <EventLimits
-              policy={{
-                value,
-                unit: 'month',
-              }}
-            />,
-          ),
-        ).toContain(labels[language][index]),
+      ].forEach(
+        /* Check each month count against its expected localized expiry wording. */
+        (value, index) =>
+          expect(
+            renderToStaticMarkup(
+              <EventLimits
+                policy={{
+                  value,
+                  unit: 'month',
+                }}
+              />,
+            ),
+          ).toContain(labels[language][index]),
       );
     }
     expect(renderToStaticMarkup(<EventLimits />)).not.toContain('1 year');

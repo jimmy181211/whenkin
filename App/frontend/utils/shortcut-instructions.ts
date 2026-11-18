@@ -7,8 +7,14 @@ export const shortcutDevices = [
   'windows',
   'mac',
 ] as const;
+/** Supported device/browser categories for manual shortcut instructions. */
 export type ShortcutDevice = (typeof shortcutDevices)[number];
 
+/**
+ * Choose browser-specific shortcut instructions, including touch-enabled
+ * iPads.
+ * @returns The matching instruction category, falling back to Chrome for unknown agents.
+ */
 export function detectShortcutDevice(
   userAgent: string,
   maxTouchPoints = 0,
@@ -40,7 +46,10 @@ export function detectShortcutDevice(
   return 'chrome';
 }
 
-// Keep the current event path without preserving legacy edit tokens or fragments.
+/**
+ * Keep a page's origin and path without preserving query parameters or fragments.
+ * @returns An absolute URL suitable for sharing or creating the page's shortcut.
+ */
 export function shortcutPageURL(href: string) {
   const url = new URL(href);
   return url.origin + url.pathname;

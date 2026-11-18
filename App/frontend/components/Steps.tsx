@@ -22,20 +22,30 @@ const steps = [
   },
 ];
 
+/**
+ * Compact introduction component describing the scheduling workflow.
+ * @returns A translated, numbered list of the three introductory steps.
+ */
 export default function Steps() {
   return (
     <div className="how-it-works">
       <p className="eyebrow">{t('THREE SMALL STEPS')}</p>
       <ol>
-        {steps.map((step, i) => (
-          <li key={step.title}>
-            <span>0{i + 1}</span>
-            <div>
-              <strong>{t(step.title)}</strong>
-              <p>{t(step.short)}</p>
-            </div>
-          </li>
-        ))}
+        {steps.map(
+          /**
+           * @returns One numbered introduction item with its translated title
+           * and summary.
+           */
+          (step, i) => (
+            <li key={step.title}>
+              <span>0{i + 1}</span>
+              <div>
+                <strong>{t(step.title)}</strong>
+                <p>{t(step.short)}</p>
+              </div>
+            </li>
+          ),
+        )}
       </ol>
     </div>
   );

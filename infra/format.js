@@ -104,7 +104,10 @@ const layout = new ESLint({
   ],
 });
 
-/** Add only whitespace around functions and between imported/destructured names. */
+/**
+ * Add only whitespace around functions and between imported/destructured names.
+ * @returns Source text with the planned layout insertions applied.
+ */
 function expandLayout(source, file) {
   const syntax = ts.createSourceFile(
     file,
@@ -114,22 +117,34 @@ function expandLayout(source, file) {
   );
   const additions = new Map();
 
+  /** Record a whitespace insertion at its original source offset. */
   const add = (offset, text) => additions.set(offset, text);
 
+  /**
+   * Recognize declarations that should have blank lines around them.
+   * @returns Whether this statement declares a function or a useCallback-backed handler.
+   */
   const definesFunction = (statement) =>
     ts.isFunctionDeclaration(statement) ||
     (ts.isVariableStatement(statement) &&
-      statement.declarationList.declarations.some((declaration) => {
-        const value = declaration.initializer;
-        return (
-          value &&
-          (ts.isArrowFunction(value) ||
-            ts.isFunctionExpression(value) ||
-            (ts.isCallExpression(value) &&
-              value.expression.getText(syntax) === 'useCallback'))
-        );
-      }));
+      statement.declarationList.declarations.some(
+        /* Check whether a variable initializes a function or useCallback handler. */
+        (declaration) => {
+          const value = declaration.initializer;
+          return (
+            value &&
+            (ts.isArrowFunction(value) ||
+              ts.isFunctionExpression(value) ||
+              (ts.isCallExpression(value) &&
+                value.expression.getText(syntax) === 'useCallback'))
+          );
+        },
+      ));
 
+  /**
+   * Walk syntax nodes and plan whitespace changes without changing
+   * expressions.
+   */
   const visit = (node) => {
     const names =
       ts.isNamedImports(node) ||
@@ -155,32 +170,43 @@ function expandLayout(source, file) {
       }
     }
     if (node.statements) {
-      node.statements.forEach((statement, index) => {
-        if (
-          index &&
-          (definesFunction(statement) ||
-            definesFunction(node.statements[index - 1]))
-        ) {
-          const start = statement.getFullStart();
+      node.statements.forEach(
+        /* Separate neighboring function declarations from surrounding statements. */
+        (statement, index) => {
           if (
-            !/^\s*\n\s*\n/.test(source.slice(start, statement.getStart(syntax)))
+            index &&
+            (definesFunction(statement) ||
+              definesFunction(node.statements[index - 1]))
           ) {
-            add(start, '\n');
+            const start = statement.getFullStart();
+            if (
+              !/^\s*\n\s*\n/.test(
+                source.slice(start, statement.getStart(syntax)),
+              )
+            ) {
+              add(start, '\n');
+            }
           }
-        }
-      });
+        },
+      );
     }
     ts.forEachChild(node, visit);
   };
 
   visit(syntax);
-  for (const [offset, text] of [...additions].sort((a, b) => b[0] - a[0])) {
+  for (const [offset, text] of [...additions].sort(
+    /* Apply later insertions first so earlier source offsets stay valid. */
+    (a, b) => b[0] - a[0],
+  )) {
     source = source.slice(0, offset) + text + source.slice(offset);
   }
   return source;
 }
 
-/** Apply block expansion before printing, then the project's multiline-list layout. */
+/**
+ * Apply block expansion before printing, then the project's multiline-list layout.
+ * @returns Formatted source text, or rejects when the formatter reports a blocking error.
+ */
 async function formatSource(source, file) {
   const isCode = /\.(js|ts|tsx)$/.test(file);
   if (isCode) {
@@ -196,11 +222,21 @@ async function formatSource(source, file) {
   }
   const separated = expandLayout(pretty, file);
   const [result] = await layout.lintText(separated, { filePath: file });
-  if (result.messages.some((message) => message.severity === 2)) {
+  if (
+    result.messages.some(
+      /* Detect formatting errors that cannot safely be accepted as output. */
+      (message) => message.severity === 2,
+    )
+  ) {
     throw Error(
       file +
         ': ' +
-        result.messages.map((message) => message.message).join('; '),
+        result.messages
+          .map(
+            /* Include each formatter diagnostic in the failure message. */
+            (message) => message.message,
+          )
+          .join('; '),
     );
   }
   return result.output ?? separated;
@@ -219,6 +255,10 @@ const files = [
       .split('\n'),
   ),
 ].filter(
+  /**
+   * Select authored source and configuration files, excluding generated
+   * compiler metadata.
+   */
   (file) =>
     (/^(App|infra|tests)\//.test(file) || !file.includes('/')) &&
     /\.(js|ts|tsx|css|json)$/.test(file) &&

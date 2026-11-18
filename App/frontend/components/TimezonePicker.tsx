@@ -53,6 +53,13 @@ const aliases: Record<string, string> = {
   UTC: 'Coordinated Universal Time GMT 协调世界时 世界標準時間 tiempo universal coordinado',
 };
 
+/**
+ * Searchable timezone-selector component that emits IANA timezone ids.
+ * @param at - Instant in milliseconds used to show offsets, including DST.
+ *
+ * @returns The current timezone trigger and, when open, a searchable menu with
+ * device detection.
+ */
 export default function TimezonePicker({
   value,
   onChange,
@@ -64,6 +71,7 @@ export default function TimezonePicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  // Remember explicit selection so it is not labeled as automatic detection.
   const [manual, setManual] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -71,12 +79,18 @@ export default function TimezonePicker({
   const menuId = useId();
   const detectedZone = deviceTimezone();
   const usingDevice = !manual && value === detectedZone;
+  /** Focus timezone search when the menu opens. */
   useEffect(() => {
     if (open) {
       search.current?.focus();
     }
   }, [open]);
+  /**
+   * Close the timezone menu on outside clicks and clean up its listener.
+   * @returns Cleanup that removes the outside-click listener.
+   */
   useEffect(() => {
+    /** Dismiss the timezone menu if the click is outside its root. */
     const close = (event: MouseEvent) => {
       if (!root.current?.contains(event.target as Node)) {
         setOpen(false);
@@ -84,6 +98,7 @@ export default function TimezonePicker({
     };
 
     document.addEventListener('mousedown', close);
+    // Remove outside-click handling when the timezone picker unmounts.
     return () => document.removeEventListener('mousedown', close);
   }, []);
   const zones = [
@@ -94,6 +109,10 @@ export default function TimezonePicker({
     ]),
   ];
 
+  /**
+   * Ignore accents, case, and underscores during timezone search.
+   * @returns Normalized search text, leaving timezone ids themselves unchanged.
+   */
   const normalize = (value: string) =>
     value
       .normalize('NFD')
@@ -103,10 +122,12 @@ export default function TimezonePicker({
 
   const shown = query.trim()
     ? zones
-      .filter((z) =>
-        normalize(z + ' ' + zoneLabel(z) + ' ' + (aliases[z] || '')).includes(
-          normalize(query.trim()),
-        ),
+      .filter(
+        /* Match the timezone id, city label, and aliases against the search text. */
+        (z) =>
+          normalize(
+            z + ' ' + zoneLabel(z) + ' ' + (aliases[z] || ''),
+          ).includes(normalize(query.trim())),
       )
       .slice(0, 70)
     : [...new Set([
@@ -114,6 +135,7 @@ export default function TimezonePicker({
       ...popular,
     ])];
 
+  /** Commit a zone and return focus; fromDevice keeps the automatic-detection label. */
   const choose = (zone: string, fromDevice = false) => {
     onChange(zone);
     setManual(!fromDevice);
@@ -126,18 +148,24 @@ export default function TimezonePicker({
     <div
       className="timezone"
       ref={root}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          setOpen(false);
+      onKeyDown={
+        /* Dismiss the timezone menu when Escape is pressed. */
+        (e) => {
+          if (e.key === 'Escape') {
+            setOpen(false);
+          }
         }
-      }}
+      }
     >
       <button
         ref={trigger}
         className="zone-trigger"
         aria-expanded={open}
         aria-controls={menuId}
-        onClick={() => setOpen(!open)}
+        onClick={
+          /* Toggle the timezone menu from its trigger. */
+          () => setOpen(!open)
+        }
         type="button"
       >
         <Globe2 size={17} />
@@ -175,28 +203,37 @@ export default function TimezonePicker({
               aria-label={t('Search time zones')}
               placeholder={t('Search a city or time zone')}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  root.current
-                    ?.querySelector<HTMLButtonElement>('.zone-option')
-                    ?.focus();
+              onChange={
+                /* Update the timezone search text. */
+                (e) => setQuery(e.target.value)
+              }
+              onKeyDown={
+                /* Move into search results with ArrowDown or select the sole match with Enter. */
+                (e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    root.current
+                      ?.querySelector<HTMLButtonElement>('.zone-option')
+                      ?.focus();
+                  }
+                  if (e.key === 'Enter' && shown.length === 1) {
+                    e.preventDefault();
+                    choose(shown[0]);
+                  }
                 }
-                if (e.key === 'Enter' && shown.length === 1) {
-                  e.preventDefault();
-                  choose(shown[0]);
-                }
-              }}
+              }
             />
             <button
               type="button"
               className="icon-button"
               aria-label={t('Close time zones')}
-              onClick={() => {
-                setOpen(false);
-                trigger.current?.focus();
-              }}
+              onClick={
+                /* Close the timezone menu and restore focus to its trigger. */
+                () => {
+                  setOpen(false);
+                  trigger.current?.focus();
+                }
+              }
             >
               <X size={16} />
             </button>
@@ -204,27 +241,41 @@ export default function TimezonePicker({
           <button
             type="button"
             className="device-zone"
-            onClick={() => choose(detectedZone, true)}
+            onClick={
+              /* Select the browser-detected timezone and retain its automatic label. */
+              () => choose(detectedZone, true)
+            }
           >
             <LocateFixed size={16} /> {t('Use Device Time Zone')}{' '}
             <small>{zoneLabel(detectedZone)}</small>
           </button>
           <div className="zone-options">
-            {shown.map((z) => (
-              <button
-                type="button"
-                className={value === z ? 'zone-option selected' : 'zone-option'}
-                key={z}
-                onClick={() => choose(z)}
-              >
-                <span>
-                  <strong>{zoneLabel(z)}</strong>
-                  <small>{z}</small>
-                </span>
-                <small>{zoneOffset(z, at)}</small>
-                {value === z && <Check size={16} />}
-              </button>
-            ))}
+            {shown.map(
+              /**
+               * @returns A timezone result button with its city label, IANA
+               * id, and offset.
+               */
+              (z) => (
+                <button
+                  type="button"
+                  className={
+                    value === z ? 'zone-option selected' : 'zone-option'
+                  }
+                  key={z}
+                  onClick={
+                    /* Commit the timezone chosen from the results. */
+                    () => choose(z)
+                  }
+                >
+                  <span>
+                    <strong>{zoneLabel(z)}</strong>
+                    <small>{z}</small>
+                  </span>
+                  <small>{zoneOffset(z, at)}</small>
+                  {value === z && <Check size={16} />}
+                </button>
+              ),
+            )}
             {!shown.length && (
               <p className="empty">
                 {t('No time zones found. Try a nearby major city.')}

@@ -11,8 +11,16 @@ const event = {
   responses: [],
   candidates: [],
 };
-afterEach(() => vi.unstubAllGlobals());
+afterEach(
+  /* Restore the fetch/browser globals replaced by event-loading tests. */
+  () => vi.unstubAllGlobals(),
+);
+/** Group the one shared event request checks. */
 describe('one shared event request', () => {
+  /**
+   * Loads group data without credentials, query-based identity, or browser
+   * storage.
+   */
   it('loads group data without credentials, query-based identity, or browser storage', async () => {
     const fetch = vi.fn().mockResolvedValue(Response.json(event));
     const getItem = vi.fn();

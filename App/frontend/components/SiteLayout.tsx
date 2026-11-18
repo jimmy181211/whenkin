@@ -16,6 +16,12 @@ import EventLimits from './EventLimits';
 import RetentionPolicyProvider from './RetentionPolicyProvider';
 import './site-layout.css';
 
+/**
+ * Shared page-layout component with navigation, policy links, and retention
+ * context.
+ * @returns The header, supplied page content, and footer inside the
+ * retention-policy provider.
+ */
 export default function SiteLayout({
   children,
   showNewEvent = false,
@@ -32,6 +38,10 @@ export default function SiteLayout({
   );
 }
 
+/**
+ * Site-header component with home navigation and language selection.
+ * @returns The brand link, language menu, and optional new-event link.
+ */
 function Header({ showNewEvent }: { showNewEvent: boolean }) {
   return (
     <header className="site-header">
@@ -52,13 +62,24 @@ function Header({ showNewEvent }: { showNewEvent: boolean }) {
   );
 }
 
+/**
+ * Site-footer component with expiry/policy information and shortcut
+ * installation controls.
+ * @returns Footer links and installation controls, plus manual instructions
+ * when needed.
+ */
 function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
   const copy = shortcutCopy[useLanguage()];
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
 
+  /** Close the manual shortcut instructions. */
   const closeShortcut = useCallback(() => setShortcutOpen(false), []);
 
+  /**
+   * Request native installation and show instructions when no prompt is
+   * available.
+   */
   async function addShortcut() {
     setInstalling(true);
     const result = await browserInstall.prompt();
@@ -85,7 +106,10 @@ function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
             aria-expanded={shortcutOpen}
             aria-busy={installing}
             disabled={installing}
-            onClick={() => void addShortcut()}
+            onClick={
+              /* Start shortcut installation from the footer button. */
+              () => void addShortcut()
+            }
           >
             {copy.title}
           </button>
@@ -102,6 +126,10 @@ function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
   );
 }
 
+/**
+ * Small decorative footer-mark component excluded from screen-reader output.
+ * @returns The styled footer-dot span.
+ */
 function GlobeIcon() {
   return <span className="footer-dot" aria-hidden="true" />;
 }

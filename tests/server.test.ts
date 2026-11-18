@@ -19,11 +19,19 @@ import {
 } from '../App/backend/app';
 import { testClient } from './test-client';
 
+/**
+ * Wrap the real API app with the reusable localhost test client.
+ * @returns An HTTP client for the API configured with this fixture database and options.
+ */
 const createApp = (db: Database, options: AppOptions = {}) =>
   testClient(apiApp(db, options));
 
 import { createWebApp as webApp } from '../App/backend/web';
 
+/**
+ * Wrap the static-file-serving app with the same localhost test client.
+ * @returns An HTTP client for API routes and files in the fixture static directory.
+ */
 const createWebApp = (
   db: Database,
   options: AppOptions & { staticRoot: string },
@@ -32,25 +40,39 @@ const createWebApp = (
 import { pageRoute } from '../App/shared/routes';
 import type { Database } from '../App/backend/db/types';
 
-const database: Database = { query: async () => [] };
+const database: Database = {
+  /**
+   * Provide an empty query result for server tests that need no fixture
+   * records.
+   */
+  query: async () => [],
+};
 let root: string;
-beforeAll(async () => {
-  root = await mkdtemp(join(tmpdir(), 'whenkin-web-'));
-  await mkdir(join(root, 'assets'));
-  await writeFile(
-    join(root, 'index.html'),
-    '<!doctype html><link rel="manifest" href="/site.webmanifest"><div id="root">Whenkin</div>',
-  );
-  await writeFile(
-    join(root, 'assets', 'app-hash.js'),
-    'console.log("Whenkin")',
-  );
-});
-afterAll(async () => {
-  await rm(root, { recursive: true });
-});
+beforeAll(
+  /* Create temporary frontend assets for direct-link and cache-behavior tests. */
+  async () => {
+    root = await mkdtemp(join(tmpdir(), 'whenkin-web-'));
+    await mkdir(join(root, 'assets'));
+    await writeFile(
+      join(root, 'index.html'),
+      '<!doctype html><link rel="manifest" href="/site.webmanifest"><div id="root">Whenkin</div>',
+    );
+    await writeFile(
+      join(root, 'assets', 'app-hash.js'),
+      'console.log("Whenkin")',
+    );
+  },
+);
+afterAll(
+  /* Remove the temporary frontend asset fixture after the suite finishes. */
+  async () => {
+    await rm(root, { recursive: true });
+  },
+);
 
+/** Group the Node server and browser routes checks. */
 describe('Node server and browser routes', () => {
+  /** Serves direct page links and refreshes, including an event UUID. */
   it('serves direct page links and refreshes, including an event UUID', async () => {
     const app = createWebApp(database, { staticRoot: root });
     for (const path of [
@@ -75,6 +97,7 @@ describe('Node server and browser routes', () => {
       expect(pageRoute(path).kind).toBe('not-found');
     }
   });
+  /** Keeps assets, missing API endpoints, and HTML fallbacks separate. */
   it('keeps assets, missing API endpoints, and HTML fallbacks separate', async () => {
     const app = createWebApp(database, { staticRoot: root });
     const asset = await app.request('http://localhost/assets/app-hash.js');
@@ -88,9 +111,14 @@ describe('Node server and browser routes', () => {
     expect(missing.headers.get('Content-Type')).toContain('application/json');
     expect(missing.headers.get('Cache-Control')).toBe('no-store');
   });
+  /** Serves page-specific launch metadata without querying the database. */
   it('serves page-specific launch metadata without querying the database', async () => {
     const app = createWebApp(
       {
+        /**
+         * Fail if generating installation metadata unexpectedly accesses the
+         * database.
+         */
         query: async () => {
           throw Error('manifest must not query the database');
         },
@@ -118,11 +146,16 @@ describe('Node server and browser routes', () => {
       display: 'standalone',
     });
   });
+  /** Checks the public HTTPS origin behind a reverse proxy. */
   it('checks the public HTTPS origin behind a reverse proxy', async () => {
     const app = createApp(database, {
       publicOrigin: 'https://whenkin.example',
     });
 
+    /**
+     * Send a creation request with the origin being checked.
+     * @returns The creation request response for the supplied origin, including validation error statuses.
+     */
     const request = (origin: string) =>
       app.request('http://app:3000/api/events', {
         method: 'POST',
@@ -136,6 +169,7 @@ describe('Node server and browser routes', () => {
     expect((await request('https://whenkin.example')).status).toBe(400);
     expect((await request('https://another.example')).status).toBe(403);
   });
+  /** Preserves the write limiter and scopes it to the server-supplied IP. */
   it('preserves the write limiter and scopes it to the server-supplied IP', async () => {
     const app = createApp(database, { trustProxy: true });
     for (let i = 0; i < 30; i++) {
@@ -178,8 +212,10 @@ describe('Node server and browser routes', () => {
     ).toBe(400);
     expect((await app.request('http://localhost/api/health')).status).toBe(200);
   });
+  /** Reports an unavailable database without leaking connection details. */
   it('reports an unavailable database without leaking connection details', async () => {
     const app = createApp({
+      /** Simulate a private database failure to verify its details stay hidden. */
       query: async () => {
         throw new Error('private-database-details');
       },

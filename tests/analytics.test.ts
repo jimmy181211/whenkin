@@ -15,31 +15,52 @@ import { analyzeSnapshot } from '../App/backend/tools/analyze-events.js';
 import { slotsToRanges } from '../App/frontend/utils/time';
 const pg = new PGlite();
 
+/**
+ * Return fixture-query rows through the same interface as the application
+ * database.
+ * @returns A promise resolving to fixture-query rows, or rejecting on a database error.
+ */
 const query = async (sql: string, p: unknown[] = []) =>
   (await pg.query(sql, p)).rows;
 
-beforeAll(async () => {
-  for (const name of (
-    await readdir(new URL('../App/backend/db/migrations/', import.meta.url))
-  )
-    .filter((n) => n.endsWith('.sql'))
-    .sort()) {
-    await pg.exec(
-      await readFile(
-        new URL('../App/backend/db/migrations/' + name, import.meta.url),
-        'utf8',
-      ),
-    );
-  }
-}, 30000);
-afterAll(async () => {
-  await pg.close();
-});
+beforeAll(
+  /* Apply migrations before this suite uses its isolated fixture database. */
+  async () => {
+    for (const name of (
+      await readdir(new URL('../App/backend/db/migrations/', import.meta.url))
+    )
+      .filter(
+        /* Select SQL migrations for the analytics fixture database. */
+        (n) => n.endsWith('.sql'),
+      )
+      .sort()) {
+      await pg.exec(
+        await readFile(
+          new URL('../App/backend/db/migrations/' + name, import.meta.url),
+          'utf8',
+        ),
+      );
+    }
+  },
+  30000,
+);
+afterAll(
+  /* Close the fixture database after this suite finishes. */
+  async () => {
+    await pg.close();
+  },
+);
+/** Group the read-only analytics checks. */
 describe('read-only analytics', () => {
+  /**
+   * Reconciles anonymous SQL metrics with the app intersection across
+   * empty, partial, overlapping and disjoint data.
+   */
   it('reconciles anonymous SQL metrics with the app intersection across empty, partial, overlapping and disjoint data', async () => {
     const base = Date.parse('2027-01-15T09:00Z');
     let seed = 42;
 
+    /** Generate repeatable pseudo-random availability from the fixed test seed. */
     const random = () => (seed = (seed * 1664525 + 1013904223) >>> 0) % 5 > 1;
 
     const expected = [];
@@ -82,9 +103,19 @@ describe('read-only analytics', () => {
           )
         )[0] as { id: string };
         const ranges = slotsToRanges(
-          Array.from({ length: 8 }, (_, j) => j)
-            .filter(() => random())
-            .map((j) => base + j * 900000),
+          Array.from(
+            { length: 8 },
+            /* Enumerate the fixture's eight possible slot positions. */
+            (_, j) => j,
+          )
+            .filter(
+              /* Keep a repeatable random subset of those fixture slots. */
+              () => random(),
+            )
+            .map(
+              /* Convert fixture slot positions to 15-minute start timestamps. */
+              (j) => base + j * 900000,
+            ),
         );
         // Duplicate availability must count one responder only.
         for (const a of [
@@ -108,6 +139,7 @@ describe('read-only analytics', () => {
           ranges,
         });
         availableTotal += ranges.reduce(
+          /** Sum offered range lengths in minutes for the expected analytics result. */
           (sum, r) => sum + (Date.parse(r.end) - Date.parse(r.start)) / 60000,
           0,
         );
@@ -118,6 +150,7 @@ describe('read-only analytics', () => {
         shared_period_count: shared.length,
         shared_minutes: people.length
           ? shared.reduce(
+            /** Sum shared free-time lengths in minutes. */
             (n, r) => n + (Date.parse(r.end) - Date.parse(r.start)) / 60000,
             0,
           )
@@ -126,6 +159,10 @@ describe('read-only analytics', () => {
           ? Math.max(
             0,
             ...shared.map(
+              /**
+                 * Calculate individual shared-period lengths for the longest-period
+                 * assertion.
+                 */
               (r) => (Date.parse(r.end) - Date.parse(r.start)) / 60000,
             ),
           )
@@ -178,14 +215,29 @@ describe('read-only analytics', () => {
       'responder_local',
     ]) {
       const all = hist.filter(
+        /** Select the aggregate histogram for the schedule frame being checked. */
         (h) => h.topic === 'all' && h.time_frame === frame,
       );
-      expect(all.reduce((sum, h) => sum + h.offered_minutes, 0)).toBe(2880);
-      expect(all.reduce((sum, h) => sum + h.available_minutes, 0)).toBe(
-        availableTotal,
-      );
+      expect(
+        all.reduce(
+          /* Total the offered minutes represented by the histogram. */
+          (sum, h) => sum + h.offered_minutes,
+          0,
+        ),
+      ).toBe(2880);
+      expect(
+        all.reduce(
+          /* Total the available minutes represented by the histogram. */
+          (sum, h) => sum + h.available_minutes,
+          0,
+        ),
+      ).toBe(availableTotal);
     }
   });
+  /**
+   * Retains extreme values and distinguishes unknown results from measured
+   * zero.
+   */
   it('retains extreme values and distinguishes unknown results from measured zero', () => {
     const events = [
       0,
@@ -193,13 +245,16 @@ describe('read-only analytics', () => {
       2,
       3,
       10000,
-    ].map((n, i) => ({
-      event_code: 'E' + i,
-      response_count: n,
-      shared_minutes: i ? 0 : null,
-      first_response_hours: null,
-      lead_days: i === 0 ? null : -10,
-    }));
+    ].map(
+      /* Build fixtures with missing values and an extreme reply count for review flags. */
+      (n, i) => ({
+        event_code: 'E' + i,
+        response_count: n,
+        shared_minutes: i ? 0 : null,
+        first_response_hours: null,
+        lead_days: i === 0 ? null : -10,
+      }),
+    );
     const result = analyzeSnapshot({ events });
     expect(result.events).toHaveLength(5);
     expect(result.summary.excluded_events).toBe(0);

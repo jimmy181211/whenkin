@@ -1,4 +1,8 @@
 /** Builds the local HTML report from the existing analysis results. */
+/**
+ * Escape text before placing it in the report's HTML.
+ * @returns Safe text for HTML content or quoted attributes, using NULL for missing values.
+ */
 const escape = (value) =>
   String(value ?? 'NULL')
     .replaceAll('&', '&amp;')
@@ -6,6 +10,11 @@ const escape = (value) =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
+/**
+ * Render existing analysis as a standalone HTML report, escaping displayed values.
+ * @param columns - Event-table fields, in the same order as the CSV export.
+ * @returns HTML text; file writing is handled by writeAnalysis.
+ */
 export function renderAnalysisReport(result, columns) {
   const cards = [
     [
@@ -76,6 +85,7 @@ export function renderAnalysisReport(result, columns) {
   )}（洛杉矶） · Whenkin 生产库只读快照</p><p>全部记录保留。橙色点仅表示需要复核的统计离群值；灰色 × 表示 NULL，放在独立的缺失值区域，不当作 0。重叠点仅作少量像素错位以便查看，数值没有改变。此报告仅保存在本机。</p>
   <div class="cards">${cards
     .map(
+      /** Render an escaped summary card for each label and value. */
       ([label, value]) =>
         '<div class="card">' +
         escape(label) +
@@ -89,16 +99,58 @@ export function renderAnalysisReport(result, columns) {
   <section><h2>大家通常什么时候更有空？</h2><p>颜色表示被标记为空闲的比例：空闲分钟数 ÷ 可选分钟数。每格均可查看活动数、回复数和分母。灰色代表没有提供该时段，不能当作无人有空。</p><label>时间口径 <select id="time-frame" aria-label="时间口径"><option value="responder_local">回复者所选时区</option><option value="event_local">活动时区</option></select></label> <label>活动模式 <select id="schedule-filter" aria-label="活动模式"><option value="dates">具体日期</option><option value="weekdays">星期模式</option></select></label><div id="availability-heatmap"></div><p id="heatmap-note"></p><h3>所有回复者共同有空的时段</h3><p>按活动时区累计分钟数，颜色越深代表累计共同时间越长。不同活动可能有不同回复人数；单人回复也可形成交集，因此另报多人活动结果。</p><div id="shared-heatmap"></div></section>
   <section><h2>NULL 与未记录字段</h2><p>缺失值保留在 CSV 的 NULL 单元格和散点图的 NULL 区域。没有回复的活动尚不能计算共同时间；星期模式没有可计算的提前日期。</p><div id="missing"></div></section>
   <section><h2>时区分布</h2><p>这是填写的时区分布，不是地理位置；活动和回复分别统计，不能当作唯一用户数。</p><h3>活动</h3><div class="bars" id="event-zones"></div><h3>回复</h3><div class="bars" id="response-zones"></div></section>
-  <section><h2>共同空闲时段分布</h2><p>按星期和小时累计共同空闲分钟数，日期模式和星期模式分开。无数据的桶不表示实际用户一定没空。</p><div class="table"><table><thead><tr><th>标签</th><th>模式</th><th>星期（1=周一）</th><th>小时</th><th>总分钟数</th></tr></thead><tbody>${(result.shared_time_histogram || []).map((h) => '<tr><td>' + escape(h.topic) + '</td><td>' + escape(h.schedule_mode) + '</td><td>' + h.weekday + '</td><td>' + h.hour + '</td><td>' + h.minutes + '</td></tr>').join('')}</tbody></table></div></section>
+  <section><h2>共同空闲时段分布</h2><p>按星期和小时累计共同空闲分钟数，日期模式和星期模式分开。无数据的桶不表示实际用户一定没空。</p><div class="table"><table><thead><tr><th>标签</th><th>模式</th><th>星期（1=周一）</th><th>小时</th><th>总分钟数</th></tr></thead><tbody>${(
+    result.shared_time_histogram || []
+  )
+    .map(
+      /* Render each shared-time histogram bucket as a report row. */
+      (h) =>
+        '<tr><td>' +
+        escape(h.topic) +
+        '</td><td>' +
+        escape(h.schedule_mode) +
+        '</td><td>' +
+        h.weekday +
+        '</td><td>' +
+        h.hour +
+        '</td><td>' +
+        h.minutes +
+        '</td></tr>',
+    )
+    .join('')}</tbody></table></div></section>
   <section><h2>指标为什么值得分析</h2><dl>${methods
     .map(
+      /** Render the metric explanation list with escaped text. */
       ([name, reason]) =>
         '<dt>' + escape(name) + '</dt><dd>' + escape(reason) + '</dd>',
     )
     .join(
       '',
     )}</dl><p>快照覆盖当前仍存储的所有活动，可能包含试用或重复活动；不自动剔除任何记录，不代表所有历史用户。1.5×IQR 标记用于人工检查，不认定恶意或无效。</p></section>
-  <section><h2>逐活动指标（不含姓名）（全部 ${result.events.length} 条）</h2><p>编号仅在本次快照内有效，不能用来打开活动。可下载同目录的 <a href="events.csv">CSV</a> 和 <a href="summary.json">JSON</a>。</p><div class="table"><table><thead><tr>${columns.map((c) => '<th>' + escape(c) + '</th>').join('')}</tr></thead><tbody>${result.events.map((e) => '<tr class="' + (e.review_flags.length ? 'flagged' : '') + '">' + columns.map((c) => '<td>' + escape(Array.isArray(e[c]) ? e[c].join('; ') : e[c]) + '</td>').join('') + '</tr>').join('')}</tbody></table></div></section></main><div id="tip"></div>
+  <section><h2>逐活动指标（不含姓名）（全部 ${result.events.length} 条）</h2><p>编号仅在本次快照内有效，不能用来打开活动。可下载同目录的 <a href="events.csv">CSV</a> 和 <a href="summary.json">JSON</a>。</p><div class="table"><table><thead><tr>${columns
+    .map(
+      /* Render the event table's column headings. */
+      (c) => '<th>' + escape(c) + '</th>',
+    )
+    .join('')}</tr></thead><tbody>${result.events
+    .map(
+      /* Render an event row and mark records that need review. */
+      (e) =>
+        '<tr class="' +
+        (e.review_flags.length ? 'flagged' : '') +
+        '">' +
+        columns
+          .map(
+            /* Render one escaped event field, joining array values for display. */
+            (c) =>
+              '<td>' +
+              escape(Array.isArray(e[c]) ? e[c].join('; ') : e[c]) +
+              '</td>',
+          )
+          .join('') +
+        '</tr>',
+    )
+    .join('')}</tbody></table></div></section></main><div id="tip"></div>
   <script>const data=${JSON.stringify(result).replaceAll('<', '\\u003c')};
   const labels={response_count:'回复人数',shared_minutes:'共同空闲分钟数',lead_days:'提前安排天数',creation_hour_local:'活动时区的创建小时',first_response_hours:'首次回复小时数'};
   const topicNames={'all':'全部活动','college-student-related':'大学生／校园相关活动','meeting':'会议','study':'学习','social':'社交聚餐','sports':'运动','career':'求职','unclassified':'未分类'};

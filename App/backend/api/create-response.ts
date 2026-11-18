@@ -10,9 +10,20 @@ import { body } from '../shared/request.js';
 import type { RequestHandler } from 'express';
 import type { Database } from '../db/types.js';
 
+/**
+ * Build the handler that creates a saved reply and its availability rows.
+ * Recheck the schedule and expiry inside the write so a change after validation
+ * cannot save availability against an old schedule.
+ * @returns An Express handler for creating a reply and its available ranges.
+ */
 export default function createResponse(
   database: Database,
 ): RequestHandler<{ id: string }> {
+  /**
+   * Validate a reply and insert its ranges against the current schedule.
+   * Invalid input, expired events, and stale schedules pass to API error handling.
+   * @returns The sent 201 JSON response with the reply id and initial revision.
+   */
   return async (req, res) => {
     const event = await readEvent(database, req.params.id);
     const input = await body(req);
@@ -20,6 +31,7 @@ export default function createResponse(
     if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
       throw new Problem(400, 'Please choose a valid time zone.');
     }
+    // The schedule version the client used when picking these times.
     const expectedSchedule = input.schedule_revision ?? event.schedule_revision;
     if (expectedSchedule !== event.schedule_revision) {
       throw new Problem(
@@ -29,6 +41,7 @@ export default function createResponse(
     }
     const ranges = validateRanges(input.ranges, event.windows);
     const id = crypto.randomUUID();
+    // "gate" locks/checks the event; no reply or availability is inserted if it fails.
     const created = await database.query(
       `WITH gate AS (
   UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$6 AND expires_at>clock_timestamp() RETURNING id

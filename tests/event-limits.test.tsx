@@ -14,8 +14,13 @@ import {
 } from '../App/frontend/i18n/index';
 import { retentionDuration } from '../App/frontend/utils/retention-label';
 
-afterEach(() => setLanguage('en'));
+afterEach(
+  /* Restore English after event-expiry wording tests. */
+  () => setLanguage('en'),
+);
+/** Group the event expiry notice checks. */
 describe('event expiry notice', () => {
+  /** Shows only the one-year notice in all three languages. */
   it('shows only the one-year notice in all three languages', () => {
     for (const language of [
       'en',
@@ -44,7 +49,12 @@ describe('event expiry notice', () => {
   });
 });
 
+/** Group the SQL migration statements checks. */
 describe('SQL migration statements', () => {
+  /**
+   * Preserves function bodies, escaped quotes, dollar tags, and nested
+   * comments.
+   */
   it('preserves function bodies, escaped quotes, dollar tags, and nested comments', () => {
     const statements =
       sqlStatements(`-- a comment;\nSELECT 'it''s; quoted', "a;name";
@@ -55,11 +65,20 @@ describe('SQL migration statements', () => {
     expect(statements[1]).toContain("BEGIN RETURN 'a;b'; END; $body$");
     expect(statements[2]).toBe('SELECT $$another;value$$');
   });
+  /**
+   * Fails on an incomplete function rather than sending partial
+   * migrations.
+   */
   it('fails on an incomplete function rather than sending partial migrations', () => {
-    expect(() => sqlStatements('SELECT $$unfinished;')).toThrow(
-      'Unterminated SQL',
-    );
+    expect(
+      /* Parse an unfinished dollar quote so its rejection can be asserted. */
+      () => sqlStatements('SELECT $$unfinished;'),
+    ).toThrow('Unterminated SQL');
   });
+  /**
+   * Keeps the capacity trigger and cleanup function intact in the
+   * migration.
+   */
   it('keeps the capacity trigger and cleanup function intact in the migration', async () => {
     const migration = await readFile(
       new URL(
@@ -71,13 +90,15 @@ describe('SQL migration statements', () => {
     const statements = sqlStatements(migration);
     expect(statements).toHaveLength(9);
     expect(
-      statements.find((s) =>
-        s.includes('CREATE FUNCTION check_response_limit'),
+      statements.find(
+        /* Find the migration's response-limit function without splitting its body. */
+        (s) => s.includes('CREATE FUNCTION check_response_limit'),
       ),
     ).toContain("ERRCODE = 'WK002'");
     expect(
-      statements.find((s) =>
-        s.includes('CREATE FUNCTION purge_expired_events'),
+      statements.find(
+        /* Find the cleanup function in the parsed migration statements. */
+        (s) => s.includes('CREATE FUNCTION purge_expired_events'),
       ),
     ).toContain('FOR UPDATE SKIP LOCKED');
   });

@@ -1,8 +1,18 @@
-// Bounded, per-process write limiter. One window per client IP.
+/**
+ * Allow up to 30 writes per client in a one-minute window within this process.
+ * Keep at most 5,000 client windows; multiple server instances do not share them.
+ * @param now - Clock returning milliseconds, replaceable for deterministic tests.
+ * @returns A limiter whose limit action reports whether a client's write is allowed.
+ */
 export function createWriteLimiter(now: () => number = Date.now) {
+  // Each client key stores its write count and an absolute expiration timestamp.
   const windows = new Map<string, { count: number;
     ends: number }>();
   return {
+    /**
+     * Count this write against the client's current window.
+     * @returns A success flag; false means the write or client-tracking limit was reached.
+     */
     async limit({ key }: { key: string }) {
       const time = now();
       let current = windows.get(key);

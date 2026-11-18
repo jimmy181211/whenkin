@@ -7,6 +7,10 @@ import { groupSharedTimes } from '../App/frontend/utils/shared-time-groups';
 import { projectWeekly } from '../App/shared/weekly';
 import type { Candidate } from '../App/shared/types';
 
+/**
+ * Build a shared-time fixture available to both reference responders.
+ * @returns A shared-time range marked available to the two reference responders.
+ */
 const candidate = (start: string, end: string): Candidate => ({
   start,
   end,
@@ -16,7 +20,12 @@ const candidate = (start: string, end: string): Candidate => ({
   ],
 });
 
+/** Group the shared times grouped by displayed day checks. */
 describe('shared times grouped by displayed day', () => {
+  /**
+   * Groups disjoint ranges without merging them and keeps each original
+   * selection.
+   */
   it('groups disjoint ranges without merging them and keeps each original selection', () => {
     const late = candidate('2027-01-15T22:00:00Z', '2027-01-15T23:00:00Z');
     const early = candidate('2027-01-15T19:00:00Z', '2027-01-15T21:00:00Z');
@@ -26,17 +35,28 @@ describe('shared times grouped by displayed day', () => {
       late,
       early,
     ], 'America/Los_Angeles');
-    expect(groups.map((g) => g.date)).toEqual([
+    expect(
+      groups.map(
+        /* Compare the viewer-local dates used to group shared time. */
+        (g) => g.date,
+      ),
+    ).toEqual([
       '2027-01-15',
       '2027-01-16',
     ]);
-    expect(groups[0].entries.map((e) => e.candidate)).toEqual([
+    expect(
+      groups[0].entries.map(
+        /* Check that grouped entries retain their original shared-time objects. */
+        (e) => e.candidate,
+      ),
+    ).toEqual([
       early,
       late,
     ]);
     expect(groups[0].entries[1].candidate).toBe(late);
     expect(early.end).toBe('2027-01-15T21:00:00Z');
   });
+  /** Uses local calendar dates rather than UTC dates when zones change. */
   it('uses local calendar dates rather than UTC dates when zones change', () => {
     const a = candidate('2027-01-16T00:00:00Z', '2027-01-16T01:00:00Z');
     const b = candidate('2027-01-16T10:00:00Z', '2027-01-16T11:00:00Z');
@@ -48,12 +68,16 @@ describe('shared times grouped by displayed day', () => {
       groupSharedTimes([
         a,
         b,
-      ], 'America/Los_Angeles').map((g) => g.date),
+      ], 'America/Los_Angeles').map(
+        /* Compare date grouping after converting ranges to Los Angeles time. */
+        (g) => g.date,
+      ),
     ).toEqual([
       '2027-01-15',
       '2027-01-16',
     ]);
   });
+  /** Keeps a cross-midnight range intact with its original end date. */
   it('keeps a cross-midnight range intact with its original end date', () => {
     const a = candidate('2027-01-15T23:00:00Z', '2027-01-16T01:00:00Z');
     const groups = groupSharedTimes([a], 'UTC');
@@ -61,6 +85,10 @@ describe('shared times grouped by displayed day', () => {
     expect(groups[0].entries[0].shown.end).toBe(a.end);
     expect(groupSharedTimes([], 'UTC')).toEqual([]);
   });
+  /**
+   * Groups projected weekly times by displayed weekday while retaining
+   * canonical selection.
+   */
   it('groups projected weekly times by displayed weekday while retaining canonical selection', () => {
     const a = candidate('2000-01-03T09:00:00Z', '2000-01-03T10:00:00Z');
     const b = candidate('2000-01-03T11:00:00Z', '2000-01-03T12:00:00Z');
@@ -80,7 +108,12 @@ describe('shared times grouped by displayed day', () => {
       b,
     ], 'UTC', projection.range);
     expect(groups[0].date).toBe('2000-01-09');
-    expect(groups[0].entries.map((e) => e.candidate)).toEqual([
+    expect(
+      groups[0].entries.map(
+        /* Confirm projected display entries still reference the original candidates. */
+        (e) => e.candidate,
+      ),
+    ).toEqual([
       a,
       b,
     ]);

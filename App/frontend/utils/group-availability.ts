@@ -1,7 +1,11 @@
 import { allSlots } from './time';
 import type { ResponseData } from '../../shared/types';
 
-// Count each saved person once per instant, even if their ranges overlap.
+/**
+ * Count responders at each stored slot start, in milliseconds.
+ * Overlapping ranges from one responder still count as one person.
+ * @returns A lookup from slot timestamp to available responder count.
+ */
 export function groupAvailability(responses: ResponseData[]) {
   const counts = new Map<number, number>();
   for (const response of responses) {
@@ -12,6 +16,10 @@ export function groupAvailability(responses: ResponseData[]) {
   return counts;
 }
 
+/**
+ * Map the available fraction to the group heatmap.
+ * @returns A CSS color expression; empty slots use the neutral background color.
+ */
 export function availabilityColor(count: number, total: number) {
   if (!total || !count) {
     return '#fafbf8';
@@ -20,6 +28,12 @@ export function availabilityColor(count: number, total: number) {
   return `color-mix(in srgb, var(--primary) ${percent}%, var(--lime))`;
 }
 
+/**
+ * Check each responder against all slots in the inspected block.
+ * A partial match is not fully available, so it stays in unavailable with partial=true.
+ * @param stamps - Stored slot starts, including every 15-minute part of the block.
+ * @returns Separate lists for full matches and unavailable/partial matches.
+ */
 export function inspectAvailability(
   responses: ResponseData[],
   stamps: number[],
@@ -28,7 +42,10 @@ export function inspectAvailability(
   const unavailable: (ResponseData & { partial: boolean })[] = [];
   for (const person of responses) {
     const selected = new Set(allSlots(person.ranges));
-    const count = stamps.filter((stamp) => selected.has(stamp)).length;
+    const count = stamps.filter(
+      /* Count inspected slots that this responder has selected. */
+      (stamp) => selected.has(stamp),
+    ).length;
     if (stamps.length && count === stamps.length) {
       available.push(person);
     } else {

@@ -12,7 +12,9 @@ import type {
 } from '../../shared/types.js';
 import { weekdayDate } from '../../shared/weekly.js';
 import { isEventDateAllowed } from '../../shared/date-limits.js';
+/** Report a request error with an HTTP status and a message safe to display. */
 export class Problem extends Error {
+  /** Keep the HTTP status alongside the safe validation message. */
   constructor(
     public status: 400 | 403 | 404 | 409 | 410 | 413 | 429 | 503,
     message: string,
@@ -22,12 +24,20 @@ export class Problem extends Error {
 }
 const uid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Reject malformed ids with the same 404 response as a missing record. */
 export const checkId = (value: string) => {
   if (!uid.test(value)) {
     throw new Problem(404, 'This event or response could not be found.');
   }
 };
 
+/**
+ * Trim a text field and reject invalid values with a user-facing message.
+ * @param label - Field description inserted into the validation message.
+ * @param max - Maximum length after trimming, measured by JavaScript string length.
+ * @param optional - Allow an empty string, but still require a string value.
+ * @returns The trimmed field value; invalid input throws Problem.
+ */
 export const text = (
   value: unknown,
   label: string,
@@ -47,6 +57,11 @@ export const text = (
   return value.trim();
 };
 
+/**
+ * Validate event fields and convert the selected schedule to sorted windows.
+ * Dated events use the organizer's timezone; weekly polls use a fixed encoded week.
+ * @returns Cleaned fields and ISO time ranges; throws Problem for invalid input.
+ */
 export function validateEvent(input: CreateInput) {
   const title = text(input.title, 'an event name', 100);
   const organizer = text(input.organizer_name ?? '', 'your name', 60, true);
@@ -63,6 +78,7 @@ export function validateEvent(input: CreateInput) {
   if (mode !== 'dates' && mode !== 'weekdays') {
     throw new Problem(400, 'Choose specific dates or days of the week.');
   }
+  // Real dates in date mode, or fixed-week encoding dates in weekday mode.
   let dates: string[];
   if (mode === 'weekdays') {
     if (
@@ -70,6 +86,7 @@ export function validateEvent(input: CreateInput) {
       !input.weekdays.length ||
       input.weekdays.length > 7 ||
       input.weekdays.some(
+        /** Reject weekday values outside the integer range Monday=1 to Sunday=7. */
         (day) => !Number.isInteger(day) || day < 1 || day > 7,
       ) ||
       new Set(input.weekdays).size !== input.weekdays.length
@@ -99,51 +116,64 @@ export function validateEvent(input: CreateInput) {
       'The end time must be after the start time on the same day.',
     );
   }
-  const windows: TimeRange[] = dates.map((date) => {
-    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      throw new Problem(400, 'Please choose valid dates.');
-    }
-    try {
-      const d = Temporal.PlainDate.from(date);
-      const today = Temporal.Now.plainDateISO(input.timezone);
-      if (mode === 'dates' && !isEventDateAllowed(d, today)) {
+  const windows: TimeRange[] = dates.map(
+    /* Validate each chosen date and convert its local clock times to an event window. */
+    (date) => {
+      if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        throw new Problem(400, 'Please choose valid dates.');
+      }
+      try {
+        const d = Temporal.PlainDate.from(date);
+        const today = Temporal.Now.plainDateISO(input.timezone);
+        if (mode === 'dates' && !isEventDateAllowed(d, today)) {
+          throw new Problem(
+            400,
+            'Choose dates from today through December 31, 2050.',
+          );
+        }
+        const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
+        const start = localToUTC(date, input.startTime, clockZone);
+        const end = localToUTC(date, input.endTime, clockZone);
+        return {
+          start,
+          end,
+        };
+      } catch (error) {
+        if (error instanceof Problem) {
+          throw error;
+        }
         throw new Problem(
           400,
-          'Choose dates from today through December 31, 2050.',
+          'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.',
         );
       }
-      const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
-      const start = localToUTC(date, input.startTime, clockZone);
-      const end = localToUTC(date, input.endTime, clockZone);
-      return {
-        start,
-        end,
-      };
-    } catch (error) {
-      if (error instanceof Problem) {
-        throw error;
-      }
-      throw new Problem(
-        400,
-        'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.',
-      );
-    }
-  });
+    },
+  );
   return {
     title,
     organizer,
     description,
     mode,
-    windows: windows.sort((a, b) => Date.parse(a.start) - Date.parse(b.start)),
+    windows: windows.sort(
+      /* Order event windows by their start instant. */
+      (a, b) => Date.parse(a.start) - Date.parse(b.start),
+    ),
   };
 }
 
+/**
+ * Check that every selected 15-minute slot belongs to the event.
+ * @param windows - The event's allowed time ranges.
+ * @returns Merged ISO ranges with duplicate selections removed.
+ */
 export function validateRanges(input: unknown, windows: TimeRange[]) {
   if (!Array.isArray(input) || input.length > 3000) {
     throw new Problem(400, 'Please choose valid availability.');
   }
+  // Membership checks use instants, so different timezone offsets can mean the same slot.
   const allowed = new Set(allSlots(windows));
   const selected = new Set<number>();
+  // Count before deduplication to bound the work caused by repeated overlapping ranges.
   let requestedSlots = 0;
   for (const range of input) {
     if (
@@ -158,6 +188,7 @@ export function validateRanges(input: unknown, windows: TimeRange[]) {
         'Availability needs a date, time, and time-zone offset.',
       );
     }
+    // Parsed start/end instants in milliseconds; timezone offsets are resolved here.
     const a = Date.parse(range.start);
     const b = Date.parse(range.end);
     if (

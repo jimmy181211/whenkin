@@ -26,6 +26,10 @@ const children = [
 ];
 let stopping = false;
 
+/**
+ * Stop both development processes once and preserve the requested exit
+ * code.
+ */
 function stop(code = 0) {
   if (stopping) {
     return;
@@ -38,8 +42,24 @@ function stop(code = 0) {
 }
 
 for (const child of children) {
-  child.on('error', () => stop(1));
-  child.on('exit', (code) => stop(code ?? 0));
+  child.on(
+    'error',
+    /* Stop development if a child process cannot start. */
+    () => stop(1),
+  );
+  child.on(
+    'exit',
+    /* Stop the other development process when this one exits. */
+    (code) => stop(code ?? 0),
+  );
 }
-process.on('SIGINT', () => stop());
-process.on('SIGTERM', () => stop());
+process.on(
+  'SIGINT',
+  /* Stop development when the terminal receives an interrupt. */
+  () => stop(),
+);
+process.on(
+  'SIGTERM',
+  /* Stop development when the process receives a termination request. */
+  () => stop(),
+);

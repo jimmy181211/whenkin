@@ -5,6 +5,15 @@ import { useRetentionPolicy } from './RetentionPolicyProvider';
 import { retentionDuration } from '../utils/retention-label';
 import type { RetentionPolicy } from '../../shared/retention.js';
 
+/**
+ * Shared expiry-message component driven by the current retention policy.
+ * @param policy - Optional explicit policy; otherwise use the shared provider.
+ * @param variant - Full notice, duration alone, or a validity sentence for
+ * policy pages.
+ *
+ * @returns A duration span or an expiry/validity paragraph, with fallback
+ * wording while the policy is unavailable.
+ */
 export default function EventLimits({
   policy: supplied,
   variant = 'notice',

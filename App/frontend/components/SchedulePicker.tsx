@@ -8,6 +8,10 @@ import {
   t,
 } from '../i18n/index';
 
+/**
+ * Selections and callbacks for switching between dated and weekly
+ * schedules.
+ */
 type Props = {
   mode: 'dates' | 'weekdays';
   onModeChange: (mode: 'dates' | 'weekdays') => void;
@@ -18,6 +22,10 @@ type Props = {
   timezone: string;
 };
 
+/**
+ * Weekday-selection component for schedules without specific calendar dates.
+ * @returns Localized weekday buttons and a clear action for the selected days.
+ */
 export function WeekdayPicker({
   value,
   onChange,
@@ -32,43 +40,58 @@ export function WeekdayPicker({
       aria-label={t('Choose days of the week')}
     >
       <div className="weekday-options">
-        {Array.from({ length: 7 }, (_, i) => {
-          const day = i + 1;
-          const date = new Date(Date.UTC(2024, 0, day)); // Jan 1 was Monday.
-          const full = new Intl.DateTimeFormat(getLocale(), {
-            weekday: 'long',
-            timeZone: 'UTC',
-          }).format(date);
-          const short = new Intl.DateTimeFormat(getLocale(), {
-            weekday: 'short',
-            timeZone: 'UTC',
-          }).format(date);
-          const selected = value.includes(day);
-          return (
-            <button
-              type="button"
-              key={day}
-              aria-label={full}
-              aria-pressed={selected}
-              title={full}
-              onClick={() =>
-                onChange(
-                  selected
-                    ? value.filter((d) => d !== day)
-                    : [
-                      ...value,
-                      day,
-                    ].sort((a, b) => a - b),
-                )
-              }
-            >
-              <span>{short}</span>
-              <span className="weekday-indicator" aria-hidden="true">
-                {selected ? '✓' : '+'}
-              </span>
-            </button>
-          );
-        })}
+        {Array.from(
+          { length: 7 },
+          /**
+           * @returns One weekday button with its selected state and localized
+           * labels.
+           */
+          (_, i) => {
+            const day = i + 1;
+            const date = new Date(Date.UTC(2024, 0, day)); // Jan 1 was Monday.
+            const full = new Intl.DateTimeFormat(getLocale(), {
+              weekday: 'long',
+              timeZone: 'UTC',
+            }).format(date);
+            const short = new Intl.DateTimeFormat(getLocale(), {
+              weekday: 'short',
+              timeZone: 'UTC',
+            }).format(date);
+            const selected = value.includes(day);
+            return (
+              <button
+                type="button"
+                key={day}
+                aria-label={full}
+                aria-pressed={selected}
+                title={full}
+                onClick={
+                  /* Toggle the chosen weekday and keep the selection in Monday-Sunday order. */
+                  () =>
+                    onChange(
+                      selected
+                        ? value.filter(
+                          /* Remove this weekday from the current selection. */
+                          (d) => d !== day,
+                        )
+                        : [
+                          ...value,
+                          day,
+                        ].sort(
+                          /* Keep weekday numbers in ascending order. */
+                          (a, b) => a - b,
+                        ),
+                    )
+                }
+              >
+                <span>{short}</span>
+                <span className="weekday-indicator" aria-hidden="true">
+                  {selected ? '✓' : '+'}
+                </span>
+              </button>
+            );
+          },
+        )}
       </div>
       <div className={`calendar-foot ${value.length ? '' : 'empty'}`}>
         <span>
@@ -86,7 +109,7 @@ export function WeekdayPicker({
           <button
             type="button"
             className="text-button"
-            onClick={() => onChange([])}
+            onClick={/* Clear every selected weekday. */ () => onChange([])}
           >
             {t('Clear')}
           </button>
@@ -96,6 +119,12 @@ export function WeekdayPicker({
   );
 }
 
+/**
+ * Schedule-selection component that switches between specific dates and a
+ * typical week. Each mode keeps its own selection; only the chosen mode is
+ * submitted for creation.
+ * @returns Mode controls and the date or weekday picker for the current mode.
+ */
 export default function SchedulePicker({
   mode,
   onModeChange,
@@ -115,7 +144,10 @@ export default function SchedulePicker({
         <button
           type="button"
           aria-pressed={mode === 'dates'}
-          onClick={() => onModeChange('dates')}
+          onClick={
+            /* Switch schedule selection to specific calendar dates. */
+            () => onModeChange('dates')
+          }
         >
           <CalendarDays size={16} />
           {t('Specific Dates')}
@@ -123,7 +155,10 @@ export default function SchedulePicker({
         <button
           type="button"
           aria-pressed={mode === 'weekdays'}
-          onClick={() => onModeChange('weekdays')}
+          onClick={
+            /* Switch schedule selection to a typical week. */
+            () => onModeChange('weekdays')
+          }
         >
           <Repeat2 size={16} />
           {t('Days of the Week')}

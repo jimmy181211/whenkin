@@ -21,10 +21,17 @@ import {
 } from '../utils/shortcut-instructions';
 import './shortcut-dialog.css';
 
+/**
+ * Shortcut-instruction dialog component with browser-specific steps and a
+ * copyable page link.
+ * @returns A dialog portal containing device selection, installation steps,
+ * and copy feedback.
+ */
 export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
   const copy = shortcutCopy[useLanguage()];
   const id = useId();
   const surface = useRef<HTMLDivElement>(null);
+  /** Choose initial instructions from browser and touchscreen information. */
   const [device, setDevice] = useState(() =>
     detectShortcutDevice(navigator.userAgent, navigator.maxTouchPoints),
   );
@@ -33,6 +40,11 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
   );
   const pageLink = shortcutPageURL(window.location.href);
 
+  /**
+   * Focus the shortcut dialog and prevent page scrolling until it closes.
+   * @returns Cleanup that restores page scrolling and focus and removes dialog
+   * keyboard handling.
+   */
   useEffect(() => {
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
@@ -41,6 +53,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
       ?.querySelector<HTMLButtonElement>('button')
       ?.focus({ preventScroll: true });
 
+    /** Close with Escape and keep Tab navigation inside the shortcut dialog. */
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -67,6 +80,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
     };
 
     document.addEventListener('keydown', handleKey);
+    // Remove dialog keyboard handling and restore scrolling and prior focus.
     return () => {
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = previousOverflow;
@@ -76,6 +90,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
+  /** Copy the current page link and display success or failure feedback. */
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(pageLink);
@@ -94,7 +109,10 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby={`${id}-title`}
         aria-describedby={`${id}-intro`}
-        onClick={(event) => event.stopPropagation()}
+        onClick={
+          /* Keep clicks inside the dialog from dismissing its backdrop. */
+          (event) => event.stopPropagation()
+        }
       >
         <button
           type="button"
@@ -112,18 +130,32 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
         <select
           id={`${id}-device`}
           value={device}
-          onChange={(event) => setDevice(event.target.value as ShortcutDevice)}
+          onChange={
+            /* Switch the manual instructions to the chosen browser or device. */
+            (event) => setDevice(event.target.value as ShortcutDevice)
+          }
         >
-          {shortcutDevices.map((value) => (
-            <option key={value} value={value}>
-              {copy.devices[value]}
-            </option>
-          ))}
+          {shortcutDevices.map(
+            /**
+             * @returns One browser/device category in the instruction
+             * selector.
+             */
+            (value) => (
+              <option key={value} value={value}>
+                {copy.devices[value]}
+              </option>
+            ),
+          )}
         </select>
         <ol className="shortcut-steps">
-          {copy.steps[device].map((step) => (
-            <li key={step}>{step}</li>
-          ))}
+          {copy.steps[device].map(
+            /**
+             * @returns One instruction step for the selected device.
+             */
+            (step) => (
+              <li key={step}>{step}</li>
+            ),
+          )}
         </ol>
         <label className="shortcut-link-label" htmlFor={`${id}-link`}>
           {copy.link}
@@ -132,12 +164,18 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
           id={`${id}-link`}
           readOnly
           value={pageLink}
-          onFocus={(event) => event.target.select()}
+          onFocus={
+            /* Select the page URL so it can also be copied manually. */
+            (event) => event.target.select()
+          }
         />
         <button
           type="button"
           className="button primary shortcut-copy"
-          onClick={() => void copyLink()}
+          onClick={
+            /* Start copying the shortcut link from the copy button. */
+            () => void copyLink()
+          }
         >
           {copyStatus === 'copied' ? <Check size={17} /> : <Copy size={17} />}
           {copyStatus === 'copied' ? copy.copied : copy.copy}

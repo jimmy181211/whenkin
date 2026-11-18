@@ -16,6 +16,10 @@ for (const mode of new Set([
   await checkRuntime(mode);
 }
 
+/**
+ * Exercise the built Worker against isolated assets and a simulated
+ * database transport.
+ */
 async function checkRuntime(htmlHandling) {
   const pg = new PGlite();
   for (const file of (await readdir('App/backend/db/migrations')).sort()) {
@@ -44,6 +48,10 @@ async function checkRuntime(htmlHandling) {
         not_found_handling: configuration.assets.not_found_handling,
       },
     },
+    /**
+     * Translate simulated Neon HTTP requests into fixture database queries.
+     * @returns A Neon-shaped JSON query result, or a status-400 JSON error when fixture SQL fails.
+     */
     outboundService: async (request) => {
       assert.equal(new URL(request.url).hostname, 'api.neon.test');
       const {
@@ -53,23 +61,28 @@ async function checkRuntime(htmlHandling) {
       try {
         const result = await pg.query(query, params);
         const fields = result.fields;
-        const rows = result.rows.map((row) =>
-          fields.map((field) => {
-            const value = row[field.name];
-            if (value === null || value === undefined) {
-              return null;
-            }
-            if (typeof value === 'boolean') {
-              return value ? 't' : 'f';
-            }
-            if (value instanceof Date) {
-              return value.toISOString();
-            }
-            if (typeof value === 'object') {
-              return JSON.stringify(value);
-            }
-            return String(value);
-          }),
+        const rows = result.rows.map(
+          /* Encode each result row in the hosted database transport's array format. */
+          (row) =>
+            fields.map(
+              /* Encode a field's null, boolean, date, object, or scalar value as the transport expects. */
+              (field) => {
+                const value = row[field.name];
+                if (value === null || value === undefined) {
+                  return null;
+                }
+                if (typeof value === 'boolean') {
+                  return value ? 't' : 'f';
+                }
+                if (value instanceof Date) {
+                  return value.toISOString();
+                }
+                if (typeof value === 'object') {
+                  return JSON.stringify(value);
+                }
+                return String(value);
+              },
+            ),
         );
         return Response.json({
           fields,
@@ -90,6 +103,10 @@ async function checkRuntime(htmlHandling) {
     },
   });
   try {
+    /**
+     * Send a request through the built Worker and parse its JSON response.
+     * @returns Status, headers, and response text, with parsed data only for JSON responses.
+     */
     const request = async (path, method = 'GET', body) => {
       const response = await mf.dispatchFetch('https://whenkin.test' + path, {
         method,

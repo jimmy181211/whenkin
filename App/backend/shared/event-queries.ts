@@ -7,6 +7,11 @@ import {
 import { commonGround } from './common-ground.js';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits.js';
 
+/**
+ * Read an active event; throw Problem for missing or expired links.
+ * @param includeResponses - Also load replies and calculate everyone's free time.
+ * @returns The event with ordered windows; responses/candidates are empty when omitted.
+ */
 export async function readEvent(
   database: Database,
   id: string,
@@ -38,12 +43,15 @@ export async function readEvent(
   if (expired) {
     throw new Problem(410, EVENT_EXPIRED_MESSAGE);
   }
-  // Existing open tabs read this field; it is always empty now, with no secondary calculation.
+  // The legacy "missing" list stays empty because candidates now require everyone.
   event.candidates = includeResponses
-    ? commonGround(event.windows, event.responses).map((candidate) => ({
-      ...candidate,
-      missing: [],
-    }))
+    ? commonGround(event.windows, event.responses).map(
+      /* Keep the legacy missing-person field empty for everyone-free results. */
+      (candidate) => ({
+        ...candidate,
+        missing: [],
+      }),
+    )
     : [];
   return event;
 }

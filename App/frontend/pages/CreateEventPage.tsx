@@ -18,35 +18,21 @@ import PageLink from '../components/PageLink';
 import EventLimits from '../components/EventLimits';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
-import {
-  getLocale,
-  t,
-} from '../i18n/index';
+import { t } from '../i18n/index';
+import TimeRangePicker from '../components/TimeRangePicker';
 import Toast from '../components/Toast';
 import { useNotice } from '../utils/use-notice';
-const times = Array.from(
-  { length: 97 },
-  (_, i) =>
-    `${String(Math.floor(i / 4)).padStart(2, '0')}:${String(
-      (i % 4) * 15,
-    ).padStart(2, '0')}`,
-);
+
 const scheduleErrors = {
   dates: 'Choose at least one date on the calendar.',
   weekdays: 'Choose at least one day of the week.',
 } as const;
 
-function labelTime(value: string) {
-  if (value === '24:00') {
-    return t('Midnight (next day)');
-  }
-  return new Intl.DateTimeFormat(getLocale(), {
-    timeZone: 'UTC',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(`2000-01-01T${value}:00Z`));
-}
-
+/**
+ * Distinguish an API connection failure from an unready database.
+ * @returns ready for creation, setup when the API responds but its database is not
+ * ready, or unreachable when the request fails.
+ */
 async function connectionStatus(): Promise<'ready' | 'setup' | 'unreachable'> {
   try {
     const result = await api<{
@@ -58,10 +44,16 @@ async function connectionStatus(): Promise<'ready' | 'setup' | 'unreachable'> {
   }
 }
 
+/**
+ * Event-creation page component that collects and validates the offered
+ * schedule.
+ * @returns The event form, connection feedback, and required-field reminders.
+ */
 export default function CreateEventPage() {
   const [scheduleMode, setScheduleMode] = useState<'dates' | 'weekdays'>(
     'dates',
   );
+  // Weekday mode uses Monday=1 through Sunday=7; date mode uses YYYY-MM-DD strings.
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [zone, setZone] = useState(deviceTimezone);
   const [dates, setDates] = useState<string[]>([]);
@@ -73,7 +65,9 @@ export default function CreateEventPage() {
     dismissNotice,
   } = useNotice();
   const [description, setDescription] = useState('');
+  // Whether the optional notes field is visible; description holds its text.
   const [notes, setNotes] = useState(false);
+  // Local clock values in the chosen zone, interpreted by the backend on creation.
   const [start, setStart] = useState('09:00');
   const [end, setEnd] = useState('18:00');
   const [busy, setBusy] = useState(false);
@@ -82,23 +76,39 @@ export default function CreateEventPage() {
     'checking' | 'ready' | 'setup' | 'unreachable'
   >('checking');
 
+  /** Show the checking state while retrying API/database readiness. */
   const checkConnection = async () => {
     setConnection('checking');
     setConnection(await connectionStatus());
   };
 
+  /**
+   * Check creation readiness once and ignore a response after the page
+   * unmounts.
+   * @returns Cleanup that ignores a readiness response after the page has
+   * unmounted.
+   */
   useEffect(() => {
     let alive = true;
-    void connectionStatus().then((status) => {
-      if (alive) {
-        setConnection(status);
-      }
-    });
+    void connectionStatus().then(
+      /* Apply the readiness result only while this page is still mounted. */
+      (status) => {
+        if (alive) {
+          setConnection(status);
+        }
+      },
+    );
+    // Prevent a late connection result from updating an unmounted creation page.
     return () => {
       alive = false;
     };
   }, []);
 
+  /**
+   * Check the name, API readiness, selected days, and time order before submitting.
+   * Send local dates/clock times with the event timezone; the backend validates and
+   * converts them to stored windows. Open the reply page only after a successful save.
+   */
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -182,10 +192,13 @@ export default function CreateEventPage() {
               aria-invalid={!title.trim() && !!notice}
               maxLength={100}
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                dismissNotice();
-              }}
+              onChange={
+                /* Update the event name and dismiss its required-field reminder. */
+                (e) => {
+                  setTitle(e.target.value);
+                  dismissNotice();
+                }
+              }
             />
           </label>
           {notes ? (
@@ -197,14 +210,20 @@ export default function CreateEventPage() {
                 maxLength={1000}
                 rows={2}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={
+                  /* Keep the optional description in the creation form state. */
+                  (e) => setDescription(e.target.value)
+                }
               />
             </label>
           ) : (
             <button
               className="text-button add-note"
               type="button"
-              onClick={() => setNotes(true)}
+              onClick={
+                /* Reveal the optional event-notes field. */
+                () => setNotes(true)
+              }
             >
               <Plus size={14} /> {t('Add a Note')}
             </button>
@@ -212,52 +231,49 @@ export default function CreateEventPage() {
           <div className="form-divider" />
           <SchedulePicker
             mode={scheduleMode}
-            onModeChange={(mode) => {
-              setScheduleMode(mode);
-              setError('');
-            }}
+            onModeChange={
+              /* Switch schedule mode and clear validation feedback from the previous mode. */
+              (mode) => {
+                setScheduleMode(mode);
+                setError('');
+              }
+            }
             dates={dates}
-            onDatesChange={(next) => {
-              setDates(next);
-              if (next.length) {
-                setError((current) =>
-                  current === scheduleErrors.dates ? '' : current,
-                );
+            onDatesChange={
+              /* Update selected dates and clear the missing-date warning once a date is chosen. */
+              (next) => {
+                setDates(next);
+                if (next.length) {
+                  setError(
+                    /* Clear only the date-selection warning, preserving unrelated errors. */
+                    (current) =>
+                      current === scheduleErrors.dates ? '' : current,
+                  );
+                }
               }
-            }}
+            }
             weekdays={weekdays}
-            onWeekdaysChange={(next) => {
-              setWeekdays(next);
-              if (next.length) {
-                setError((current) =>
-                  current === scheduleErrors.weekdays ? '' : current,
-                );
+            onWeekdaysChange={
+              /* Update selected weekdays and clear their required-selection warning. */
+              (next) => {
+                setWeekdays(next);
+                if (next.length) {
+                  setError(
+                    /* Clear only the weekday-selection warning. */
+                    (current) =>
+                      current === scheduleErrors.weekdays ? '' : current,
+                  );
+                }
               }
-            }}
+            }
             timezone={zone}
           />
-          <div className="fields-row two-fields">
-            <label className="field">
-              {t('From')}
-              <select value={start} onChange={(e) => setStart(e.target.value)}>
-                {times.slice(0, -1).map((t) => (
-                  <option key={t} value={t}>
-                    {labelTime(t)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('Until')}
-              <select value={end} onChange={(e) => setEnd(e.target.value)}>
-                {times.slice(1).map((t) => (
-                  <option key={t} value={t}>
-                    {labelTime(t)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <TimeRangePicker
+            start={start}
+            end={end}
+            onStartChange={setStart}
+            onEndChange={setEnd}
+          />
           <TimezonePicker value={zone} onChange={setZone} />
           {(connection === 'setup' || connection === 'unreachable') && (
             <div className="connection-notice" role="status">
@@ -281,7 +297,10 @@ export default function CreateEventPage() {
                   <button
                     type="button"
                     className="text-button"
-                    onClick={() => void checkConnection()}
+                    onClick={
+                      /* Retry the creation page's connection check. */
+                      () => void checkConnection()
+                    }
                   >
                     <RefreshCw size={12} /> {t('Retry Connection')}
                   </button>

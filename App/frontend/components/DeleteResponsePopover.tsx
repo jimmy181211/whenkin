@@ -2,6 +2,11 @@ import { useState } from 'react';
 import AnchoredPanel from './AnchoredPanel';
 import { t } from '../i18n/index';
 
+/**
+ * Anchored confirmation component for deleting a saved response.
+ * @returns The response name and cancel/delete controls; controls stay
+ * disabled while confirmation runs.
+ */
 export default function DeleteResponsePopover({
   anchor,
   name,
@@ -15,12 +20,18 @@ export default function DeleteResponsePopover({
 }) {
   const [busy, setBusy] = useState(false);
 
+  /** Dismiss the confirmation only when deletion is not running. */
   const dismiss = () => {
     if (!busy) {
       onClose();
     }
   };
 
+  /**
+   * Run confirmation once and restore controls when it finishes.
+   * A resolved callback closes the popup even if its value is false; a rejection
+   * skips closing and propagates to the caller.
+   */
   const confirm = async () => {
     if (busy) {
       return;
@@ -58,7 +69,10 @@ export default function DeleteResponsePopover({
           type="button"
           className="button danger compact"
           disabled={busy}
-          onClick={() => void confirm()}
+          onClick={
+            /* Start the asynchronous confirmation action from the delete button. */
+            () => void confirm()
+          }
         >
           {t(busy ? 'Deleting…' : 'Delete')}
         </button>

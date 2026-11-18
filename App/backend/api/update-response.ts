@@ -11,10 +11,21 @@ import { body } from '../shared/request.js';
 import type { RequestHandler } from 'express';
 import type { Database } from '../db/types.js';
 
+/**
+ * Build the handler that replaces an existing reply's name, zone, and availability.
+ * Both the reply revision and schedule revision must match; otherwise return 409
+ * so the caller reloads instead of overwriting a newer version.
+ * @returns An Express handler for updating a reply with revision checks.
+ */
 export default function updateResponse(
   database: Database,
 ): RequestHandler<{ id: string;
   responseId: string }> {
+  /**
+   * Replace the reply and its ranges after checking both revision numbers.
+   * Missing or expired records, invalid input, and conflicts pass to API error handling.
+   * @returns The sent JSON response with the reply id and its new revision.
+   */
   return async (req, res) => {
     const event = await readEvent(database, req.params.id);
     const id = req.params.responseId;
@@ -54,6 +65,8 @@ export default function updateResponse(
       );
     }
     const ranges = validateRanges(input.ranges, event.windows);
+    // One statement checks revisions, removes old ranges, and inserts replacements.
+    // The new ranges are inserted only for the reply accepted by "target".
     const updated = await database.query<{
       id: string;
       revision: number;

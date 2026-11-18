@@ -19,7 +19,12 @@ const event = {
     },
   ],
 };
+/** Group the date-free weekly display conversion checks. */
 describe('date-free weekly display conversion', () => {
+  /**
+   * Shows the same saved Monday 9 AM as noon in New York without changing
+   * stored selections.
+   */
   it('shows the same saved Monday 9 AM as noon in New York without changing stored selections', () => {
     const before = JSON.stringify(event);
     const stamp = Date.parse(event.windows[0].start);
@@ -34,6 +39,10 @@ describe('date-free weekly display conversion', () => {
       end: '2000-01-03T14:00:00.000Z',
     });
   });
+  /**
+   * Uses the disclosed creation-date offsets, including summer/winter and
+   * quarter-hour zones.
+   */
   it('uses the disclosed creation-date offsets, including summer/winter and quarter-hour zones', () => {
     const stamp = Date.parse(event.windows[0].start);
     const summer = projectWeekly(event, 'Asia/Kathmandu');
@@ -52,6 +61,10 @@ describe('date-free weekly display conversion', () => {
     );
     expect(summer.referenceTime).toBe(Date.parse(event.created_at));
   });
+  /**
+   * Wraps Sunday into Monday and preserves a round trip for every selected
+   * slot.
+   */
   it('wraps Sunday into Monday and preserves a round trip for every selected slot', () => {
     const source = {
       ...event,
@@ -74,6 +87,10 @@ describe('date-free weekly display conversion', () => {
     expect(display.map(view.toCanonical)).toEqual(original);
     expect(new Set(display).size).toBe(original.length);
   });
+  /**
+   * Keeps a meeting duration intact when its displayed end crosses the
+   * week boundary.
+   */
   it('keeps a meeting duration intact when its displayed end crosses the week boundary', () => {
     const source = {
       ...event,

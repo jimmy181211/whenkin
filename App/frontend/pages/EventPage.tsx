@@ -23,6 +23,14 @@ import { useEventResponse } from '../utils/use-event-response';
 
 const COPY_FEEDBACK_MS = 2200;
 
+/**
+ * Event-response page component that connects calendar controls to shared
+ * reply state. useEventResponse owns reply changes and saving; this page
+ * connects those actions to the calendar, responder list, sharing dialog, and
+ * shared-time highlight button.
+ * @returns The calendar and results page, or the appropriate loading, error,
+ * or unavailable-event view.
+ */
 export default function EventPage({ id }: { id: string }) {
   const {
     event,
@@ -60,14 +68,21 @@ export default function EventPage({ id }: { id: string }) {
     setError,
   } = useEventResponse(id);
   const [share, setShare] = useState(false);
+  // Link label used for temporary copy feedback; empty means no success indicator.
   const [copied, setCopied] = useState('');
+  // Backend intersections: every saved responder is free throughout each range.
   const suggestions = event?.candidates ?? [];
 
+  /** Copy a link and briefly mark its label, or show a manual-copy fallback. */
   async function copy(value: string, label: string) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(label);
-      setTimeout(() => setCopied(''), COPY_FEEDBACK_MS);
+      setTimeout(
+        /* Clear the temporary copied-link success indicator. */
+        () => setCopied(''),
+        COPY_FEEDBACK_MS,
+      );
     } catch {
       setError(
         'Copy did not work. Select the link in the sharing panel and copy it manually.',
@@ -75,6 +90,10 @@ export default function EventPage({ id }: { id: string }) {
     }
   }
 
+  /**
+   * Project an undated weekly schedule into the viewer's timezone.
+   * @returns A weekly display projection, or null for a dated event.
+   */
   const weeklyView = useMemo(
     () =>
       event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null,
@@ -114,7 +133,10 @@ export default function EventPage({ id }: { id: string }) {
           event={event}
           zone={zone}
           inspection={inspection}
-          onClose={() => setInspection(null)}
+          onClose={
+            /* Hide the current availability inspection panel. */
+            () => setInspection(null)
+          }
         />
       )}
       {notice && (
@@ -136,7 +158,10 @@ export default function EventPage({ id }: { id: string }) {
                 <button
                   data-tour-share
                   className="button primary compact"
-                  onClick={() => setShare(true)}
+                  onClick={
+                    /* Open sharing controls for the current event. */
+                    () => setShare(true)
+                  }
                 >
                   <Link2 size={17} /> {t('Share Event')}
                 </button>
@@ -155,7 +180,10 @@ export default function EventPage({ id }: { id: string }) {
                   type="button"
                   className="text-button"
                   disabled={isSaving}
-                  onClick={() => void save()}
+                  onClick={
+                    /* Retry saving the current response after a recoverable failure. */
+                    () => void save()
+                  }
                 >
                   {t('Retry')}
                 </button>
@@ -168,12 +196,15 @@ export default function EventPage({ id }: { id: string }) {
               disabled={switching}
               inputRef={nameInput}
               editNotice={editNotice}
-              onChange={(value) => {
-                setName(value);
-                setEditNotice(false);
-                dismissNotice();
-                updateDraft({ name: value });
-              }}
+              onChange={
+                /* Update the draft name and clear old name-validation feedback. */
+                (value) => {
+                  setName(value);
+                  setEditNotice(false);
+                  dismissNotice();
+                  updateDraft({ name: value });
+                }
+              }
             />
             <TimezonePicker
               value={zone}
@@ -193,57 +224,74 @@ export default function EventPage({ id }: { id: string }) {
             onChange={updateSelection}
             highlights={highlightShared && view === 'group' ? suggestions : []}
             view={view}
-            onViewChange={(next) => {
-              setView(next);
-              if (next === 'personal') {
-                setHighlightShared(false);
+            onViewChange={
+              /* Switch calendar views and remove shared-time highlighting in personal view. */
+              (next) => {
+                setView(next);
+                if (next === 'personal') {
+                  setHighlightShared(false);
+                }
               }
-            }}
+            }
             inspection={view === 'group' ? inspection : null}
             onInspect={setInspection}
             canEdit={!switching && !!name.trim()}
-            onEditBlocked={() => {
-              if (!switching) {
-                requestEditing();
+            onEditBlocked={
+              /* Show the name requirement when editing is blocked outside a response switch. */
+              () => {
+                if (!switching) {
+                  requestEditing();
+                }
               }
-            }}
+            }
           />
         </section>
         <EventResults
           onDeleteResponse={deleteResponse}
           event={event}
           editingId={editingId}
-          onEditResponse={(responseId) => void editResponse(responseId)}
+          onEditResponse={
+            /* Load the responder selected in the results sidebar. */
+            (responseId) => void editResponse(responseId)
+          }
           switching={switching}
           highlighted={highlightShared}
           suggestions={suggestions}
-          onToggleHighlight={() => {
-            const next = !highlightShared;
-            setHighlightShared(next);
-            setInspection(null);
-            if (next) {
-              setView('group');
-              requestAnimationFrame(() =>
-                document
-                  .querySelector<HTMLElement>('.time-cell.highlighted')
-                  ?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest',
-                  }),
-              );
+          onToggleHighlight={
+            /* Toggle shared-time highlights and reveal the first matching block in group view. */
+            () => {
+              const next = !highlightShared;
+              setHighlightShared(next);
+              setInspection(null);
+              if (next) {
+                setView('group');
+                requestAnimationFrame(
+                  /* Scroll to a highlighted block after React has rendered the new group view. */
+                  () =>
+                    document
+                      .querySelector<HTMLElement>('.time-cell.highlighted')
+                      ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest',
+                      }),
+                );
+              }
             }
-          }}
+          }
         />
       </div>
       {share && (
         <ShareEventDialog
           eventLink={eventLink}
           copied={copied}
-          onClose={() => {
-            setShare(false);
-            dismissNotice();
-          }}
+          onClose={
+            /* Close sharing controls and dismiss any associated reminder. */
+            () => {
+              setShare(false);
+              dismissNotice();
+            }
+          }
           onCopy={copy}
         />
       )}
