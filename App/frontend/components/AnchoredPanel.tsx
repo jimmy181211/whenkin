@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom';
 import { anchoredPanelPosition } from '../utils/anchored-panel-position';
 import PopupSurface from './PopupSurface';
 
+/** Trigger, content, and close behavior for a small anchored popup. */
 type Props = {
   anchor: HTMLElement;
   label: string;
@@ -19,6 +20,15 @@ type Props = {
   focusOnOpen?: boolean;
 };
 
+/**
+ * Reusable anchored popup component that stays within the visible viewport.
+ * Reposition on scrolling/resizing and close on outside clicks or Escape.
+ * @param focusOnOpen - Move focus into the panel and restore it when
+ * appropriate.
+ *
+ * @returns A dialog portal beside the trigger, containing the supplied
+ * children.
+ */
 export default function AnchoredPanel({
   anchor,
   label,
@@ -28,17 +38,26 @@ export default function AnchoredPanel({
   focusOnOpen = false,
 }: Props) {
   const panel = useRef<HTMLDivElement>(null);
+  // Event listeners use the latest close callback without being attached again.
   const close = useRef(onClose);
   close.current = onClose;
   const [position, setPosition] = useState<CSSProperties>({
     visibility: 'hidden',
   });
+  /**
+   * Measure the panel immediately and keep its position aligned with scrolling
+   * and resizing.
+   * @returns Cleanup that disconnects panel measurements and viewport
+   * listeners.
+   */
   useLayoutEffect(() => {
+    /** Measure the current trigger and visible screen before placing the panel. */
     const place = () => {
       if (!anchor.isConnected || !panel.current) {
         close.current();
         return;
       }
+      // The visible viewport can shrink or shift when a mobile keyboard opens.
       const vv = window.visualViewport;
       const viewport = {
         left: vv?.offsetLeft ?? 0,
@@ -63,6 +82,7 @@ export default function AnchoredPanel({
       observer.observe(panel.current);
     }
     observer.observe(anchor);
+    // Disconnect panel measurements and scroll/resize listeners when the anchor changes.
     return () => {
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
@@ -71,8 +91,14 @@ export default function AnchoredPanel({
       observer.disconnect();
     };
   }, [anchor]);
+  /**
+   * Handle focus, Escape, and outside clicks for the open panel.
+   * @returns Cleanup that removes input listeners and restores focus when this
+   * panel owned it.
+   */
   useEffect(() => {
     const node = panel.current;
+    // Focus target to restore when this panel was opened with focusOnOpen.
     const previous = document.activeElement;
     if (focusOnOpen) {
       node
@@ -80,6 +106,7 @@ export default function AnchoredPanel({
         ?.focus({ preventScroll: true });
     }
 
+    /** Close the panel when the user presses Escape. */
     const escape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -87,6 +114,7 @@ export default function AnchoredPanel({
       }
     };
 
+    /** Close only when the pointer is outside both the panel and its trigger. */
     const outside = (e: PointerEvent) => {
       if (
         e.target instanceof Node &&
@@ -99,6 +127,7 @@ export default function AnchoredPanel({
 
     document.addEventListener('keydown', escape);
     document.addEventListener('pointerdown', outside, true);
+    // Remove input listeners and restore focus when this panel owned it.
     return () => {
       document.removeEventListener('keydown', escape);
       document.removeEventListener('pointerdown', outside, true);

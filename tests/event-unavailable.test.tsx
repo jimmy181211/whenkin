@@ -11,13 +11,22 @@ import {
   t,
 } from '../App/frontend/i18n/index';
 
-afterEach(() => setLanguage('en'));
+afterEach(
+  /* Restore English after unavailable-event page checks. */
+  () => setLanguage('en'),
+);
+/** Group the expired and missing event pages checks. */
 describe('expired and missing event pages', () => {
+  /**
+   * Check both expired and missing link explanations in every supported
+   * language.
+   */
   it.each([
     'expired',
     'missing',
   ] as const)(
     'explains %s links and provides policy and recovery links in every language',
+
     (reason) => {
       for (const language of [
         'en',

@@ -15,6 +15,11 @@ const output = resolve(
 const pg = new PGlite();
 const clock = '2026-11-05T12:00:00Z';
 
+/**
+ * Execute fixture SQL with the simulated clock substituted for current
+ * time.
+ * @returns The fixture query's rows after execution against the isolated database.
+ */
 const query = async (sql, params = []) =>
   (
     await pg.query(
@@ -31,6 +36,7 @@ const report = {
   scenarios: [],
 };
 
+/** Fail the retention verification with the supplied explanation. */
 const check = (value, message) => {
   if (!value) {
     throw Error(message);
@@ -41,7 +47,10 @@ try {
   for (const name of (
     await readdir(new URL('../db/migrations/', import.meta.url))
   )
-    .filter((name) => name.endsWith('.sql'))
+    .filter(
+      /* Select SQL migrations to prepare the isolated test database. */
+      (name) => name.endsWith('.sql'),
+    )
     .sort()) {
     await pg.exec(
       await readFile(
@@ -120,6 +129,11 @@ try {
       );
     }
 
+    /**
+     * Capture every fixture table so deletion and retention can be compared
+     * exactly.
+     * @returns Table names mapped to their rows in stable id order.
+     */
     const snapshot = async () =>
       Object.fromEntries(
         await Promise.all(
@@ -129,6 +143,7 @@ try {
             'responses',
             'availability',
           ].map(
+            /** Read a fixture table in stable id order for the before/after comparison. */
             async (table) => [
               table,
               await query(`SELECT * FROM ${table} ORDER BY id`),
@@ -141,10 +156,11 @@ try {
     const expected = new Set(
       before.events
         .filter(
+          /** Select fixture events expected to expire at the simulated deadline. */
           (row) =>
             Number(row.title.slice(8)) <= 206 || row.title === 'Fixture 210',
         )
-        .map((row) => row.id),
+        .map(/* Collect the ids expected to be removed. */ (row) => row.id),
     );
     check(
       (await cleanup.dryRun()).eligibleEvents === 207,
@@ -152,6 +168,10 @@ try {
     );
     const batches = [];
 
+    /**
+     * Run cleanup SQL and record each reported deletion batch.
+     * @returns The query result rows used by the cleanup instance under test.
+     */
     const execute = async (sql, params) => {
       const rows = await query(sql, params);
       if (sql.includes('purge_expired_events')) {
@@ -164,28 +184,55 @@ try {
     const after = await snapshot();
     const actual = new Set(
       before.events
-        .filter((row) => !after.events.some((kept) => kept.id === row.id))
-        .map((row) => row.id),
+        .filter(
+          /* Find fixture events missing from the post-cleanup snapshot. */
+          (row) =>
+            !after.events.some(
+              /* Check whether this original event still exists after cleanup. */
+              (kept) => kept.id === row.id,
+            ),
+        )
+        .map(
+          /* Collect the ids actually removed by cleanup. */
+          (row) => row.id,
+        ),
     );
     check(
       result.deletedEvents === 207 &&
         actual.size === expected.size &&
-        [...actual].every((id) => expected.has(id)),
+        [...actual].every(
+          /* Check that every actual deletion was expected. */
+          (id) => expected.has(id),
+        ),
       'Missing or excessive deletions',
     );
     const responses = new Set(
       before.responses
-        .filter((row) => !expected.has(row.event_id))
-        .map((row) => row.id),
+        .filter(
+          /* Select replies belonging to events that should be retained. */
+          (row) => !expected.has(row.event_id),
+        )
+        .map(
+          /* Collect the ids of replies expected to remain. */
+          (row) => row.id,
+        ),
     );
     const kept = {
-      events: before.events.filter((row) => !expected.has(row.id)),
+      events: before.events.filter(
+        /* Build the expected retained-event snapshot. */
+        (row) => !expected.has(row.id),
+      ),
       event_windows: before.event_windows.filter(
+        /** Keep schedule windows belonging to retained events. */
         (row) => !expected.has(row.event_id),
       ),
-      responses: before.responses.filter((row) => responses.has(row.id)),
-      availability: before.availability.filter((row) =>
-        responses.has(row.response_id),
+      responses: before.responses.filter(
+        /* Keep the replies expected to survive cleanup. */
+        (row) => responses.has(row.id),
+      ),
+      availability: before.availability.filter(
+        /* Keep time ranges belonging to those retained replies. */
+        (row) => responses.has(row.response_id),
       ),
     };
     for (const table of Object.keys(kept)) {
@@ -211,16 +258,22 @@ try {
       plus_one_millisecond_preserved: true,
       second_cleanup_deleted_rows: 0,
       before: Object.fromEntries(
-        Object.entries(before).map(([key, rows]) => [
-          key,
-          rows.length,
-        ]),
+        Object.entries(before).map(
+          /* Record each fixture table's row count before cleanup. */
+          ([key, rows]) => [
+            key,
+            rows.length,
+          ],
+        ),
       ),
       after: Object.fromEntries(
-        Object.entries(after).map(([key, rows]) => [
-          key,
-          rows.length,
-        ]),
+        Object.entries(after).map(
+          /* Record the corresponding row counts after cleanup. */
+          ([key, rows]) => [
+            key,
+            rows.length,
+          ],
+        ),
       ),
     });
   }
@@ -239,6 +292,14 @@ await writeFile(
 );
 await writeFile(
   resolve(output, 'retention-evidence.html'),
-  `<!doctype html><meta charset="utf-8"><title>Whenkin 清理验证</title><style>body{font:16px system-ui;max-width:960px;margin:40px auto;padding:20px;color:#183d35}table{width:100%;border-collapse:collapse}th,td{border:1px solid #dce5dc;padding:12px;text-align:left}</style><h1>按月配置的清理验证：${report.status}</h1><p>测试时间（人为模拟）：${clock}。仅使用本地合成数据，正式数据库未修改。</p><table><tr><th>保留期限</th><th>应删除活动行</th><th>实际删除活动行</th><th>漏删行</th><th>误删行</th></tr>${report.scenarios.map((row) => `<tr><td>${row.months} 个月</td><td>${row.expected_deleted_event_rows}</td><td>${row.actual_deleted_event_rows}</td><td>${row.missing_deletions}</td><td>${row.excess_deletions}</td></tr>`).join('')}</table><p>通过项同时验证关联记录清理、保留记录完整、到期边界，以及重复运行不再删除数据。</p>`,
+  `<!doctype html><meta charset="utf-8"><title>Whenkin 清理验证</title><style>body{font:16px system-ui;max-width:960px;margin:40px auto;padding:20px;color:#183d35}table{width:100%;border-collapse:collapse}th,td{border:1px solid #dce5dc;padding:12px;text-align:left}</style><h1>按月配置的清理验证：${report.status}</h1><p>测试时间（人为模拟）：${clock}。仅使用本地合成数据，正式数据库未修改。</p><table><tr><th>保留期限</th><th>应删除活动行</th><th>实际删除活动行</th><th>漏删行</th><th>误删行</th></tr>${report.scenarios
+    .map(
+      /* Render each retention scenario's expected and actual deletion counts. */
+      (row) =>
+        `<tr><td>${row.months} 个月</td><td>${row.expected_deleted_event_rows}</td><td>${row.actual_deleted_event_rows}</td><td>${row.missing_deletions}</td><td>${row.excess_deletions}</td></tr>`,
+    )
+    .join(
+      '',
+    )}</table><p>通过项同时验证关联记录清理、保留记录完整、到期边界，以及重复运行不再删除数据。</p>`,
 );
 console.log(JSON.stringify(report, null, 2));

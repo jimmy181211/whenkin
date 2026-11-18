@@ -1,11 +1,17 @@
-// Split migration files without breaking function bodies, quoted strings, or
-// comments. Statements run sequentially on the migration transaction's connection.
+/**
+ * Split SQL at semicolons outside strings, function bodies, and comments.
+ * Track nested block comments and PostgreSQL dollar quotes instead of splitting
+ * function bodies into invalid fragments. Throw if a quote/comment is unfinished.
+ * @returns Statements in source order, without their final separating semicolons.
+ */
 export function sqlStatements(source) {
   const statements = [];
   let start = 0;
   let quote = '';
+  // Active dollar-quote delimiter, such as $$ or $function$; empty outside a body.
   let dollar = '';
   let lineComment = false;
+  // PostgreSQL allows nested block comments, so a boolean would not be enough.
   let blockDepth = 0;
   for (let i = 0; i < source.length; i++) {
     const ch = source[i];

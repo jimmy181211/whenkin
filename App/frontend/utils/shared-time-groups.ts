@@ -4,12 +4,18 @@ import type {
   TimeRange,
 } from '../../shared/types';
 
+/** Original shared-time range paired with its viewer-facing display range. */
 export type SharedTimeEntry = { candidate: Candidate;
   shown: TimeRange };
+/** Shared-time entries collected under one viewer-local date. */
 export type SharedTimeGroup = { date: string;
   entries: SharedTimeEntry[] };
 
-// Group by the date the viewer sees; retain canonical ranges for grid selection.
+/**
+ * Group by the viewer's local date while retaining original ranges for grid selection.
+ * @returns Chronological date groups with entries ordered by display time; empty
+ * candidate input returns an empty list.
+ */
 export function groupSharedTimes(
   candidates: Candidate[],
   zone: string,
@@ -27,11 +33,18 @@ export function groupSharedTimes(
     groups.set(date, entries);
   }
   return [...groups.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, entries]) => ({
-      date,
-      entries: entries.sort(
-        (a, b) => Date.parse(a.shown.start) - Date.parse(b.shown.start),
-      ),
-    }));
+    .sort(
+      /* Order shared-time groups by the viewer's local date. */
+      ([a], [b]) => a.localeCompare(b),
+    )
+    .map(
+      /* Build a date group with its entries sorted by displayed start time. */
+      ([date, entries]) => ({
+        date,
+        entries: entries.sort(
+          /** Order this day's displayed free-time ranges from earliest to latest. */
+          (a, b) => Date.parse(a.shown.start) - Date.parse(b.shown.start),
+        ),
+      }),
+    );
 }

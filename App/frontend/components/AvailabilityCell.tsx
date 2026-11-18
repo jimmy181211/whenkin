@@ -15,6 +15,10 @@ import type {
 } from '../../shared/types';
 import type { SlotInspection } from './SlotDetails';
 
+/**
+ * Shared calendar data and callbacks passed from the grid to each time
+ * block.
+ */
 export type AvailabilityCellContext = {
   event: MeetingEvent;
   zone: string;
@@ -33,7 +37,12 @@ export type AvailabilityCellContext = {
   rememberSelection: () => void;
 };
 
+/**
+ * The slots and grid coordinates needed to render one visible calendar
+ * block.
+ */
 type Props = {
+  /** Underlying 15-minute slots grouped into this one visible calendar block. */
   cells: GridCell[];
   rowMinute: number;
   rowIndex: number;
@@ -41,6 +50,13 @@ type Props = {
   context: AvailabilityCellContext;
 };
 
+/**
+ * Calendar block component for personal selections and group availability. A
+ * 30-minute block contains two 15-minute slots, so it can be partly selected
+ * or show different availability counts in its upper and lower halves.
+ * @returns An interactive time block with selection, heatmap, and highlight
+ * indicators, or an empty placeholder when no slots exist.
+ */
 export default function AvailabilityCell({
   cells,
   rowMinute,
@@ -74,34 +90,49 @@ export default function AvailabilityCell({
       />
     );
   }
+  // End bounds are exclusive: the final slot contributes its full 15 minutes.
   const blockEnd = cells.at(-1)!.stamp + SLOT;
-  const selectedCells = cells.filter((c) =>
-    selected.has(canonicalStamp(c.stamp)),
+  const selectedCells = cells.filter(
+    /* Select this block's underlying slots that are marked available. */
+    (c) => selected.has(canonicalStamp(c.stamp)),
   );
+  // "active" means the entire visible block is selected, not merely hovered.
   const active = selectedCells.length === cells.length;
+  // At least one underlying slot is selected, but the entire block is not.
   const partial = selectedCells.length > 0 && !active;
   const inspected =
     group &&
     inspection &&
-    cells.some((c) => inspection.stamps.includes(canonicalStamp(c.stamp)));
+    cells.some(
+      /* Check whether the open inspection includes a slot in this block. */
+      (c) => inspection.stamps.includes(canonicalStamp(c.stamp)),
+    );
   const highlightedCells = cells.map(
+    /** Determine shared-time highlighting separately for each underlying slot. */
     (c) =>
       group &&
       highlights.some(
+        /** Check whether this stored slot starts inside a shared free-time range. */
         (range) =>
           canonicalStamp(c.stamp) >= Date.parse(range.start) &&
           canonicalStamp(c.stamp) < Date.parse(range.end),
       ),
   );
+  // A partial shared-time highlight needs different styling from a fully matched block.
   const highlighted = highlightedCells.some(Boolean);
   const fullyHighlighted = highlightedCells.every(Boolean);
-  const cellCounts = cells.map((c) => counts.get(canonicalStamp(c.stamp)) ?? 0);
+  const cellCounts = cells.map(
+    /* Look up available-person counts for this block's slots, defaulting to zero. */
+    (c) => counts.get(canonicalStamp(c.stamp)) ?? 0,
+  );
+  // A block may contain different counts, so its label can show a range (e.g. 1–2).
   const minimum = Math.min(...cellCounts);
   const maximum = Math.max(...cellCounts);
   const groupLabel = t('{count} of {total} available', {
     count: minimum === maximum ? minimum : `${minimum}–${maximum}`,
     total: event.responses.length,
   });
+  // Screen-reader description of the date, range, timezone, and availability state.
   const label = `${formatDay(
     cell.stamp,
     clockZone,
@@ -112,11 +143,18 @@ export default function AvailabilityCell({
     clockZone,
   )}, ${weekly ? zoneLabel(zone) : 'UTC' + cell.offset}, ${group ? groupLabel : t(partial ? 'Partly available' : active ? 'Available' : 'not selected')}`;
 
-  /** Share the same inspection range for hover, focus, and click. */
+  /**
+   * Open availability details for every slot in this block.
+   * Use stored timestamps to look up responders and display timestamps for the label.
+   * @param anchor - Button whose position anchors the details panel.
+   */
   function inspectSlot(anchor: HTMLButtonElement) {
     onInspect?.({
       anchor,
-      stamps: cells.map((c) => canonicalStamp(c.stamp)),
+      stamps: cells.map(
+        /* Use stored slot coordinates when requesting responder details. */
+        (c) => canonicalStamp(c.stamp),
+      ),
       range: {
         start: new Date(cell.stamp).toISOString(),
         end: new Date(blockEnd).toISOString(),
@@ -127,6 +165,7 @@ export default function AvailabilityCell({
   const background = group
     ? `linear-gradient(to bottom, ${cellCounts
       .map(
+        /** Paint each underlying slot's portion of the group heatmap. */
         (count, index) =>
           `${availabilityColor(
             count,
@@ -158,57 +197,79 @@ export default function AvailabilityCell({
             } as React.CSSProperties)
             : undefined
       }
-      onPointerEnter={(e) => {
-        if (group && e.pointerType !== 'touch') {
-          inspectSlot(e.currentTarget);
+      onPointerEnter={
+        /* Inspect a group block on mouse hover without treating touch movement as hover. */
+        (e) => {
+          if (group && e.pointerType !== 'touch') {
+            inspectSlot(e.currentTarget);
+          }
         }
-      }}
-      onFocus={(e) => {
-        if (group) {
-          inspectSlot(e.currentTarget);
+      }
+      onFocus={
+        /* Show the same group details when keyboard focus reaches the block. */
+        (e) => {
+          if (group) {
+            inspectSlot(e.currentTarget);
+          }
         }
-      }}
-      onClick={(e) => {
-        if (group) {
-          inspectSlot(e.currentTarget);
-        } else if (!canEdit) {
-          onEditBlocked?.();
+      }
+      onClick={
+        /* Inspect group availability or explain why personal editing is blocked. */
+        (e) => {
+          if (group) {
+            inspectSlot(e.currentTarget);
+          } else if (!canEdit) {
+            onEditBlocked?.();
+          }
         }
-      }}
-      onKeyDown={(e) => {
-        if (e.key !== ' ' && e.key !== 'Enter') {
-          return;
+      }
+      onKeyDown={
+        /* Toggle this personal block with Space or Enter and retain undo history. */
+        (e) => {
+          if (e.key !== ' ' && e.key !== 'Enter') {
+            return;
+          }
+          if (group) {
+            return;
+          }
+          e.preventDefault();
+          if (!canEdit) {
+            onEditBlocked?.();
+            return;
+          }
+          rememberSelection();
+          onChange(
+            paintSelection(
+              selected,
+              cells.map(
+                /* Convert keyboard-selected slots back to saved coordinates. */
+                (c) => canonicalStamp(c.stamp),
+              ),
+              selectedCells.length > 0,
+            ),
+          );
         }
-        if (group) {
-          return;
-        }
-        e.preventDefault();
-        if (!canEdit) {
-          onEditBlocked?.();
-          return;
-        }
-        rememberSelection();
-        onChange(
-          paintSelection(
-            selected,
-            cells.map((c) => canonicalStamp(c.stamp)),
-            selectedCells.length > 0,
-          ),
-        );
-      }}
+      }
     >
-      {highlightedCells.map((yes, index) =>
-        yes && (!fullyHighlighted || index === 0) ? (
-          <span
-            key={index}
-            aria-hidden="true"
-            className="shared-highlight-slice"
-            style={{
-              top: fullyHighlighted ? '0%' : (index * 100) / cells.length + '%',
-              height: fullyHighlighted ? '100%' : 100 / cells.length + '%',
-            }}
-          />
-        ) : null,
+      {highlightedCells.map(
+        /**
+         * @returns A shared-time outline for this block portion, or null when
+         * no outline is needed.
+         */
+        (yes, index) =>
+          yes && (!fullyHighlighted || index === 0) ? (
+            <span
+              key={index}
+              aria-hidden="true"
+              className="shared-highlight-slice"
+              style={{
+                top: fullyHighlighted
+                  ? '0%'
+                  : (index * 100) / cells.length + '%',
+                height: fullyHighlighted ? '100%' : 100 / cells.length + '%',
+              }}
+            />
+          ) : null,
       )}
       {!group && partial ? (
         <span className="sr-only">{t('Partly available')}</span>

@@ -1,6 +1,10 @@
 import type { Request } from 'express';
 import { Problem } from './validation.js';
 
+/**
+ * Reject arrays, null, and other bodies that cannot represent named request fields.
+ * @returns The parsed JSON object, ready for individual field validation.
+ */
 export function body(request: Request): Record<string, unknown> {
   const parsed: unknown = request.body;
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {

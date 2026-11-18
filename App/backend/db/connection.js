@@ -1,7 +1,10 @@
 /** Creates the Node PostgreSQL pool used by the server and maintenance tools. */
 import { Pool } from 'pg';
 
-// One bounded pool per process, for local or hosted PostgreSQL.
+/**
+ * Create a bounded PostgreSQL pool; callers must close it when finished.
+ * @returns Query, connection checkout, and shutdown actions backed by the same pool.
+ */
 export function createDatabase(connectionString = process.env.DATABASE_URL) {
   if (!connectionString && !process.env.PGHOST) {
     throw new Error(
@@ -16,17 +19,34 @@ export function createDatabase(connectionString = process.env.DATABASE_URL) {
     query_timeout: 15000,
     options: '-c timezone=UTC',
   });
-  pool.on('error', () =>
-    console.error(
-      'A database connection was interrupted. The pool will reconnect when needed.',
-    ),
+  pool.on(
+    'error',
+    /* Log a safe message when an idle database connection fails. */
+    () =>
+      console.error(
+        'A database connection was interrupted. The pool will reconnect when needed.',
+      ),
   );
   return {
-    /** @param {string} sql @param {unknown[]} [params] */
+    /**
+     * Execute parameterized SQL and return its rows.
+     * @param {string} sql
+     * @param {unknown[]} [params] - Values for the SQL placeholders.
+     * @returns The result rows after the query completes, without driver metadata.
+     */
     async query(sql, params = []) {
       return (await pool.query(sql, params)).rows;
     },
+    /**
+     * Check out one connection for operations that must share a transaction
+     * or lock.
+     * @returns A checked-out connection after it is available; release it when finished.
+     */
     connect: () => pool.connect(),
+    /**
+     * Close the pool after the server or maintenance command finishes.
+     * @returns A promise that resolves once the pool has finished shutting down.
+     */
     close: () => pool.end(),
   };
 }

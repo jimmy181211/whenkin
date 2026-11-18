@@ -4,6 +4,12 @@ import { t } from '../i18n/index';
 import './event-unavailable.css';
 import EventLimits from '../components/EventLimits';
 
+/**
+ * Recovery page component for an expired or missing event link. Missing
+ * records may have been cleaned up, so do not claim expiry is certain.
+ * @returns An explanation with a create-event action and retention-policy
+ * links.
+ */
 export default function EventUnavailablePage({
   reason,
 }: {

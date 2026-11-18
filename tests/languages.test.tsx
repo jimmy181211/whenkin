@@ -35,11 +35,18 @@ import {
 } from '../App/frontend/utils/time';
 import type { MeetingEvent } from '../App/shared/types';
 
-afterEach(() => {
-  setLanguage('en');
-  vi.unstubAllGlobals();
-});
+afterEach(
+  /* Reset the language and browser globals after each localization test. */
+  () => {
+    setLanguage('en');
+    vi.unstubAllGlobals();
+  },
+);
 
+/**
+ * Render a requested route with a mobile-sized browser fixture.
+ * @returns Static HTML for the requested page after installing the mobile window fixture.
+ */
 const page = (path = '/') => {
   vi.stubGlobal('window', {
     location: {
@@ -52,7 +59,9 @@ const page = (path = '/') => {
   return renderToStaticMarkup(<App />);
 };
 
+/** Group the language changes across the website checks. */
 describe('language changes across the website', () => {
+  /** Starts in English with a compact guide entry on every screen. */
   it('starts in English with a compact guide entry on every screen', () => {
     expect(getLanguage()).toBe('en');
     const html = page();
@@ -72,6 +81,7 @@ describe('language changes across the website', () => {
       /<nav[^>]*>[\s\S]*?New Event[\s\S]*?English/,
     );
   });
+  /** Renders Chinese forms, instructions, and the selected language. */
   it('renders Chinese forms, instructions, and the selected language', () => {
     setLanguage('zh');
     const html = page();
@@ -84,6 +94,7 @@ describe('language changes across the website', () => {
     expect(page('/how-it-works')).toContain('guide-page');
     expect(getLocale()).toBe('zh-CN');
   });
+  /** Renders Spanish forms, guide, dates, and explanatory errors. */
   it('renders Spanish forms, guide, dates, and explanatory errors', () => {
     setLanguage('es');
     const html = page();
@@ -95,6 +106,10 @@ describe('language changes across the website', () => {
     expect(t('Edit {name}', { name: 'Sam' })).toBe('Editar a Sam');
     expect(t('{count} hours', { count: 1.5 })).toBe('1,5 horas');
   });
+  /**
+   * Verify each added locale's page labels, menu selection, and number
+   * formatting.
+   */
   it.each([
     [
       'pt',
@@ -114,6 +129,7 @@ describe('language changes across the website', () => {
     ],
   ] as const)(
     'renders complete %s forms and localized numbers',
+
     (language, locale, title, shortcut, edit, hours) => {
       setLanguage(language);
       const html = page();
@@ -126,7 +142,16 @@ describe('language changes across the website', () => {
       expect(page('/how-it-works')).toContain('guide-page');
     },
   );
+  /**
+   * Includes every interface key and preserves substitution placeholders
+   * in the new languages.
+   */
   it('includes every interface key and preserves substitution placeholders in the new languages', () => {
+    /**
+     * Extract placeholder tokens so translations preserve the same
+     * replacements.
+     * @returns The sorted placeholder tokens, or an empty list if the message has none.
+     */
     const placeholders = (text: string) =>
       (text.match(/\{\w+\}/g) ?? []).sort();
 
@@ -161,6 +186,10 @@ describe('language changes across the website', () => {
       expect(privacy.match(/\{retention\}/g)).toHaveLength(2);
     }
   });
+  /**
+   * Matches typed Portuguese and German month names without changing their
+   * numeric values.
+   */
   it('matches typed Portuguese and German month names without changing their numeric values', () => {
     for (const [locale, query, expected] of [
       [
@@ -174,13 +203,17 @@ describe('language changes across the website', () => {
         '3',
       ],
     ] as const) {
-      const months = Array.from({ length: 12 }, (_, index) => ({
-        value: String(index + 1),
-        label: new Intl.DateTimeFormat(locale, {
-          month: 'long',
-          timeZone: 'UTC',
-        }).format(new Date(Date.UTC(2000, index, 1))),
-      }));
+      const months = Array.from(
+        { length: 12 },
+        /* Build month labels using the locale under test. */
+        (_, index) => ({
+          value: String(index + 1),
+          label: new Intl.DateTimeFormat(locale, {
+            month: 'long',
+            timeZone: 'UTC',
+          }).format(new Date(Date.UTC(2000, index, 1))),
+        }),
+      );
       expect(matchingOptions(months, query)[0].value).toBe(expected);
       expect(exactOption(months, expected)?.value).toBe(expected);
     }
@@ -195,23 +228,30 @@ describe('language changes across the website', () => {
       expect(isLanguage(invalid)).toBe(false);
     }
   });
+  /** Does not expose a demo route. */
   it('does not expose a demo route', () => {
     const html = page('/demo');
     expect(html).toContain('That Page Is a Little Off-Grid.');
     expect(html).not.toContain('availability-section');
   });
+  /** Preserves typed text when translating templates. */
   it('preserves typed text when translating templates', () => {
     setLanguage('zh');
     expect(t('ORGANIZED BY {name}', { name: 'Ana & 李' })).toBe(
       '组织者：Ana & 李',
     );
   });
+  /** Remembers the explicit language preference on this device. */
   it('remembers the explicit language preference on this device', () => {
     const storage = { setItem: vi.fn() };
     vi.stubGlobal('localStorage', storage);
     setLanguage('es');
     expect(storage.setItem).toHaveBeenCalledWith('whenkin:language', 'es');
   });
+  /**
+   * Offers policy links from home and event pages and localizes both
+   * documents.
+   */
   it('offers policy links from home and event pages and localizes both documents', () => {
     const titles = {
       en: [
@@ -262,7 +302,9 @@ describe('language changes across the website', () => {
     }
   });
 });
+/** Group the language is independent of scheduling data checks. */
 describe('language is independent of scheduling data', () => {
+  /** Keeps selected instants and UTC ranges unchanged in every language. */
   it('keeps selected instants and UTC ranges unchanged in every language', () => {
     vi.stubGlobal('window', { innerWidth: 390 });
     const start = localToUTC('2027-01-15', '10:00', 'America/Los_Angeles');
@@ -289,7 +331,10 @@ describe('language is independent of scheduling data', () => {
           event={event}
           zone="America/New_York"
           selected={selected}
-          onChange={() => {}}
+          onChange={
+            /* Leave calendar selections unchanged during language-rendering checks. */
+            () => {}
+          }
         />,
       );
       expect(
@@ -298,6 +343,7 @@ describe('language is independent of scheduling data', () => {
       expect(slotsToRanges(selected)).toEqual(before);
       expect(
         gridModel(event.windows, 'America/New_York').days[0][1].map(
+          /** Compare stored instants after rendering in another timezone. */
           (c) => c.stamp,
         ),
       ).toEqual(allSlots(event.windows));

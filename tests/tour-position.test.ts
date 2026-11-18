@@ -5,11 +5,13 @@ import {
 } from 'vitest';
 import { tourScrollDelta } from '../App/frontend/utils/tour-position';
 
+/** Group the context-preserving guide scrolling checks. */
 describe('context-preserving guide scrolling', () => {
   const bounds = {
     top: 20,
     bottom: 530,
   };
+  /** Keeps visible fields and neighboring tabs in place. */
   it('keeps visible fields and neighboring tabs in place', () => {
     expect(
       tourScrollDelta(
@@ -30,6 +32,7 @@ describe('context-preserving guide scrolling', () => {
       ),
     ).toBe(0);
   });
+  /** Reveals offscreen targets with the minimum required movement. */
   it('reveals offscreen targets with the minimum required movement', () => {
     expect(
       tourScrollDelta(
@@ -50,6 +53,7 @@ describe('context-preserving guide scrolling', () => {
       ),
     ).toBe(-50);
   });
+  /** Does not recenter a large grid that is already substantially visible. */
   it('does not recenter a large grid that is already substantially visible', () => {
     expect(
       tourScrollDelta(
@@ -79,6 +83,7 @@ describe('context-preserving guide scrolling', () => {
       ),
     ).toBe(0);
   });
+  /** Reveals enough of a tall grid while retaining the field above it. */
   it('reveals enough of a tall grid while retaining the field above it', () => {
     expect(
       tourScrollDelta(
@@ -99,6 +104,7 @@ describe('context-preserving guide scrolling', () => {
       ),
     ).toBe(310);
   });
+  /** Handles a short phone viewport without invalid movement. */
   it('handles a short phone viewport without invalid movement', () => {
     expect(
       tourScrollDelta(

@@ -11,6 +11,12 @@ import type { Database } from './db/types.js';
 import { pageRoute } from '../shared/routes.js';
 import { documentWithManifest } from './web-manifest.js';
 
+/**
+ * Add built frontend files and page routes to the API for the Node deployment.
+ * Valid page URLs receive the React document; unknown page URLs receive it with 404.
+ * @param options - API settings plus an optional directory containing index.html/assets.
+ * @returns An Express app serving both API requests and the built frontend.
+ */
 export function createWebApp(
   database: Database,
   options: AppOptions & { staticRoot?: string } = {},
@@ -19,6 +25,7 @@ export function createWebApp(
   const root =
     options.staticRoot ??
     fileURLToPath(new URL('../../client/', import.meta.url));
+  // Load the built HTML once per app instance; requests share the same read promise.
   let document: Promise<string> | undefined;
   app.use(
     '/assets',
@@ -35,16 +42,23 @@ export function createWebApp(
       dotfiles: 'deny',
     }),
   );
-  app.get(/.*/, async (req, res) => {
-    if (req.path.startsWith('/assets/')) {
-      return res.status(404).end();
-    }
-    document ??= readFile(join(root, 'index.html'), 'utf8');
-    return res
-      .status(pageRoute(req.path).kind === 'not-found' ? 404 : 200)
-      .type('html')
-      .send(documentWithManifest(await document, req.path));
-  });
+  app.get(
+    /.*/,
+    /**
+     * Serve page HTML while preserving genuine asset 404s.
+     * @returns The sent HTML response, or an empty 404 response for a missing asset.
+     */
+    async (req, res) => {
+      if (req.path.startsWith('/assets/')) {
+        return res.status(404).end();
+      }
+      document ??= readFile(join(root, 'index.html'), 'utf8');
+      return res
+        .status(pageRoute(req.path).kind === 'not-found' ? 404 : 200)
+        .type('html')
+        .send(documentWithManifest(await document, req.path));
+    },
+  );
   app.use(errorHandler);
   return app;
 }

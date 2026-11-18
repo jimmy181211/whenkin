@@ -16,11 +16,19 @@ import {
 } from '../App/frontend/i18n/index';
 import { isEventDateAllowed } from '../App/shared/date-limits';
 
-afterEach(() => {
-  setLanguage('en');
-  vi.useRealTimers();
-});
+afterEach(
+  /* Restore English and real timers after each calendar test. */
+  () => {
+    setLanguage('en');
+    vi.useRealTimers();
+  },
+);
+/** Group the calendar month and year navigation checks. */
 describe('calendar month and year navigation', () => {
+  /**
+   * Allows every month from 2026 through 2050 and clamps only outside
+   * those years.
+   */
   it('allows every month from 2026 through 2050 and clamps only outside those years', () => {
     expect(
       clampCalendarMonth(Temporal.PlainDate.from('2025-12-01')).toString(),
@@ -35,6 +43,10 @@ describe('calendar month and year navigation', () => {
       clampCalendarMonth(Temporal.PlainDate.from('2050-12-31')).toString(),
     ).toBe('2050-12-01');
   });
+  /**
+   * Permits future dates through 2050 while blocking past dates and later
+   * years.
+   */
   it('permits future dates through 2050 while blocking past dates and later years', () => {
     const today = Temporal.PlainDate.from('2026-10-23');
     for (const date of [
@@ -56,6 +68,10 @@ describe('calendar month and year navigation', () => {
       );
     }
   });
+  /**
+   * Renders editable localized month and year controls without blocking
+   * past-month browsing.
+   */
   it('renders editable localized month and year controls without blocking past-month browsing', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
@@ -75,7 +91,14 @@ describe('calendar month and year navigation', () => {
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(
-        <Calendar timezone="UTC" value={['2026-10-25']} onChange={() => {}} />,
+        <Calendar
+          timezone="UTC"
+          value={['2026-10-25']}
+          onChange={
+            /* Keep date selection unchanged in this render-only calendar fixture. */
+            () => {}
+          }
+        />,
       );
       expect(html).toContain(`aria-label="${t('Month')}"`);
       expect(html).toContain(`aria-label="${t('Year')}"`);

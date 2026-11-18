@@ -10,6 +10,10 @@ import { documentWithManifest } from '../../App/backend/web-manifest.js';
 // Keep the current Sites/Neon deployment working until the EC2 cutover.
 // The API uses the same Express app and SQL as the Node deployment.
 const database: Database = {
+  /**
+   * Run parameterized SQL through the current host's HTTP database adapter.
+   * @returns The result rows after the hosted query completes; database failures reject.
+   */
   async query<T>(sql: string, params: unknown[] = []) {
     if (!env.DATABASE_URL) {
       throw new Problem(
@@ -24,6 +28,11 @@ const app = createApp(database, { trustProxy: true });
 app.listen(3000);
 const nodeHandler = httpServerHandler({ port: 3000 });
 
+/**
+ * Resolve a successful HTML document across the hosted and local asset
+ * conventions.
+ * @returns Page HTML with the correct manifest link, or a 503 response if no document loads.
+ */
 async function appDocument(request: Request): Promise<Response> {
   // The hosted asset service canonicalizes index.html to /; local assets can
   // instead require index.html. Accept only a real HTML response, never a redirect.
@@ -61,6 +70,11 @@ async function appDocument(request: Request): Promise<Response> {
 }
 
 export default {
+  /**
+   * Route API requests to Express and resolve page HTML through hosted
+   * assets.
+   * @returns The API, page, or asset response, retaining not-found and unavailable statuses.
+   */
   async fetch(
     request: Request,
     bindings: unknown,

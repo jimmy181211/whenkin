@@ -9,6 +9,10 @@ assert(
   'Use a local test server. This check creates a test event.',
 );
 
+/**
+ * Send a same-origin request to the running application's API.
+ * @returns The HTTP status and parsed JSON body; transport or JSON failures reject.
+ */
 const request = async (path, method = 'GET', data) => {
   const response = await fetch(new URL('/api' + path, base), {
     method,
@@ -34,7 +38,10 @@ for (let i = 0; i < 60; i++) {
   if (ready) {
     break;
   }
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise(
+    /* Pause briefly between readiness retries in the HTTP smoke check. */
+    (resolve) => setTimeout(resolve, 1000),
+  );
 }
 assert(ready, 'Server and migrated database did not become ready.');
 const date = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);

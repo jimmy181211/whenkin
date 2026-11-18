@@ -3,6 +3,10 @@ import Steps from '../components/Steps';
 import PageLink from '../components/PageLink';
 import { t } from '../i18n/index';
 
+/**
+ * Usage-guide page component for the scheduling workflow.
+ * @returns The introductory steps with navigation back to event creation.
+ */
 export default function HowItWorksPage() {
   return (
     <main className="guide-page">

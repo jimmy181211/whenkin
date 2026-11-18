@@ -8,6 +8,7 @@ import {
 import { t } from '../../i18n/index';
 import PopupSurface from '../PopupSurface';
 
+/** Shareable URL, copy feedback, and actions supplied by the event page. */
 type Props = {
   eventLink: string;
   copied: string;
@@ -15,6 +16,14 @@ type Props = {
   onCopy: (value: string, label: string) => Promise<void>;
 };
 
+/**
+ * Event-sharing dialog component with a copyable URL and clipboard feedback.
+ * @param copied - Label of the link last copied; "event" shows success
+ * feedback.
+ *
+ * @returns A sharing dialog with the event URL, copy action, and close
+ * control.
+ */
 export default function ShareEventDialog({
   eventLink,
   copied,
@@ -29,12 +38,18 @@ export default function ShareEventDialog({
         role="dialog"
         aria-modal="true"
         aria-label={t('Share Event')}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            onClose();
+        onClick={
+          /* Keep clicks on sharing controls from closing the dialog backdrop. */
+          (e) => e.stopPropagation()
+        }
+        onKeyDown={
+          /* Close the sharing dialog when Escape is pressed. */
+          (e) => {
+            if (e.key === 'Escape') {
+              onClose();
+            }
           }
-        }}
+        }
       >
         <button
           className="icon-button modal-close"
@@ -54,12 +69,18 @@ export default function ShareEventDialog({
           className="share-link-input"
           readOnly
           value={eventLink}
-          onFocus={(e) => e.target.select()}
+          onFocus={
+            /* Select the event URL for manual copying. */
+            (e) => e.target.select()
+          }
         />
         <button
           type="button"
           className="button primary"
-          onClick={() => void onCopy(eventLink, 'event')}
+          onClick={
+            /* Copy the event link and identify which control should show success feedback. */
+            () => void onCopy(eventLink, 'event')
+          }
         >
           {copied === 'event' ? (
             <>

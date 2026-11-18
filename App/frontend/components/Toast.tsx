@@ -13,12 +13,18 @@ import { createPortal } from 'react-dom';
 import PopupSurface from './PopupSurface';
 import { t } from '../i18n/index';
 
+/** Text, anchor, and dismissal action for a temporary field reminder. */
 type Props = {
   message: string;
   anchor: HTMLElement | null;
   onDismiss: () => void;
 };
 
+/**
+ * Temporary field-reminder component positioned within the visible viewport.
+ * @returns The reminder content inline without a document, or in a
+ * document-body portal in the browser.
+ */
 export default function Toast({
   message,
   anchor,
@@ -28,12 +34,25 @@ export default function Toast({
   const [position, setPosition] = useState<CSSProperties>({
     visibility: 'hidden',
   });
+  /**
+   * Dismiss the reminder after four seconds and cancel the timer on cleanup.
+   * @returns Cleanup that cancels the reminder's pending dismissal timer.
+   */
   useEffect(() => {
     const timer = setTimeout(onDismiss, 4000);
+    // Cancel the previous reminder's dismissal timer.
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
+  /**
+   * Track the reminder's position as the viewport, anchor, or content changes.
+   * @returns Cleanup that disconnects measurements and viewport listeners.
+   */
   useLayoutEffect(() => {
+    /**
+     * Measure and place the reminder without letting it extend beyond the
+     * viewport.
+     */
     const place = () => {
       if (!notice.current) {
         return;
@@ -89,6 +108,7 @@ export default function Toast({
     if (anchor) {
       resize.observe(anchor);
     }
+    // Disconnect reminder measurements and remove viewport listeners.
     return () => {
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);

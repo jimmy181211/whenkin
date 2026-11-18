@@ -15,6 +15,12 @@ import {
 } from './i18n/index';
 import { legalDocuments } from './content/legal';
 
+/**
+ * Application root that selects the current page and its localized document
+ * title.
+ * @returns The shared site layout containing the matched page, or the
+ * unknown-page message.
+ */
 export default function App() {
   const language = useLanguage();
   const path = typeof window === 'undefined' ? '/' : window.location.pathname;
@@ -22,6 +28,10 @@ export default function App() {
   const eventId = route.kind === 'event' ? route.id : null;
   const legalKind =
     route.kind === 'terms' || route.kind === 'privacy' ? route.kind : null;
+  /**
+   * Update the document language and title when the selected language or
+   * legal page changes.
+   */
   useEffect(() => {
     document.documentElement.lang = getLocale();
     document.title = legalKind

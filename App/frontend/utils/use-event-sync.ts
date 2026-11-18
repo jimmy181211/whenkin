@@ -7,7 +7,12 @@ import type { MeetingEvent } from '../../shared/types';
 const EVENT_REFRESH_INTERVAL_MS = 10_000;
 const MAX_BROWSER_TIMEOUT_MS = 2_147_483_647;
 
+/** Distinguishes an expired event from a link with no matching record. */
 type UnavailableReason = 'expired' | 'missing';
+/**
+ * Event data and editor callbacks needed for loading, refresh, and expiry
+ * checks.
+ */
 type EventSyncOptions = {
   id: string;
   event: MeetingEvent | null;
@@ -19,6 +24,14 @@ type EventSyncOptions = {
   setUnavailableReason: (reason: UnavailableReason) => void;
 };
 
+/**
+ * React Hook that loads an event and refreshes visible pages or returning tabs.
+ * Expiry is checked separately so an open tab stops editing at its deadline.
+ * Temporary background refresh errors keep the last data; missing/expired events
+ * switch the editor to its unavailable state. Cleanup ignores late initial loads
+ * and removes timers and listeners without aborting an already-sent request.
+ * @param applyEvent - Merge fresh data while preserving the editor's local draft.
+ */
 export function useEventSync({
   id,
   event,
@@ -29,8 +42,14 @@ export function useEventSync({
   setError,
   setUnavailableReason,
 }: EventSyncOptions) {
+  /**
+   * Load the event for this id and ignore responses arriving after the
+   * effect is cleaned up.
+   */
   useEffect(() => {
+    // A reply may arrive after navigation; ignore it once this effect is cleaned up.
     let alive = true;
+    // Load this event and distinguish missing, expired, and temporary failures.
     (async () => {
       try {
         const result = await loadEvent(id);
@@ -49,6 +68,7 @@ export function useEventSync({
         }
       }
     })();
+    // Ignore a late initial-load response after leaving this event.
     return () => {
       alive = false;
     };
@@ -57,13 +77,16 @@ export function useEventSync({
     load,
     applyEvent,
   ]);
+  /** Watch the event deadline and cancel its timer when the deadline changes. */
   useEffect(() => {
     if (!event?.expires_at) {
       return;
     }
     let timer: ReturnType<typeof setTimeout>;
 
+    /** Recheck the deadline in chunks that fit the browser's timer limit. */
     const checkExpiry = () => {
+      // Remaining milliseconds, not the configured retention duration in months.
       const remaining = Date.parse(event.expires_at!) - Date.now();
       if (remaining <= 0) {
         expire();
@@ -78,16 +101,22 @@ export function useEventSync({
     };
 
     checkExpiry();
+    // Cancel the old expiry check when its effect is cleaned up.
     return () => clearTimeout(timer);
   }, [
     event?.expires_at,
     expire,
   ]);
+  /**
+   * Refresh visible event pages on a timer and when the user returns to
+   * them.
+   */
   useEffect(() => {
     if (!hasEvent) {
       return;
     }
 
+    /** Close unavailable events; transient refresh failures wait for a retry. */
     const refreshError = (error: unknown) => {
       if (
         error instanceof ApiError &&
@@ -97,12 +126,17 @@ export function useEventSync({
       }
     };
 
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        load().then(applyEvent).catch(refreshError);
-      }
-    }, EVENT_REFRESH_INTERVAL_MS);
+    const timer = setInterval(
+      /* Read fresh event data every ten seconds while the page is visible. */
+      () => {
+        if (document.visibilityState === 'visible') {
+          load().then(applyEvent).catch(refreshError);
+        }
+      },
+      EVENT_REFRESH_INTERVAL_MS,
+    );
 
+    /** Refresh immediately after focus or visibility returns to the page. */
     const refresh = () => {
       if (document.visibilityState === 'visible') {
         load().then(applyEvent).catch(refreshError);
@@ -111,6 +145,7 @@ export function useEventSync({
 
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
+    // Stop polling and remove focus/visibility listeners when synchronization stops.
     return () => {
       clearInterval(timer);
       window.removeEventListener('focus', refresh);

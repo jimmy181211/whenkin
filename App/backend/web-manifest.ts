@@ -3,6 +3,11 @@ import {
   shortcutPath,
 } from '../shared/shortcut-path.js';
 
+/**
+ * Build install metadata so a shortcut opens its event page with Whenkin's icons.
+ * @param page - Requested local page path; unsupported paths fall back to home.
+ * @returns Manifest data with safe launch paths, display settings, and Whenkin icons.
+ */
 export function webManifest(page: unknown) {
   const path = shortcutPath(page);
   return {
@@ -32,6 +37,10 @@ export function webManifest(page: unknown) {
   };
 }
 
+/**
+ * Point the shared HTML document at the manifest for the currently viewed page.
+ * @returns HTML with its manifest link targeting the safe shortcut launch path.
+ */
 export function documentWithManifest(html: string, pathname: string) {
   return html.replace(
     'href="/site.webmanifest"',

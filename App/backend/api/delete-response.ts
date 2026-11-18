@@ -8,10 +8,20 @@ import { body } from '../shared/request.js';
 import type { RequestHandler } from 'express';
 import type { Database } from '../db/types.js';
 
+/**
+ * Build the handler that deletes the reviewed reply revision.
+ * Check its event and schedule as well; database foreign keys remove that reply's
+ * availability rows without touching anyone else's responses.
+ * @returns An Express handler for deleting the specified saved reply revision.
+ */
 export default function deleteResponse(
   database: Database,
 ): RequestHandler<{ id: string;
   responseId: string }> {
+  /**
+   * Delete only the reviewed reply revision and its availability rows.
+   * @returns The sent JSON response identifying the removed reply.
+   */
   return async (req, res) => {
     const event = await readEvent(database, req.params.id);
     const id = req.params.responseId;

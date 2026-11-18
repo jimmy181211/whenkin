@@ -17,26 +17,49 @@ import {
 } from '../content/legal';
 import EventLimits from '../components/EventLimits';
 
+/**
+ * Legal-text rendering component that inserts live retention wording and
+ * contact links.
+ * @returns A paragraph with retention placeholders resolved and email
+ * addresses linked.
+ */
 function Paragraph({ text }: { text: string }) {
   return (
     <p>
-      {text.split('{retention}').map((part, index) => (
-        <React.Fragment key={index}>
-          {index > 0 && <EventLimits variant="duration" />}
-          {part.split(LEGAL.email).map((text, emailIndex) => (
-            <React.Fragment key={emailIndex}>
-              {emailIndex > 0 && (
-                <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
-              )}
-              {text}
-            </React.Fragment>
-          ))}
-        </React.Fragment>
-      ))}
+      {text.split('{retention}').map(
+        /**
+         * @returns A legal-text fragment preceded by the live retention
+         * duration where required.
+         */
+        (part, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <EventLimits variant="duration" />}
+            {part.split(LEGAL.email).map(
+              /**
+               * @returns A text fragment with a linked contact address
+               * inserted between email-separated parts.
+               */
+              (text, emailIndex) => (
+                <React.Fragment key={emailIndex}>
+                  {emailIndex > 0 && (
+                    <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
+                  )}
+                  {text}
+                </React.Fragment>
+              ),
+            )}
+          </React.Fragment>
+        ),
+      )}
     </p>
   );
 }
 
+/**
+ * Localized terms/privacy page component with section navigation.
+ * @returns The chosen legal document, its contents links, and navigation to
+ * the other policy.
+ */
 export default function LegalPage({ kind }: { kind: LegalKind }) {
   const document = legalDocuments[getLanguage()][kind];
   const otherKind = kind === 'terms' ? 'privacy' : 'terms';
@@ -67,26 +90,44 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
         <details className="legal-contents">
           <summary>{t('On This Page')}</summary>
           <ol>
-            {document.sections.map((section, index) => (
-              <li key={section.title}>
-                <a href={`#${kind}-${index + 1}`}>{section.title}</a>
-              </li>
-            ))}
+            {document.sections.map(
+              /**
+               * @returns A contents-list link to the corresponding legal
+               * section.
+               */
+              (section, index) => (
+                <li key={section.title}>
+                  <a href={`#${kind}-${index + 1}`}>{section.title}</a>
+                </li>
+              ),
+            )}
           </ol>
         </details>
         <div className="legal-body">
-          {document.sections.map((section, index) => (
-            <section
-              id={`${kind}-${index + 1}`}
-              key={section.title}
-              aria-labelledby={`${kind}-heading-${index + 1}`}
-            >
-              <h2 id={`${kind}-heading-${index + 1}`}>{section.title}</h2>
-              {section.paragraphs.map((text) => (
-                <Paragraph text={text} key={text} />
-              ))}
-            </section>
-          ))}
+          {document.sections.map(
+            /**
+             * @returns A legal section with its heading and rendered
+             * paragraphs.
+             */
+            (section, index) => (
+              <section
+                id={`${kind}-${index + 1}`}
+                key={section.title}
+                aria-labelledby={`${kind}-heading-${index + 1}`}
+              >
+                <h2 id={`${kind}-heading-${index + 1}`}>{section.title}</h2>
+                {section.paragraphs.map(
+                  /**
+                   * @returns One legal paragraph with shared retention and
+                   * email-link rendering.
+                   */
+                  (text) => (
+                    <Paragraph text={text} key={text} />
+                  ),
+                )}
+              </section>
+            ),
+          )}
         </div>
         {kind === 'privacy' && (
           <section

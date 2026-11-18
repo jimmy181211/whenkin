@@ -10,7 +10,12 @@ import {
 import { shortcutManifestHref } from '../App/shared/shortcut-path';
 
 const event = '/e/855e5518-3b5a-49cb-b906-69bbd7bac603';
+/** Group the installable website metadata checks. */
 describe('installable website metadata', () => {
+  /**
+   * Provides a standalone launcher and the Whenkin icon for desktop and
+   * Android.
+   */
   it('provides a standalone launcher and the Whenkin icon for desktop and Android', () => {
     const manifest = webManifest(undefined);
     expect(manifest.id).toBe('/');
@@ -31,6 +36,10 @@ describe('installable website metadata', () => {
       },
     ]);
   });
+  /**
+   * Preserves the event destination and gives it a stable identity
+   * independent of slash or case.
+   */
   it('preserves the event destination and gives it a stable identity independent of slash or case', () => {
     const manifest = webManifest(event.toUpperCase() + '/');
     expect(manifest.start_url).toBe(event);
@@ -40,6 +49,7 @@ describe('installable website metadata', () => {
     expect(webManifest(event).id).toBe(event);
     expect(webManifest(event + '/').start_url).toBe(event);
   });
+  /** Check unsupported manifest inputs fall back to the home launch target. */
   it.each([
     'https://other.example/',
     '//other.example/',
@@ -52,10 +62,18 @@ describe('installable website metadata', () => {
       event,
     ],
     { page: event },
-  ])('rejects unrecognized launch targets: %s', (value) => {
-    expect(webManifest(value).start_url).toBe('/');
-    expect(webManifest(value).id).toBe('/');
-  });
+  ])(
+    'rejects unrecognized launch targets: %s',
+
+    (value) => {
+      expect(webManifest(value).start_url).toBe('/');
+      expect(webManifest(value).id).toBe('/');
+    },
+  );
+  /**
+   * Points the initial HTML to the event manifest before the browser
+   * considers installation.
+   */
   it('points the initial HTML to the event manifest before the browser considers installation', () => {
     const html = '<link rel="manifest" href="/site.webmanifest" />';
     const href = shortcutManifestHref(event);

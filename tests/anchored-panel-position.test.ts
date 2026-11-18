@@ -5,6 +5,10 @@ import {
 } from 'vitest';
 import { anchoredPanelPosition } from '../App/frontend/utils/anchored-panel-position';
 
+/**
+ * Build a rectangle fixture with consistent edges and dimensions.
+ * @returns Viewport edges and dimensions describing the same rectangle.
+ */
 const rect = (left: number, top: number, width: number, height: number) => ({
   left,
   top,
@@ -14,7 +18,12 @@ const rect = (left: number, top: number, width: number, height: number) => ({
   bottom: top + height,
 });
 
+/** Group the contextual panel placement checks. */
 describe('contextual panel placement', () => {
+  /**
+   * Keeps panels inside phone and desktop viewports for blocks near every
+   * edge.
+   */
   it('keeps panels inside phone and desktop viewports for blocks near every edge', () => {
     for (const width of [
       320,
@@ -53,6 +62,7 @@ describe('contextual panel placement', () => {
       }
     }
   });
+  /** Opens above a bottom-of-page slot rather than beyond the bottom edge. */
   it('opens above a bottom-of-page slot rather than beyond the bottom edge', () => {
     const p = anchoredPanelPosition(
       rect(36, 770, 100, 26),
@@ -69,6 +79,7 @@ describe('contextual panel placement', () => {
     );
     expect(p.top + 280).toBeLessThan(770);
   });
+  /** Accounts for the visible viewport when a phone keyboard is open. */
   it('accounts for the visible viewport when a phone keyboard is open', () => {
     const p = anchoredPanelPosition(
       rect(40, 430, 100, 30),

@@ -1,9 +1,12 @@
-// Wheel events cover both mouse wheels and two-finger laptop trackpads.
-// Preserve browser zoom and let the page scroll when the grid reaches an edge.
+/**
+ * Scroll the calendar with a mouse wheel or trackpad without trapping page scroll.
+ * Prevent default scrolling only if the grid actually moved; preserve browser zoom.
+ */
 export function scrollGrid(element: HTMLElement, event: WheelEvent) {
   if (event.ctrlKey || event.metaKey) {
     return;
   }
+  // Wheel deltas may be pixels, lines, or pages; convert them to pixel movement.
   const unit =
     event.deltaMode === 1
       ? 16

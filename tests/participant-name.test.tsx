@@ -15,11 +15,19 @@ import {
 } from '../App/frontend/i18n/index';
 import type { MeetingEvent } from '../App/shared/types';
 
-afterEach(() => {
-  setLanguage('en');
-  vi.unstubAllGlobals();
-});
+afterEach(
+  /* Restore the language and browser globals after name-field tests. */
+  () => {
+    setLanguage('en');
+    vi.unstubAllGlobals();
+  },
+);
+/** Group the name before availability editing checks. */
 describe('name before availability editing', () => {
+  /**
+   * Keeps the name field quiet until an edit attempt needs an accessible
+   * notice.
+   */
   it('keeps the name field quiet until an edit attempt needs an accessible notice', () => {
     for (const language of [
       'en',
@@ -28,12 +36,26 @@ describe('name before availability editing', () => {
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(
-        <ParticipantName name="" onChange={() => {}} editNotice={false} />,
+        <ParticipantName
+          name=""
+          onChange={
+            /* Keep the first name-field fixture unchanged while inspecting its markup. */
+            () => {}
+          }
+          editNotice={false}
+        />,
       );
       expect(html).not.toContain('name-help');
       expect(html).not.toContain('aria-describedby');
       const noticed = renderToStaticMarkup(
-        <ParticipantName name="  " onChange={() => {}} editNotice />,
+        <ParticipantName
+          name="  "
+          onChange={
+            /* Keep the second name-field fixture unchanged while inspecting its markup. */
+            () => {}
+          }
+          editNotice
+        />,
       );
       expect(noticed).toContain('aria-invalid="true"');
       expect(noticed).not.toContain(
@@ -41,12 +63,24 @@ describe('name before availability editing', () => {
       );
     }
   });
+  /** Does not show the blank-name hint once a name is supplied. */
   it('does not show the blank-name hint once a name is supplied', () => {
     const html = renderToStaticMarkup(
-      <ParticipantName name="Sam" onChange={() => {}} editNotice={false} />,
+      <ParticipantName
+        name="Sam"
+        onChange={
+          /* Leave the translated name value unchanged in this render-only test. */
+          () => {}
+        }
+        editNotice={false}
+      />,
     );
     expect(html).not.toContain('name-help');
   });
+  /**
+   * Locks editing before a name while keeping cells able to report a
+   * blocked attempt on desktop and mobile.
+   */
   it('locks editing before a name while keeping cells able to report a blocked attempt on desktop and mobile', () => {
     const event: MeetingEvent = {
       id: 'test',
@@ -74,8 +108,14 @@ describe('name before availability editing', () => {
           selected={new Set()}
           status={<AvailabilityStatus state="saved" hasSavedResponse={false} />}
           canEdit={false}
-          onChange={() => {}}
-          onEditBlocked={() => {}}
+          onChange={
+            /* Keep the blocked calendar's selection unchanged. */
+            () => {}
+          }
+          onEditBlocked={
+            /* Provide the blocked-edit hook without showing a real reminder. */
+            () => {}
+          }
         />,
       );
       expect(html).not.toContain('done-mode');

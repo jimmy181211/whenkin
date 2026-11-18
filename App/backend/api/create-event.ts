@@ -4,7 +4,18 @@ import { body } from '../shared/request.js';
 import type { RequestHandler } from 'express';
 import type { Database } from '../db/types.js';
 
+/**
+ * Build the POST /api/events handler for the supplied database.
+ * Validate the form and insert the event plus its offered windows in one statement.
+ * The response contains the new event id, used to open its reply page.
+ * @returns An Express handler that creates an event when a request arrives.
+ */
 export default function createEvent(database: Database): RequestHandler {
+  /**
+   * Validate and save the submitted event and its offered windows.
+   * Invalid form data or database failures pass to the shared API error handler.
+   * @returns The sent 201 JSON response containing the new event id.
+   */
   return async (req, res) => {
     const input = (await body(req)) as CreateInput;
     const valid = validateEvent(input);

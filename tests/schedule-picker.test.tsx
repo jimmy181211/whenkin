@@ -11,23 +11,37 @@ import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
 import { setLanguage } from '../App/frontend/i18n/index';
 import type { MeetingEvent } from '../App/shared/types';
 
-afterEach(() => {
-  setLanguage('en');
-  vi.unstubAllGlobals();
-});
+afterEach(
+  /* Restore English and browser globals after schedule-picker tests. */
+  () => {
+    setLanguage('en');
+    vi.unstubAllGlobals();
+  },
+);
+/** Group the date and weekday scheduling modes checks. */
 describe('date and weekday scheduling modes', () => {
+  /** Offers both modes and shows the date calendar by default. */
   it('offers both modes and shows the date calendar by default', () => {
     const html = renderToStaticMarkup(
       <SchedulePicker
         mode="dates"
-        onModeChange={() => {}}
+        onModeChange={
+          /* Keep schedule mode unchanged while checking dated-mode rendering. */
+          () => {}
+        }
         dates={[]}
-        onDatesChange={() => {}}
+        onDatesChange={
+          /* Keep selected dates unchanged in this static schedule fixture. */
+          () => {}
+        }
         weekdays={[
           1,
           7,
         ]}
-        onWeekdaysChange={() => {}}
+        onWeekdaysChange={
+          /* Keep selected weekdays unchanged in the dated-mode fixture. */
+          () => {}
+        }
         timezone="UTC"
       />,
     );
@@ -36,6 +50,7 @@ describe('date and weekday scheduling modes', () => {
     expect(html).toContain('calendar-grid');
     expect(html).not.toContain('weekday-options');
   });
+  /** Shows seven localized weekday choices with no month or calendar dates. */
   it('shows seven localized weekday choices with no month or calendar dates', () => {
     for (const [language, monday, sunday] of [
       [
@@ -58,14 +73,23 @@ describe('date and weekday scheduling modes', () => {
       const html = renderToStaticMarkup(
         <SchedulePicker
           mode="weekdays"
-          onModeChange={() => {}}
+          onModeChange={
+            /* Leave weekly-mode selection unchanged during rendering assertions. */
+            () => {}
+          }
           dates={['2027-01-15']}
-          onDatesChange={() => {}}
+          onDatesChange={
+            /* Keep the weekly fixture's inactive date selection unchanged. */
+            () => {}
+          }
           weekdays={[
             1,
             7,
           ]}
-          onWeekdaysChange={() => {}}
+          onWeekdaysChange={
+            /* Keep the weekly fixture's active weekdays unchanged. */
+            () => {}
+          }
           timezone="America/Los_Angeles"
         />,
       );
@@ -76,6 +100,10 @@ describe('date and weekday scheduling modes', () => {
       expect(html).not.toContain('2027-01-15');
     }
   });
+  /**
+   * Offers personal and group views with weekday labels without synthetic
+   * dates.
+   */
   it('offers personal and group views with weekday labels without synthetic dates', () => {
     vi.stubGlobal('window', { innerWidth: 390 });
     const event: MeetingEvent = {
@@ -98,7 +126,10 @@ describe('date and weekday scheduling modes', () => {
         event={event}
         zone="America/Los_Angeles"
         selected={new Set()}
-        onChange={() => {}}
+        onChange={
+          /* Leave weekday selection unchanged while checking translated labels. */
+          () => {}
+        }
       />,
     );
     expect(html).toContain('>Mon</strong>');

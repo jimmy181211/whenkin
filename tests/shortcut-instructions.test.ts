@@ -8,7 +8,12 @@ import {
   shortcutPageURL,
 } from '../App/frontend/utils/shortcut-instructions';
 
+/** Group the shortcut instructions checks. */
 describe('shortcut instructions', () => {
+  /**
+   * Check each browser/device signature against its expected instruction
+   * category.
+   */
   it.each([
     [
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) CriOS/140.0 Mobile',
@@ -42,10 +47,15 @@ describe('shortcut instructions', () => {
     ],
   ] as const)(
     'chooses device instructions for %s',
+
     (agent, touch, expected) => {
       expect(detectShortcutDevice(agent, touch)).toBe(expected);
     },
   );
+  /**
+   * Keeps the current event path while excluding edit tokens and
+   * fragments.
+   */
   it('keeps the current event path while excluding edit tokens and fragments', () => {
     expect(
       shortcutPageURL('https://whenkin.example/e/test?token=private#response'),
