@@ -2238,23 +2238,16 @@ input[aria-invalid='true'] {
 }
 .calendar-heading .calendar-selects {
   display: grid;
-  grid-template-columns: minmax(7.75rem, 1fr) 5rem;
+  grid-template-columns: minmax(7.75rem, 1fr) clamp(4.25rem, 17vw, 5rem);
   gap: 8px;
-  flex: 1 1 14rem;
+  flex: 1 1 12.5rem;
   min-width: 0;
-  max-width: 16rem;
+  max-width: clamp(12.5rem, calc(75vw - 6rem), 16rem);
 }
 .calendar-heading .calendar-navigation {
   flex-shrink: 0;
   margin-left: auto;
   gap: 0;
-}
-@media (max-width: 419px) {
-  .calendar-heading .calendar-selects {
-    grid-template-columns: 7.75rem 4.25rem;
-    flex: 0 0 auto;
-    max-width: 100%;
-  }
 }
 
 /* Shared expiry and capacity notice on desktop and mobile. */
