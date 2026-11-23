@@ -14,7 +14,10 @@ import {
   setLanguage,
   t,
 } from '../App/frontend/i18n/index';
-import { isEventDateAllowed } from '../App/shared/date-limits';
+import {
+  isEventDateAllowed,
+  parseEventYear,
+} from '../App/shared/date-limits';
 
 afterEach(
   /* Restore English and real timers after each calendar test. */
@@ -26,33 +29,37 @@ afterEach(
 /** Group the calendar month and year navigation checks. */
 describe('calendar month and year navigation', () => {
   /**
-   * Allows every month from 2026 through 2050 and clamps only outside
+   * Allows every month from 2026 through 9999 and clamps only outside
    * those years.
    */
-  it('allows every month from 2026 through 2050 and clamps only outside those years', () => {
+  it('allows every month from 2026 through 9999 and clamps only outside those years', () => {
     expect(
       clampCalendarMonth(Temporal.PlainDate.from('2025-12-01')).toString(),
     ).toBe('2026-01-01');
     expect(
-      clampCalendarMonth(Temporal.PlainDate.from('2051-01-01')).toString(),
-    ).toBe('2050-12-01');
+      clampCalendarMonth(Temporal.PlainDate.from('+010000-01-01')).toString(),
+    ).toBe('9999-12-01');
     expect(
       clampCalendarMonth(Temporal.PlainDate.from('2028-02-29')).toString(),
     ).toBe('2028-02-01');
     expect(
-      clampCalendarMonth(Temporal.PlainDate.from('2050-12-31')).toString(),
-    ).toBe('2050-12-01');
+      clampCalendarMonth(Temporal.PlainDate.from('9999-12-31')).toString(),
+    ).toBe('9999-12-01');
+    expect(clampCalendarMonth(Temporal.PlainDate.from('2070-06-15')).year).toBe(
+      2070,
+    );
   });
   /**
-   * Permits future dates through 2050 while blocking past dates and later
+   * Permits future dates through 9999 while blocking past dates and later
    * years.
    */
-  it('permits future dates through 2050 while blocking past dates and later years', () => {
+  it('permits future dates through 9999 while blocking past dates and later years', () => {
     const today = Temporal.PlainDate.from('2026-10-23');
     for (const date of [
       '2026-10-23',
       '2028-02-29',
-      '2050-12-31',
+      '2070-12-31',
+      '9999-12-31',
     ]) {
       expect(isEventDateAllowed(Temporal.PlainDate.from(date), today)).toBe(
         true,
@@ -61,7 +68,7 @@ describe('calendar month and year navigation', () => {
     for (const date of [
       '2026-10-22',
       '2025-12-31',
-      '2051-01-01',
+      '+010000-01-01',
     ]) {
       expect(isEventDateAllowed(Temporal.PlainDate.from(date), today)).toBe(
         false,
@@ -98,7 +105,9 @@ describe('calendar month and year navigation', () => {
       );
       expect(html).toContain(`aria-label="${t('Month')}"`);
       expect(html).toContain(`aria-label="${t('Year')}"`);
-      expect(html.match(/role="combobox"/g)).toHaveLength(2);
+      expect(html.match(/role="combobox"/g)).toHaveLength(1);
+      expect(html).toContain('type="number"');
+      expect(html).toContain('min="2026" max="9999" step="1"');
       expect(html).toContain(`value="${october}"`);
       expect(html).toContain('value="2026"');
       expect(html).toContain('inputMode="numeric"');
@@ -106,6 +115,29 @@ describe('calendar month and year navigation', () => {
         /aria-label="2026-10-21" aria-pressed="false" disabled=""/,
       );
       expect(html).toMatch(/aria-label="2026-10-25" aria-pressed="true"/);
+      expect(html).not.toContain('calendar-foot');
+    }
+  });
+
+  /** Accept free whole years while rejecting partial, nonnumeric, and out-of-range edits. */
+  it('validates numeric years without requiring matching options', () => {
+    for (const value of [
+      '2026',
+      '2070',
+      '9999',
+    ]) {
+      expect(parseEventYear(value)).toBe(Number(value));
+    }
+    for (const value of [
+      '',
+      '202',
+      '2025',
+      '10000',
+      '2070.5',
+      '2e3',
+      'text',
+    ]) {
+      expect(parseEventYear(value)).toBeNull();
     }
   });
 });

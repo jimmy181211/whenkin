@@ -13,6 +13,7 @@ import {
   LAST_EVENT_DATE,
 } from '../../shared/date-limits';
 import EditableSelect from './EditableSelect';
+import CalendarYearInput from './CalendarYearInput';
 
 /** Visible month and validated navigation action supplied by the calendar. */
 type CalendarControlsProps = {
@@ -21,9 +22,10 @@ type CalendarControlsProps = {
 };
 
 /**
- * Calendar navigation component. Text input is validated by EditableSelect;
- * the parent clamps requested months to the same supported date range.
- * @returns Month/year comboboxes and previous/next buttons with boundary states.
+ * Calendar navigation component. Month names use searchable choices;
+ * years use bounded numeric input without an option list.
+ * The parent clamps requested months to the same supported date range.
+ * @returns A month combobox, year field, and bounded previous/next buttons.
  */
 export default function CalendarControls({
   month,
@@ -39,11 +41,6 @@ export default function CalendarControls({
         month: 'long',
         timeZone: 'UTC',
       }).format(new Date(Date.UTC(2000, i, 1))),
-  );
-  const years = Array.from(
-    { length: last.year - first.year + 1 },
-    /** Enumerate every year supported by the calendar limits. */
-    (_, i) => first.year + i,
   );
   return (
     <div className="calendar-heading">
@@ -70,25 +67,12 @@ export default function CalendarControls({
           }
           invalidMessage={t('Choose a valid month.')}
         />
-        <EditableSelect
-          label={t('Year')}
-          value={String(month.year)}
-          options={years.map(
-            /* Build the allowed numeric year choices. */
-            (year) => ({
-              label: String(year),
-              value: String(year),
-            }),
-          )}
+        <CalendarYearInput
+          value={month.year}
           onChange={
-            /* Apply the validated year from the editable dropdown. */
-            (value) => setMonth(month.with({ year: Number(value) }))
+            /* Keep the visible month while changing to the validated year. */
+            (year) => setMonth(month.with({ year }))
           }
-          numeric
-          invalidMessage={t('Choose a year from {first} to {last}.', {
-            first: String(first.year),
-            last: String(last.year),
-          })}
         />
       </div>
       <div className="calendar-navigation">

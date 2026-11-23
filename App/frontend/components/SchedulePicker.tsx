@@ -24,7 +24,7 @@ type Props = {
 
 /**
  * Weekday-selection component for schedules without specific calendar dates.
- * @returns Localized weekday buttons and a clear action for the selected days.
+ * @returns Localized weekday buttons that toggle each day's selected state.
  */
 export function WeekdayPicker({
   value,
@@ -91,28 +91,6 @@ export function WeekdayPicker({
               </button>
             );
           },
-        )}
-      </div>
-      <div className={`calendar-foot ${value.length ? '' : 'empty'}`}>
-        <span>
-          <i />
-          {value.length
-            ? t(
-              value.length === 1
-                ? '{count} day selected'
-                : '{count} days selected',
-              { count: value.length },
-            )
-            : null}
-        </span>
-        {value.length > 0 && (
-          <button
-            type="button"
-            className="text-button"
-            onClick={/* Clear every selected weekday. */ () => onChange([])}
-          >
-            {t('Clear')}
-          </button>
         )}
       </div>
     </div>
