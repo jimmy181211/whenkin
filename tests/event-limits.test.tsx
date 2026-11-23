@@ -20,12 +20,11 @@ afterEach(
 );
 /** Group the event expiry notice checks. */
 describe('event expiry notice', () => {
-  /** Shows only the one-year notice in all three languages. */
-  it('shows only the one-year notice in all three languages', () => {
+  /** Shows only the one-year notice in both supported languages. */
+  it('shows only the one-year notice in both supported languages', () => {
     for (const language of [
       'en',
       'zh',
-      'es',
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

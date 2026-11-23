@@ -272,31 +272,10 @@ describe('administrator-controlled retention in calendar months', () => {
         '1 年',
         '2 年',
       ],
-      es: [
-        '1 mes',
-        '2 meses',
-        '1 año',
-        '2 años',
-      ],
-      pt: [
-        '1 mês',
-        '2 meses',
-        '1 ano',
-        '2 anos',
-      ],
-      de: [
-        '1 Monat',
-        '2 Monate',
-        '1 Jahr',
-        '2 Jahre',
-      ],
     };
     for (const language of [
       'en',
       'zh',
-      'es',
-      'pt',
-      'de',
     ] as const) {
       setLanguage(language);
       [

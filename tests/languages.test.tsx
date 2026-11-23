@@ -94,59 +94,11 @@ describe('language changes across the website', () => {
     expect(page('/how-it-works')).toContain('guide-page');
     expect(getLocale()).toBe('zh-CN');
   });
-  /** Renders Spanish forms, guide, dates, and explanatory errors. */
-  it('renders Spanish forms, guide, dates, and explanatory errors', () => {
-    setLanguage('es');
-    const html = page();
-    expect(html).toContain('Crea tu Evento');
-    expect(html).toContain('Añadir un acceso directo');
-    expect(html).not.toContain('Los Participantes Marcan Cuándo Están Libres');
-    expect(html).toContain('Fechas del evento');
-    expect(page('/how-it-works')).toContain('guide-page');
-    expect(t('Edit {name}', { name: 'Sam' })).toBe('Editar a Sam');
-    expect(t('{count} hours', { count: 1.5 })).toBe('1,5 horas');
-  });
-  /**
-   * Verify each added locale's page labels, menu selection, and number
-   * formatting.
-   */
-  it.each([
-    [
-      'pt',
-      'pt-BR',
-      'Crie seu evento',
-      'Adicionar atalho',
-      'Editar Sam',
-      '1,5 horas',
-    ],
-    [
-      'de',
-      'de-DE',
-      'Erstelle deinen Termin',
-      'Verknüpfung hinzufügen',
-      'Sam bearbeiten',
-      '1,5 Stunden',
-    ],
-  ] as const)(
-    'renders complete %s forms and localized numbers',
-
-    (language, locale, title, shortcut, edit, hours) => {
-      setLanguage(language);
-      const html = page();
-      expect(getLocale()).toBe(locale);
-      expect(html).toContain(title);
-      expect(html).toContain(shortcut);
-      expect(html).toContain(`value="${language}" selected=""`);
-      expect(t('Edit {name}', { name: 'Sam' })).toBe(edit);
-      expect(t('{count} hours', { count: 1.5 })).toBe(hours);
-      expect(page('/how-it-works')).toContain('guide-page');
-    },
-  );
   /**
    * Includes every interface key and preserves substitution placeholders
-   * in the new languages.
+   * in Chinese.
    */
-  it('includes every interface key and preserves substitution placeholders in the new languages', () => {
+  it('includes every interface key and preserves substitution placeholders in Chinese', () => {
     /**
      * Extract placeholder tokens so translations preserve the same
      * replacements.
@@ -155,10 +107,7 @@ describe('language changes across the website', () => {
     const placeholders = (text: string) =>
       (text.match(/\{\w+\}/g) ?? []).sort();
 
-    for (const language of [
-      'pt',
-      'de',
-    ] as const) {
+    for (const language of ['zh'] as const) {
       expect(Object.keys(translations[language]).sort()).toEqual(
         Object.keys(messages).sort(),
       );
@@ -186,39 +135,51 @@ describe('language changes across the website', () => {
       expect(privacy.match(/\{retention\}/g)).toHaveLength(2);
     }
   });
-  /**
-   * Matches typed Portuguese and German month names without changing their
-   * numeric values.
-   */
-  it('matches typed Portuguese and German month names without changing their numeric values', () => {
+
+  /** Retired saved preferences fall back to English instead of breaking rendering. */
+  it('offers only English and Chinese and safely loads retired preferences', async () => {
+    expect(languageOptions.map(({ value }) => value)).toEqual([
+      'en',
+      'zh',
+    ]);
+    for (const retired of [
+      'es',
+      'pt',
+      'de',
+    ]) {
+      expect(isLanguage(retired)).toBe(false);
+      vi.stubGlobal('localStorage', { getItem: () => retired });
+      vi.resetModules();
+      const fresh = await import('../App/frontend/i18n/index');
+      expect(fresh.getLanguage()).toBe('en');
+      expect(fresh.t('Event Name')).toBe('Event Name');
+    }
+  });
+
+  /** Typed month suggestions preserve numeric month values in both supported locales. */
+  it('matches typed English and Chinese months', () => {
     for (const [locale, query, expected] of [
       [
-        'pt-BR',
+        'en-US',
         'jan',
         '1',
       ],
       [
-        'de-DE',
-        'mar',
+        'zh-CN',
+        '三',
         '3',
       ],
-    ] as const) {
-      const months = Array.from(
-        { length: 12 },
-        /* Build month labels using the locale under test. */
-        (_, index) => ({
-          value: String(index + 1),
-          label: new Intl.DateTimeFormat(locale, {
-            month: 'long',
-            timeZone: 'UTC',
-          }).format(new Date(Date.UTC(2000, index, 1))),
-        }),
-      );
+    ]) {
+      const months = Array.from({ length: 12 }, (_, index) => ({
+        value: String(index + 1),
+        label: new Intl.DateTimeFormat(locale, {
+          month: 'long',
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(2000, index, 1))),
+      }));
       expect(matchingOptions(months, query)[0].value).toBe(expected);
       expect(exactOption(months, expected)?.value).toBe(expected);
     }
-    expect(isLanguage('pt')).toBe(true);
-    expect(isLanguage('de')).toBe(true);
     for (const invalid of [
       'toString',
       '__proto__',
@@ -228,6 +189,7 @@ describe('language changes across the website', () => {
       expect(isLanguage(invalid)).toBe(false);
     }
   });
+
   /** Does not expose a demo route. */
   it('does not expose a demo route', () => {
     const html = page('/demo');
@@ -245,8 +207,8 @@ describe('language changes across the website', () => {
   it('remembers the explicit language preference on this device', () => {
     const storage = { setItem: vi.fn() };
     vi.stubGlobal('localStorage', storage);
-    setLanguage('es');
-    expect(storage.setItem).toHaveBeenCalledWith('whenkin:language', 'es');
+    setLanguage('zh');
+    expect(storage.setItem).toHaveBeenCalledWith('whenkin:language', 'zh');
   });
   /**
    * Offers policy links from home and event pages and localizes both
@@ -261,18 +223,6 @@ describe('language changes across the website', () => {
       zh: [
         '使用条款',
         '隐私政策',
-      ],
-      es: [
-        'Condiciones de Uso',
-        'Política de Privacidad',
-      ],
-      pt: [
-        'Termos de Uso',
-        'Política de Privacidade',
-      ],
-      de: [
-        'Nutzungsbedingungen',
-        'Datenschutzerklärung',
       ],
     };
     for (const { value: language } of languageOptions) {

@@ -31,9 +31,6 @@ describe('expired and missing event pages', () => {
       for (const language of [
         'en',
         'zh',
-        'es',
-        'pt',
-        'de',
       ] as const) {
         setLanguage(language);
         const html = renderToStaticMarkup(

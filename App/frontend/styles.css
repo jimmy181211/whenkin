@@ -3387,3 +3387,18 @@ button.person > svg {
     max-width: 100%;
   }
 }
+
+/* Page actions now live in the shared header, leaving the title its full width. */
+.event-page .event-summary .event-heading {
+  display: block;
+}
+.event-page .event-summary .event-heading > div {
+  width: 100%;
+  max-width: none;
+}
+.suggestions-card .shared-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}

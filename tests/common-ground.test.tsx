@@ -263,7 +263,6 @@ describe('shared result and editing UI', () => {
     for (const language of [
       'en',
       'zh',
-      'es',
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

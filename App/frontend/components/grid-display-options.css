@@ -1,0 +1,33 @@
+.grid-display-options {
+  position: relative;
+}
+.grid-tool-actions .grid-display-options > .icon-button {
+  width: 36px;
+  height: 36px;
+}
+.grid-display-panel {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 8px);
+  right: 0;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px #163f3020;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+.grid-display-panel > div {
+  display: flex;
+  gap: 4px;
+}
+.grid-tool-actions .grid-display-panel .icon-button {
+  width: 36px;
+  height: 36px;
+}

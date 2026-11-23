@@ -32,7 +32,6 @@ describe('name before availability editing', () => {
     for (const language of [
       'en',
       'zh',
-      'es',
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

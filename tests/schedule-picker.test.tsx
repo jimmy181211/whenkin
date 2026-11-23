@@ -63,11 +63,6 @@ describe('date and weekday scheduling modes', () => {
         '星期一',
         '星期日',
       ],
-      [
-        'es',
-        'lunes',
-        'domingo',
-      ],
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

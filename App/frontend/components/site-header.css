@@ -1,0 +1,120 @@
+.site-header .header-navigation,
+.header-secondary,
+.header-secondary-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.site-header .header-navigation {
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+}
+.site-header .header-navigation .button {
+  min-height: 40px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.site-header .event-tour-trigger {
+  font-size: 0.875rem !important;
+}
+.header-share-slot,
+.header-guide-slot {
+  display: flex;
+}
+.header-secondary {
+  position: relative;
+}
+.site-header .header-menu-toggle {
+  display: none;
+}
+.header-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  color: var(--primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.header-help:hover {
+  text-decoration: underline;
+}
+.header-menu-toggle:focus-visible,
+.header-help:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+@media (max-width: 999px) {
+  .site-header[data-event='true'] {
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  .site-header[data-event='true'] .header-navigation {
+    gap: 8px;
+  }
+  .site-header .header-menu-toggle {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+  .site-header[data-event='true'] .header-secondary-panel {
+    display: none;
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(19rem, calc(100vw - 3rem));
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 32px #163f3020;
+  }
+  .site-header[data-event='true'] .header-secondary-panel[data-open='true'] {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .header-secondary-panel .header-guide-slot .button,
+  .site-header[data-event='true'] .header-secondary-panel > .button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .site-header[data-event='true'] .header-secondary-panel .language-selector {
+    width: 100%;
+  }
+  .site-header[data-event='true']
+    .header-secondary-panel
+    .language-selector
+    select {
+    width: 100%;
+    max-width: none;
+    min-height: 40px;
+    font-size: 0.875rem;
+  }
+}
+@media (max-width: 699px) {
+  .site-header .header-navigation {
+    gap: 8px;
+  }
+  .header-help {
+    justify-content: center;
+    width: 36px;
+  }
+  .header-help span {
+    display: none;
+  }
+  .header-secondary-panel {
+    gap: 8px;
+  }
+  .site-header .header-share-slot .button {
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 360px) {
+  .site-header .brand span {
+    display: none;
+  }
+}
