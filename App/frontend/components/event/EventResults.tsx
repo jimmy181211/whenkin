@@ -119,7 +119,6 @@ export default function EventResults({
               type="button"
               className="button primary highlight-shared-times"
               aria-pressed={highlighted}
-              disabled={!highlighted && !suggestions.length}
               onClick={onToggleHighlight}
             >
               {t(

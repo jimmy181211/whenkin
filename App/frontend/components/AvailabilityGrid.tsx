@@ -4,7 +4,6 @@ import AvailabilityGridTools from './AvailabilityGridTools';
 import AvailabilityGridBody from './AvailabilityGridBody';
 import { t } from '../i18n/index';
 import {
-  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -45,7 +44,6 @@ type Props = {
   highlights?: TimeRange[];
   canEdit?: boolean;
   onEditBlocked?: () => void;
-  status?: ReactNode;
   view?: 'personal' | 'group';
   onViewChange?: (view: 'personal' | 'group') => void;
 };
@@ -83,7 +81,6 @@ export default function AvailabilityGrid({
   highlights = [],
   canEdit = true,
   onEditBlocked,
-  status,
   view = 'personal',
   onViewChange,
   onInspect,
@@ -398,7 +395,6 @@ export default function AvailabilityGrid({
       <AvailabilityGridTools
         view={view}
         onViewChange={onViewChange}
-        status={status}
         editing={editing}
         undos={undos}
         onUndo={undo}

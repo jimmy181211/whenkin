@@ -3,7 +3,6 @@ import PageLink from '../components/PageLink';
 import {
   ArrowLeft,
   ArrowRight,
-  Mail,
 } from 'lucide-react';
 import {
   getLanguage,
@@ -71,7 +70,6 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
       </PageLink>
       <article className="legal-card" aria-labelledby="legal-title">
         <header className="legal-heading">
-          <p className="eyebrow">WHENKIN</p>
           <h1 id="legal-title">{document.title}</h1>
           <p className="legal-summary">{document.summary}</p>
           <div className="legal-meta">
@@ -139,13 +137,6 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
             <a href="https://neon.com/privacy-policy">Neon</a>
           </section>
         )}
-        <div className="legal-contact">
-          <Mail size={20} aria-hidden="true" />
-          <div>
-            <strong>{t('Contact Us')}</strong>
-            <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>
-          </div>
-        </div>
         <a className="text-button legal-other" href={`/${otherKind}`}>
           {legalDocuments[getLanguage()][otherKind].title}
           <ArrowRight size={16} />

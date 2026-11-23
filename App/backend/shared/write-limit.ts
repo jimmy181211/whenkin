@@ -38,5 +38,3 @@ export function createWriteLimiter(now: () => number = Date.now) {
     },
   };
 }
-
-export const writeLimiter = createWriteLimiter();

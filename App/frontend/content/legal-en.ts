@@ -8,57 +8,46 @@ export const enLegalDocuments: Record<LegalKind, LegalDocument> = {
   terms: {
     title: 'Terms of Use',
     summary:
-      'Whenkin helps people share availability and find a time to meet. These terms explain the responsibilities that come with using it.',
+      'Whenkin helps groups share availability and find a time to meet. Creating an event or submitting a response means you agree to these terms.',
     sections: [
       {
-        title: 'About Whenkin',
+        title: 'Using Whenkin',
         paragraphs: [
-          'UCSD CSSA, United States, operates Whenkin. By creating an event or submitting availability, you agree to these terms. If you do not agree, do not create events or submit responses. Contact us at j4ouyang@ucsd.edu with questions.',
+          'UCSD CSSA, United States, operates Whenkin. You must be at least 13 and meet any higher local minimum age. If you are not legally an adult, get permission from a parent or guardian. If you disagree with these terms, do not create events or submit responses.',
         ],
       },
       {
-        title: 'Who Can Use Whenkin',
+        title: 'Your Content and Conduct',
         paragraphs: [
-          'You must be at least 13 and meet any higher minimum age required where you live. If you are below the age of legal adulthood, use Whenkin with permission from a parent or guardian. Whenkin is not directed to children under 13.',
-        ],
-      },
-      {
-        title: 'Your Events and Responses',
-        paragraphs: [
-          'Provide information you are entitled to share. Use a display name that lets your organizer recognize you; a legal name is not required. Do not impersonate others or put sensitive information, such as health records, financial details, passwords, or government identifiers, in event names or notes.',
-          'You retain your rights to your content. You allow us and our service providers to store, display, and process it as needed to operate Whenkin, calculate suggestions, and handle support or legal obligations.',
+          'Share only information you have the right to share. A recognizable display name is enough; a legal name is not required. Do not impersonate others or include sensitive information such as health records, financial details, passwords, or government identifiers.',
+          'You keep your rights to your content and allow us and our providers to store, display, and process it to operate Whenkin, calculate shared times, provide support, and meet legal obligations.',
+          'Do not use Whenkin for unlawful activity, harassment, spam, or unauthorized data collection. Do not falsify others’ responses, bypass safeguards, or overload the service. We may restrict abuse or remove unlawful content as permitted by law.',
         ],
       },
       {
         title: 'Shared Links and Editing',
         paragraphs: [
-          'Everyone with the event link can see event details, saved responses, names, time zones, availability, and shared free times. Everyone with that link can also edit any response by selecting a person in Responders. This applies to existing events too. Share the link with the people you want to collaborate with.',
-        ],
-      },
-      {
-        title: 'Acceptable Use',
-        paragraphs: [
-          'Do not use Whenkin for unlawful activity, harassment, spam, or collecting information without authority. Use shared editing responsibly. Do not deliberately falsify responses, bypass safeguards, or overload the service. We may restrict abusive use or remove unlawful content as permitted by law.',
+          'Anyone with an event link can view its details and all saved names, time zones, availability, and shared free times. They can also edit or delete any response through Responders. This applies to existing events too. Share links only with people you want to collaborate with.',
         ],
       },
       {
         title: 'Scheduling and Service Availability',
         paragraphs: [
-          'Shared free times show only periods when every respondent is available throughout. Suggestions reflect saved responses and do not guarantee attendance. Check dates, time zones, and the final arrangement with your group. The organizer communicates the chosen time outside Whenkin.',
-          'Whenkin is currently free to use. Features and availability may change, and interruptions or data loss are possible. Keep your own copy of important arrangements. To the extent permitted by law, the service is provided as available without warranties of uninterrupted or error-free operation. It is not intended for emergencies or other uses requiring guaranteed availability.',
+          'Shared times require every respondent to be free throughout. They reflect saved responses, not a guarantee of attendance. Check dates, time zones, and the final plan with your group; communicate the chosen time outside Whenkin.',
+          'Whenkin is currently free. Features may change, and interruptions or data loss are possible. Keep important arrangements elsewhere. Where law permits, the service is provided as available, without guarantees of uninterrupted or error-free operation. Do not rely on it for emergencies or other uses requiring guaranteed availability.',
         ],
       },
       {
         title: 'Your Legal Rights',
         paragraphs: [
-          'Nothing in these terms excludes liability or rights that cannot be excluded under applicable law. Where the law permits, UCSD CSSA is not responsible for indirect or consequential losses arising from use of Whenkin. These terms do not impose mandatory arbitration or waive your statutory consumer rights.',
+          'These terms do not exclude rights or liability that applicable law protects. Where law permits, UCSD CSSA is not liable for indirect or consequential losses from using Whenkin. There is no mandatory arbitration or waiver of statutory consumer rights.',
         ],
       },
       {
         title: 'Privacy, Changes, and Contact',
         paragraphs: [
-          'Our Privacy Policy explains how we handle information. You can stop using Whenkin at any time and contact j4ouyang@ucsd.edu about your data or these terms.',
-          'We will post revised terms with a new effective date. Changes apply prospectively; where required by law, we will provide additional notice or seek agreement.',
+          'Our Privacy Policy explains how we handle information. You may stop using Whenkin at any time. For questions or data requests, contact j4ouyang@ucsd.edu.',
+          'Revised terms carry a new effective date and apply prospectively. We provide additional notice or seek agreement where law requires.',
         ],
       },
     ],
@@ -66,66 +55,61 @@ export const enLegalDocuments: Record<LegalKind, LegalDocument> = {
   privacy: {
     title: 'Privacy Policy',
     summary:
-      'Your availability helps your group plan. Here is what Whenkin collects, who can see it, and how to request changes or deletion.',
+      'What Whenkin collects, how it is used and shared, and how to manage your information.',
     sections: [
       {
         title: 'Who Is Responsible',
         paragraphs: [
-          'UCSD CSSA, United States, operates Whenkin and is responsible for the information described here. Contact j4ouyang@ucsd.edu for privacy questions or requests. This policy covers Whenkin, rather than other websites you may visit from it.',
+          'UCSD CSSA, United States, operates Whenkin. Contact j4ouyang@ucsd.edu for privacy questions or requests. This policy covers Whenkin, not other websites linked from it.',
         ],
       },
       {
         title: 'Information We Handle',
         paragraphs: [
-          'Events include a title, optional notes, possible dates and hours, and time zone. Older events may also contain an optional creator name. Responses include a display name, time zone, selected availability, and update information. We also store event and response identifiers. Historical unused credential hashes may remain until the event is deleted. A legal name, account, email address, and payment details are not required to schedule.',
-          'Your browser supplies its time zone for local time labels; you may choose another. We do not request precise GPS location. Requests also expose technical information such as IP address, browser headers, requested URL, and time to our hosting infrastructure. IP addresses are used for abuse rate limits; hosting providers may maintain operational and security logs. If you email us, we receive your address and message.',
+          'We store event titles, optional notes, offered dates and hours, time zones, response display names, selected availability, update information, and event and response identifiers. Older events may retain creator names and unused credential hashes until deletion. No legal name, account, email, or payment details are required to schedule.',
+          'Your browser supplies a time zone, which you can change; we do not request GPS location. Hosting infrastructure receives IP addresses, browser headers, requested URLs, and request times. IP addresses support abuse limits, and providers may keep operational and security logs. If you email us, we receive your address and message.',
         ],
       },
       {
         title: 'How We Use Information',
         paragraphs: [
-          'We use this information to save and update events and responses, find periods when everyone is available, display local times, protect the service, and answer requests. Suggestions are calculated from saved availability, not by sending it to an AI model.',
-          'Where a legal basis is required, we process information to provide the service you request, pursue legitimate interests in operating and protecting it, or meet legal obligations, as applicable. We do not sell or rent personal information or share it for cross-context behavioral advertising.',
+          'We use information to save responses, calculate shared times, show local times, protect the service, and answer requests. Administrators may summarize event topics and availability patterns to understand use and improve the service. Shared times are calculated from saved availability without sending it to an AI model.',
+          'Where a legal basis is required, processing supports the service you request, legitimate interests in operating and protecting it, or legal obligations. We do not sell or rent personal information or share it for cross-context behavioral advertising.',
         ],
       },
       {
-        title: 'Who Can See and Edit Your Information',
+        title: 'Access, Providers, and International Processing',
         paragraphs: [
-          'Everyone with the event link can view all saved names, time zones, availability, and shared free times, and edit any response. There are no private editing links. This includes existing events. Authorized administrators and providers may access data as needed for operations, security, support, or legal obligations.',
-        ],
-      },
-      {
-        title: 'Providers and International Processing',
-        paragraphs: [
-          'ChatGPT Sites hosts the website and server, and Neon PostgreSQL stores events and responses. These providers and their infrastructure process data to deliver and secure the service. Processing may occur in the United States or other countries where providers operate, whose privacy rules may differ from yours.',
+          'Anyone with an event link can see event details and all saved names, time zones, availability, and shared times, and edit or delete any response. There are no private editing links; this also applies to existing events.',
+          'Authorized administrators and providers may access data for operations, security, support, or legal obligations. ChatGPT Sites hosts Whenkin; Neon PostgreSQL stores events and responses. Processing may occur in the United States or other countries where providers operate, with different privacy rules.',
         ],
       },
       {
         title: 'Browser Storage and Tracking',
         paragraphs: [
-          'Whenkin uses local browser storage for your language preference and whether you completed or skipped the guide. It does not restore responses or drafts from browser storage. Opening an event starts a blank form; select a person in Responders to load a saved response in any browser. Pending edits remain only while the page is open.',
-          'You can clear browser storage without deleting server data. Whenkin does not add advertising or third-party analytics trackers. Hosting providers may use necessary security technologies.',
+          'Local browser storage remembers your language and guide dismissal, not responses or drafts. Open an event and select a name in Responders to load a saved response. Unsaved edits remain only while the page is open. Clearing browser storage does not delete server data.',
+          'Whenkin adds no advertising or third-party analytics trackers. Hosting providers may use necessary security technologies.',
         ],
       },
       {
         title: 'Retention and Security',
         paragraphs: [
-          'Events and all their links expire {retention} after creation. There is no participant limit. Administrators run cleanup manually to delete events at least {retention} old, together with their responses and availability. Expired data may remain stored until that manual operation is run. Contact us if you need earlier deletion. Support messages and security records are retained as needed to handle requests, protect the service, and meet legal obligations; provider backups and logs follow their retention processes.',
-          'We use HTTPS, input validation, expiry checks, write limits, and revision checks to protect the service. Everyone with an event link can edit its responses; the link is the shared access point.',
+          'Event links expire {retention} after creation. Administrators manually delete events at least {retention} old, including their responses and availability; expired data may remain until cleanup runs. Contact us for earlier deletion. Support messages and security records are kept as needed for requests, protection, and legal obligations; provider backups and logs follow their retention processes.',
+          'We use HTTPS, input validation, expiry checks, write limits, and revision checks. Event links provide shared access, including the ability to edit responses.',
         ],
       },
       {
-        title: 'Your Choices and Requests',
+        title: 'Your Choices and Rights',
         paragraphs: [
-          'Open the event link and select your name in Responders to view or edit your response. Availability saves automatically. Use the trash icon beside a name to delete a response after confirmation. For event deletion, data access, or other privacy requests, email j4ouyang@ucsd.edu with the ordinary event link and describe your request.',
-          'We may need to verify that you control the relevant event or response before acting. Depending on applicable law, you may have rights to access, correct, delete, obtain a copy of, restrict, or object to processing, and complain to a privacy regulator. We handle requests according to applicable law.',
+          'Select your name in Responders to view or edit your response; availability saves automatically. The trash icon deletes a response after confirmation. For event deletion, data access, or other requests, email j4ouyang@ucsd.edu with the event link and your request.',
+          'We may verify your connection to the event or response. Depending on applicable law, you may access, correct, delete, or obtain a copy of your data, restrict or object to processing, or complain to a privacy regulator. We handle requests under applicable law.',
         ],
       },
       {
         title: 'Children and Policy Changes',
         paragraphs: [
-          'Whenkin is not directed to children under 13, and they should not submit personal information. If you believe a child has done so, contact us to request removal.',
-          'We will update the effective date when this policy changes and provide additional notice of material changes where required. Changes do not retroactively authorize incompatible uses of information already collected.',
+          'Whenkin is not directed to children under 13. If a child submits personal information, contact us for removal.',
+          'Policy changes carry a new effective date, with additional notice of material changes where required. Changes do not retroactively authorize incompatible uses of previously collected information.',
         ],
       },
     ],
