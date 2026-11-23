@@ -77,9 +77,6 @@ export const messages: Record<string, string> = {
   'Choose a valid month.': '请选择有效月份。',
   'Choose a year from {first} to {last}.':
     '请输入 {first} 至 {last} 之间的年份。',
-  Saved: '已保存',
-  Unsaved: '未保存',
-  'Not Started': '尚未开始',
   'Enter your name before editing availability.':
     '请先输入姓名，再编辑空闲时间。',
   'Enter an event name before creating your event.':
@@ -181,8 +178,6 @@ export const messages: Record<string, string> = {
   'Next month': '下个月',
   '{count} date selected': '已选择 {count} 个日期',
   '{count} dates selected': '已选择 {count} 个日期',
-  'Your Time Zone · Detected': '你的时区 · 自动检测',
-  'Your Time Zone · Selected': '你的时区 · 手动选择',
   'Choose your time zone': '选择你的时区',
   'Search time zones': '搜索时区',
   'Search a city or time zone': '搜索城市或时区',
@@ -280,5 +275,4 @@ export const messages: Record<string, string> = {
   'Effective Date': '生效日期',
   'On This Page': '本页内容',
   'Provider Information': '服务提供商信息',
-  'Contact Us': '联系我们',
 };

@@ -18,7 +18,10 @@ import {
   t,
   translations,
 } from '../App/frontend/i18n/index';
-import { legalDocuments } from '../App/frontend/content/legal';
+import {
+  LEGAL,
+  legalDocuments,
+} from '../App/frontend/content/legal';
 import {
   exactOption,
   matchingOptions,
@@ -245,7 +248,7 @@ describe('language changes across the website', () => {
         );
         expect(html).toContain('UCSD CSSA');
         expect(html).toContain('href="mailto:j4ouyang@ucsd.edu"');
-        expect(html).toMatch(/<time datetime="2026-10-24"/i);
+        expect(html).toContain(`<time dateTime="${LEGAL.updated}"`);
         expect(html).not.toContain('create-submit');
         expect(html).not.toContain('That Page Is a Little Off-Grid.');
       }

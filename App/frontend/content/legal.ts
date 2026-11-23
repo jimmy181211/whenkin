@@ -7,7 +7,7 @@ export const LEGAL = {
   operator: 'UCSD CSSA',
   country: 'United States',
   email: 'j4ouyang@ucsd.edu',
-  updated: '2026-10-24',
+  updated: '2026-11-23',
 } as const;
 /** Identifies which legal document the page should display. */
 export type LegalKind = 'terms' | 'privacy';

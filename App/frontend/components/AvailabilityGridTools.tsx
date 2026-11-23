@@ -1,5 +1,4 @@
 /** Presents grid view, zoom, undo, day navigation, and heatmap controls. */
-import type { ReactNode } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,7 +20,6 @@ type GridPaging = {
 type AvailabilityGridToolsProps = {
   view: 'personal' | 'group';
   onViewChange?: (view: 'personal' | 'group') => void;
-  status?: ReactNode;
   editing: boolean;
   undos: number;
   onUndo: () => void;
@@ -39,7 +37,6 @@ type AvailabilityGridToolsProps = {
 export default function AvailabilityGridTools({
   view,
   onViewChange,
-  status,
   editing,
   undos,
   onUndo,
@@ -79,7 +76,6 @@ export default function AvailabilityGridTools({
               {t('Group Availability')}
             </button>
           </div>
-          {status}
         </div>
         <div className="grid-tool-actions">
           <button

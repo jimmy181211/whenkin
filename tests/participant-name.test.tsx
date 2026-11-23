@@ -8,7 +8,6 @@ import {
 } from 'vitest';
 import ParticipantName from '../App/frontend/components/ParticipantName';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import AvailabilityStatus from '../App/frontend/components/AvailabilityStatus';
 import {
   setLanguage,
   t,
@@ -105,7 +104,6 @@ describe('name before availability editing', () => {
           event={event}
           zone="UTC"
           selected={new Set()}
-          status={<AvailabilityStatus state="saved" hasSavedResponse={false} />}
           canEdit={false}
           onChange={
             /* Keep the blocked calendar's selection unchanged. */
@@ -120,7 +118,7 @@ describe('name before availability editing', () => {
       expect(html).not.toContain('done-mode');
       expect(html).toContain('Your Availability');
       expect(html).toContain('Group Availability');
-      expect(html).toContain('Not Started');
+
       expect(html).not.toMatch(/>.*? Done<\/button>|>.*? Edit<\/button>/);
       expect(html).toMatch(/aria-disabled="true" data-stamp/);
       expect(html).not.toContain('Start on a blank time');
