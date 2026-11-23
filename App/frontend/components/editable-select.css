@@ -10,6 +10,11 @@
   font-size: 13px;
   font-weight: 500;
   min-height: 44px;
+  text-align: center;
+}
+.calendar-selects .editable-select input {
+  /* Center in the text area, reserving 28px for the dropdown button. */
+  padding-inline: 4px 32px;
 }
 .calendar-selects .calendar-year input {
   padding-inline: 4px;
@@ -66,7 +71,6 @@
   .calendar-selects .editable-select input,
   .calendar-selects .calendar-year input {
     font-size: 16px;
-    padding-left: 8px;
   }
   .calendar-selects .calendar-year input {
     padding-inline: 4px;
