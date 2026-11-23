@@ -1,9 +1,6 @@
 /** Shared legal-document types, operator details, and language selection. */
 import { enLegalDocuments } from './legal-en';
 import { zhLegalDocuments } from './legal-zh';
-import { esLegalDocuments } from './legal-es';
-import { ptLegalDocuments } from './legal-pt';
-import { deLegalDocuments } from './legal-de';
 import type { Language } from '../i18n/index';
 
 export const LEGAL = {
@@ -30,7 +27,4 @@ export const legalDocuments: Record<
 > = {
   en: enLegalDocuments,
   zh: zhLegalDocuments,
-  es: esLegalDocuments,
-  pt: ptLegalDocuments,
-  de: deLegalDocuments,
 };

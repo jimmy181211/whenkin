@@ -84,10 +84,6 @@ describe('calendar month and year navigation', () => {
         'zh',
         '十月',
       ],
-      [
-        'es',
-        'octubre',
-      ],
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

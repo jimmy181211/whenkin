@@ -26,7 +26,13 @@ import EventTourView from './EventTourView';
  * @returns The guide trigger and, while active, a portal with the highlighted
  * control and step instructions.
  */
-export default function EventTour() {
+export default function EventTour({
+  onOpen,
+  onRestoreFocus,
+}: {
+  onOpen?: () => void;
+  onRestoreFocus?: () => void;
+} = {}) {
   const copy = tourCopy[useLanguage()];
   // Null closes the guide; -1 shows the welcome card; 0 onward indexes tourSteps.
   const [step, setStep] = useState<number | null>(null);
@@ -121,8 +127,13 @@ export default function EventTour() {
         ? lastFocus.current
         : trigger.current
       )?.focus({ preventScroll: true });
+      // A collapsed header menu needs its visible trigger as the return target.
+      onRestoreFocus?.();
     };
-  }, [active]);
+  }, [
+    active,
+    onRestoreFocus,
+  ]);
 
   useTourPosition({
     step,
@@ -135,7 +146,10 @@ export default function EventTour() {
   });
 
   /** Open the welcome card without marking the guide complete. */
-  const start = () => setStep(-1);
+  const start = () => {
+    onOpen?.();
+    setStep(-1);
+  };
 
   /** Record dismissal and restore the previously focused control. */
   const skip = () => close('skipped');

@@ -42,7 +42,10 @@ export default function App() {
     legalKind,
   ]);
   return (
-    <SiteLayout showNewEvent={!!eventId}>
+    <SiteLayout
+      showNewEvent={!!eventId}
+      showFooterTagline={route.kind !== 'home'}
+    >
       {eventId ? (
         <EventPage key={eventId} id={eventId} />
       ) : route.kind === 'home' ? (

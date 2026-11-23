@@ -169,7 +169,6 @@ describe('group availability', () => {
     for (const language of [
       'en',
       'zh',
-      'es',
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(
@@ -241,7 +240,6 @@ describe('group availability', () => {
       for (const language of [
         'en',
         'zh',
-        'es',
       ] as const) {
         vi.stubGlobal('window', { innerWidth: width });
         setLanguage(language);
@@ -277,7 +275,6 @@ describe('shared link and name notice', () => {
     for (const language of [
       'en',
       'zh',
-      'es',
     ] as const) {
       setLanguage(language);
       const html = renderToStaticMarkup(

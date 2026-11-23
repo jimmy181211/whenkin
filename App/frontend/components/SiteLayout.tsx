@@ -3,8 +3,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Plus } from 'lucide-react';
-import LanguageSelector, { useLanguage } from './LanguageSelector';
+import { useLanguage } from './LanguageSelector';
+import SiteHeader from './SiteHeader';
+import { HeaderActionsProvider } from './HeaderActions';
 import PageLink from './PageLink';
 import ShortcutDialog from './ShortcutDialog';
 import { BRAND } from '../brand';
@@ -25,40 +26,23 @@ import './site-layout.css';
 export default function SiteLayout({
   children,
   showNewEvent = false,
+  showFooterTagline = true,
 }: {
   children: ReactNode;
   showNewEvent?: boolean;
+  showFooterTagline?: boolean;
 }) {
   return (
     <RetentionPolicyProvider>
-      <Header showNewEvent={showNewEvent} />
-      {children}
-      <Footer showEventExpiry={showNewEvent} />
+      <HeaderActionsProvider>
+        <SiteHeader showNewEvent={showNewEvent} />
+        {children}
+        <Footer
+          showEventExpiry={showNewEvent}
+          showTagline={showFooterTagline}
+        />
+      </HeaderActionsProvider>
     </RetentionPolicyProvider>
-  );
-}
-
-/**
- * Site-header component with home navigation and language selection.
- * @returns The brand link, language menu, and optional new-event link.
- */
-function Header({ showNewEvent }: { showNewEvent: boolean }) {
-  return (
-    <header className="site-header">
-      <PageLink className="brand" href="/" aria-label={t('Whenkin home')}>
-        <img src="/favicon.svg" alt="" width={40} height={40} />
-        <span>{BRAND.name.toLowerCase()}</span>
-      </PageLink>
-      <nav aria-label={t('Main navigation')}>
-        {showNewEvent && (
-          <PageLink className="button secondary compact quiet-action" href="/">
-            <Plus size={16} />
-            {t('New Event')}
-          </PageLink>
-        )}
-        <LanguageSelector />
-      </nav>
-    </header>
   );
 }
 
@@ -68,7 +52,13 @@ function Header({ showNewEvent }: { showNewEvent: boolean }) {
  * @returns Footer links and installation controls, plus manual instructions
  * when needed.
  */
-function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
+function Footer({
+  showEventExpiry,
+  showTagline,
+}: {
+  showEventExpiry: boolean;
+  showTagline: boolean;
+}) {
   const copy = shortcutCopy[useLanguage()];
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
@@ -94,9 +84,9 @@ function Footer({ showEventExpiry }: { showEventExpiry: boolean }) {
       <footer className="site-footer">
         {showEventExpiry ? (
           <EventLimits className="footer-expiry" />
-        ) : (
+        ) : showTagline ? (
           <span>{t(BRAND.tagline)}</span>
-        )}
+        ) : null}
         <nav aria-label={copy.footer}>
           <button
             type="button"

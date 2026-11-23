@@ -6,7 +6,6 @@ import React, {
 } from 'react';
 import {
   ArrowRight,
-  CalendarDays,
   Info,
   LoaderCircle,
   Plus,
@@ -14,7 +13,6 @@ import {
 } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
-import PageLink from '../components/PageLink';
 import EventLimits from '../components/EventLimits';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
@@ -190,18 +188,10 @@ export default function CreateEventPage() {
           onDismiss={dismissNotice}
         />
       )}
-      <section className="intro">
-        <PageLink className="mobile-guide-link" href="/how-it-works">
-          {t('How It Works')} <ArrowRight size={16} />
-        </PageLink>
-      </section>
       <section className="create-card">
         <div className="form-heading">
           <div>
             <h2>{t('Create Your Event')}</h2>
-          </div>
-          <div className="heading-icon">
-            <CalendarDays size={22} />
           </div>
         </div>
         <form noValidate onSubmit={create}>

@@ -1,11 +1,9 @@
 /** Tracks the selected language and formats translated interface messages. */
 import { messages } from './messages';
 export { messages } from './messages';
-import pt from './pt';
-import de from './de';
 
-// English is the default; Portuguese uses the Brazilian locale.
-export type Language = 'en' | 'zh' | 'es' | 'pt' | 'de';
+// English is the default; Chinese uses simplified characters.
+export type Language = 'en' | 'zh';
 export const languageOptions: { value: Language;
   label: string }[] = [
   {
@@ -16,50 +14,16 @@ export const languageOptions: { value: Language;
     value: 'zh',
     label: '简体中文',
   },
-  {
-    value: 'es',
-    label: 'Español',
-  },
-  {
-    value: 'pt',
-    label: 'Português',
-  },
-  {
-    value: 'de',
-    label: 'Deutsch',
-  },
 ];
 export const translations: Record<
   Exclude<Language, 'en'>,
   Record<string, string>
 > = {
-  zh: Object.fromEntries(
-    Object.entries(messages).map(
-      /* Build the Chinese message lookup from the shared translation table. */
-      ([key, values]) => [
-        key,
-        values[0],
-      ],
-    ),
-  ),
-  es: Object.fromEntries(
-    Object.entries(messages).map(
-      /* Build the Spanish lookup from the second translation column. */
-      ([key, values]) => [
-        key,
-        values[1],
-      ],
-    ),
-  ),
-  pt,
-  de,
+  zh: messages,
 };
 const locales = {
   en: 'en-US',
   zh: 'zh-CN',
-  es: 'es-ES',
-  pt: 'pt-BR',
-  de: 'de-DE',
 } as const;
 
 /**
@@ -88,7 +52,7 @@ const listeners = new Set<() => void>();
 
 /**
  * Read the selected interface language.
- * @returns The current supported language code, such as en or pt.
+ * @returns The current supported language code, either en or zh.
  */
 export function getLanguage() {
   return language;
@@ -96,7 +60,7 @@ export function getLanguage() {
 
 /**
  * Resolve the Intl locale for the current interface language.
- * @returns Its locale identifier; Portuguese uses the Brazilian pt-BR locale.
+ * @returns The English en-US or simplified Chinese zh-CN locale identifier.
  */
 export function getLocale() {
   return locales[language];

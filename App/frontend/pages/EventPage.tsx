@@ -16,6 +16,10 @@ import { t } from '../i18n/index';
 import EventResults from '../components/event/EventResults';
 import ShareEventDialog from '../components/event/ShareEventDialog';
 import EventTour from '../components/EventTour';
+import {
+  HeaderAction,
+  useHeaderActions,
+} from '../components/HeaderActions';
 import Toast from '../components/Toast';
 import AvailabilityPopover from '../components/AvailabilityPopover';
 import EventUnavailablePage from './EventUnavailablePage';
@@ -32,6 +36,7 @@ const COPY_FEEDBACK_MS = 2200;
  * or unavailable-event view.
  */
 export default function EventPage({ id }: { id: string }) {
+  const { menu } = useHeaderActions();
   const {
     event,
     zone,
@@ -128,6 +133,25 @@ export default function EventPage({ id }: { id: string }) {
   const eventLink = location.origin + `/e/${id}`;
   return (
     <main className="event-page">
+      <HeaderAction name="share">
+        <button
+          type="button"
+          data-tour-share
+          className="button primary compact"
+          onClick={
+            /* Open the page-owned sharing dialog from the shared header. */
+            () => setShare(true)
+          }
+        >
+          <Link2 size={17} /> {t('Share Event')}
+        </button>
+      </HeaderAction>
+      <HeaderAction name="guide">
+        <EventTour
+          onOpen={menu.closeAndFocus}
+          onRestoreFocus={menu.closeAndFocus}
+        />
+      </HeaderAction>
       {view === 'group' && inspection && (
         <AvailabilityPopover
           event={event}
@@ -153,19 +177,6 @@ export default function EventPage({ id }: { id: string }) {
             <div className="event-heading">
               <div>
                 <h1>{event.title}</h1>
-              </div>
-              <div className="event-actions">
-                <button
-                  data-tour-share
-                  className="button primary compact"
-                  onClick={
-                    /* Open sharing controls for the current event. */
-                    () => setShare(true)
-                  }
-                >
-                  <Link2 size={17} /> {t('Share Event')}
-                </button>
-                <EventTour />
               </div>
             </div>
             {event.description && (

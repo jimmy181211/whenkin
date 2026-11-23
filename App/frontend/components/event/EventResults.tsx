@@ -113,30 +113,33 @@ export default function EventResults({
         <div className="sidebar-title">
           <h2>{t('When Everyone Is Free')}</h2>
         </div>
-        <button
-          type="button"
-          className="button primary highlight-shared-times"
-          aria-pressed={highlighted}
-          disabled={!highlighted && !suggestions.length}
-          onClick={onToggleHighlight}
-        >
-          {t(
-            highlighted
-              ? 'Cancel Highlight'
-              : 'Highlight Everyone’s Free Times',
-          )}
-        </button>
-        <p className="shared-time-summary" role="status">
-          {t(
-            suggestions.length === 1
-              ? '{count} shared time period'
-              : '{count} shared time periods',
-            { count: suggestions.length },
-          )}
-        </p>
-        {!suggestions.length && event.responses.length > 0 && (
-          <p className="field-help">
-            {t('Add more availability to find a time that works.')}
+        {suggestions.length > 0 || highlighted ? (
+          <>
+            <button
+              type="button"
+              className="button primary highlight-shared-times"
+              aria-pressed={highlighted}
+              disabled={!highlighted && !suggestions.length}
+              onClick={onToggleHighlight}
+            >
+              {t(
+                highlighted
+                  ? 'Cancel Highlight'
+                  : 'Highlight Everyone’s Free Times',
+              )}
+            </button>
+            <p className="shared-time-summary" role="status">
+              {t(
+                suggestions.length === 1
+                  ? '{count} shared time period'
+                  : '{count} shared time periods',
+                { count: suggestions.length },
+              )}
+            </p>
+          </>
+        ) : (
+          <p className="shared-empty" role="status">
+            {t('No shared free time yet.')}
           </p>
         )}
       </section>

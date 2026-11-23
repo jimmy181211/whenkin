@@ -1,6 +1,6 @@
 # Whenkin
 
-Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English, Simplified Chinese, Spanish, Brazilian Portuguese and German, specific dates and typical weekdays, and automatic time-zone conversion.
+Whenkin helps a group find a time to meet: create an event, share its link, and mark availability. It supports desktop and mobile, English and Simplified Chinese, specific dates and typical weekdays, and automatic time-zone conversion.
 
 ## Website shortcuts
 
@@ -46,7 +46,7 @@ App/
     components/         Calendar, availability grids, responders and dialogs
     api/                Browser HTTP client and event loading
     utils/              Browser display and interaction helpers
-    i18n/               Interface translations and locale selection (five languages)
+    i18n/               Interface translations and locale selection (English and Chinese)
     content/            Existing legal documents
     public/             Static assets
     App.tsx             Page selection and shared layout

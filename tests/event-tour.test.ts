@@ -128,8 +128,5 @@ describe('first-visit event guide', () => {
     }
     expect(tourCopy.en.personal[1]).toBe('View or edit your current response.');
     expect(tourCopy.zh.personal[1]).toBe('查看或修改你正在填写的空闲时间。');
-    expect(tourCopy.es.personal[1]).toBe(
-      'Consulta o edita tu respuesta actual.',
-    );
   });
 });

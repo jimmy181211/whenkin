@@ -3,11 +3,10 @@ import type { ReactNode } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  Minus,
-  Plus,
   Undo2,
 } from 'lucide-react';
 import { t } from '../i18n/index';
+import GridDisplayOptions from './GridDisplayOptions';
 
 /** Current date-page boundaries and the action that changes the page index. */
 type GridPaging = {
@@ -92,30 +91,7 @@ export default function AvailabilityGridTools({
           >
             <Undo2 size={17} />
           </button>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={t('Smaller time slots')}
-            disabled={zoom <= 1}
-            onClick={
-              /* Reduce row height by one zoom level. */
-              () => onZoomChange(zoom - 1)
-            }
-          >
-            <Minus size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={t('Larger time slots')}
-            disabled={zoom >= 3}
-            onClick={
-              /* Increase row height by one zoom level. */
-              () => onZoomChange(zoom + 1)
-            }
-          >
-            <Plus size={16} />
-          </button>
+          <GridDisplayOptions zoom={zoom} onZoomChange={onZoomChange} />
         </div>
       </div>
       {paging.totalDays > paging.daysPerPage && (
