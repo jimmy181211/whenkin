@@ -181,29 +181,45 @@ describe('shared events and common ground', () => {
       ).status,
     ).toBe(400);
   });
-  /** Accepts future dates through 2050 and rejects 2051. */
-  it('accepts future dates through 2050 and rejects 2051', async () => {
+  /** Store and reload future dates through 9999; reject dates outside the supported range. */
+  it('stores future dates through 9999 and rejects unsupported dates and UTC overflow', async () => {
     for (const value of [
       '2028-02-29',
-      '2050-12-31',
+      '2070-12-31',
+      '9999-12-31',
+    ]) {
+      const created = await request('/events', 'POST', {
+        ...input,
+        dates: [value],
+      });
+      expect(created.status).toBe(201);
+      const event = await get((await created.json()).id);
+      expect(event.windows[0].start.slice(0, 4)).toBe(value.slice(0, 4));
+    }
+    for (const date of [
+      '2025-12-31',
+      '10000-01-01',
+      '2070.5-01-01',
     ]) {
       expect(
         (
           await request('/events', 'POST', {
             ...input,
-            dates: [value],
+            dates: [date],
           })
         ).status,
-      ).toBe(201);
+      ).toBe(400);
     }
-    expect(
-      (
-        await request('/events', 'POST', {
-          ...input,
-          dates: ['2051-01-01'],
-        })
-      ).status,
-    ).toBe(400);
+    const overflow = await request('/events', 'POST', {
+      ...input,
+      dates: ['9999-12-31'],
+      startTime: '23:00',
+      endTime: '24:00',
+    });
+    expect(overflow.status).toBe(400);
+    expect(await overflow.json()).toMatchObject({
+      error: 'Choose times within the supported year range.',
+    });
   });
   /**
    * Shows the same group responses and matches with a shared link or an

@@ -86,8 +86,6 @@ export const messages: Record<string, string> = {
   'Specific Dates': '具体日期',
   'Days of the Week': '星期几',
   'Choose days of the week': '选择星期几',
-  '{count} day selected': '已选 {count} 天',
-  '{count} days selected': '已选 {count} 天',
   'Choose at least one day of the week.': '请至少选择一周中的一天。',
   'Choose specific dates or days of the week.': '请选择具体日期或星期模式。',
   Week: '每周',
@@ -166,7 +164,6 @@ export const messages: Record<string, string> = {
   'Copy did not work. Select the link in the sharing panel and copy it manually.':
     '复制失败。请在分享窗口中选中链接并手动复制。',
   'Your availability grid': '你的空闲时间表',
-  Clear: '清除',
   'Undo selection': '撤销选择',
   'Smaller time slots': '缩小时间格',
   'Larger time slots': '放大时间格',
@@ -176,8 +173,6 @@ export const messages: Record<string, string> = {
   'not selected': '未选择',
   'Previous month': '上个月',
   'Next month': '下个月',
-  '{count} date selected': '已选择 {count} 个日期',
-  '{count} dates selected': '已选择 {count} 个日期',
   'Choose your time zone': '选择你的时区',
   'Search time zones': '搜索时区',
   'Search a city or time zone': '搜索城市或时区',
@@ -218,8 +213,10 @@ export const messages: Record<string, string> = {
   'The end time must be after the start time on the same day.':
     '结束时间必须晚于同一天的开始时间。',
   'Please choose valid dates.': '请选择有效的日期。',
-  'Choose dates from today through December 31, 2050.':
-    '请选择今天至 2050 年 12 月 31 日之间的日期。',
+  'Choose dates from today through December 31, 9999.':
+    '请选择今天至 9999 年 12 月 31 日之间的日期。',
+  'Choose times within the supported year range.':
+    '请选择在支持年份范围内的时间。',
 
   'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.':
     '所选时间在夏令时切换时无效或重复。请选择其他开始或结束时间。',

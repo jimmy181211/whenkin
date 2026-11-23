@@ -29,10 +29,9 @@ export function clampCalendarMonth(value: Temporal.PlainDate) {
  * Date-selection component with editable month/year controls and event-date
  * limits.
  * @param timezone - Determines today's date and which past dates are disabled.
- * @param onChange - Receives all selected dates after adding, removing, or
- * clearing.
+ * @param onChange - Receives all selected dates after adding or removing a date.
  *
- * @returns A month calendar with selected-date controls and a clear action.
+ * @returns A month calendar with individually selectable dates.
  */
 export default function Calendar({
   value,
@@ -60,31 +59,6 @@ export default function Calendar({
         value={value}
         onChange={onChange}
       />
-      <div className={`calendar-foot ${value.length ? '' : 'empty'}`}>
-        <span>
-          <i />{' '}
-          {value.length
-            ? t(
-              value.length === 1
-                ? '{count} date selected'
-                : '{count} dates selected',
-              { count: value.length },
-            )
-            : null}
-        </span>
-        {value.length > 0 && (
-          <button
-            type="button"
-            className="text-button"
-            onClick={
-              /* Clear all selected calendar dates. */
-              () => onChange([])
-            }
-          >
-            {t('Clear')}
-          </button>
-        )}
-      </div>
     </div>
   );
 }

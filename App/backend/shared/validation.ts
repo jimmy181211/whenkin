@@ -11,7 +11,10 @@ import type {
   TimeRange,
 } from '../../shared/types.js';
 import { weekdayDate } from '../../shared/weekly.js';
-import { isEventDateAllowed } from '../../shared/date-limits.js';
+import {
+  isEventDateAllowed,
+  LAST_EVENT_DATE,
+} from '../../shared/date-limits.js';
 /** Report a request error with an HTTP status and a message safe to display. */
 export class Problem extends Error {
   /** Keep the HTTP status alongside the safe validation message. */
@@ -128,12 +131,23 @@ export function validateEvent(input: CreateInput) {
         if (mode === 'dates' && !isEventDateAllowed(d, today)) {
           throw new Problem(
             400,
-            'Choose dates from today through December 31, 2050.',
+            'Choose dates from today through December 31, 9999.',
           );
         }
         const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
         const start = localToUTC(date, input.startTime, clockZone);
         const end = localToUTC(date, input.endTime, clockZone);
+        // The final local day can cross into year 10000 after timezone conversion.
+        // Reject that boundary explicitly rather than passing unsupported ISO text to SQL.
+        if (
+          Temporal.Instant.from(end).toZonedDateTimeISO('UTC').year >
+          LAST_EVENT_DATE.year
+        ) {
+          throw new Problem(
+            400,
+            'Choose times within the supported year range.',
+          );
+        }
         return {
           start,
           end,

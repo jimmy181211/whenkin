@@ -431,29 +431,6 @@ small {
 .calendar-day:disabled {
   opacity: 0.25;
 }
-.calendar-foot {
-  font-size: 10px;
-  color: #7a8b78;
-  display: flex;
-  justify-content: space-between;
-  margin: 14px 0 22px;
-  align-items: center;
-  min-height: 16px;
-}
-.calendar-foot > span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.calendar-foot i {
-  background: var(--lime);
-  border-radius: 3px;
-  width: 9px;
-  height: 9px;
-}
-.calendar-foot button {
-  font-size: 10px;
-}
 .fields-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1.2fr;
@@ -1217,9 +1194,6 @@ small {
   }
   .weekday {
     font-size: 11px;
-  }
-  .calendar-foot {
-    font-size: 10px;
   }
   .zone-trigger strong {
     font-size: 12px;
@@ -2040,9 +2014,6 @@ input[aria-invalid='true'] {
 }
 
 /* Keep the mobile creation flow focused on the form. */
-.calendar-foot.empty {
-  display: none;
-}
 .schedule-picker {
   margin-bottom: 20px;
 }
@@ -2109,12 +2080,6 @@ input[aria-invalid='true'] {
 .weekday-indicator {
   font-size: 15px;
   line-height: 1;
-}
-.weekly-picker .calendar-foot {
-  margin-bottom: 0;
-}
-.schedule-picker .calendar-foot {
-  margin-bottom: 0;
 }
 @media (max-width: 699px) {
   .schedule-mode-switch button {
