@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
-import EventLimits from '../components/EventLimits';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
 import { t } from '../i18n/index';
@@ -301,7 +300,6 @@ export default function CreateEventPage() {
               {t(error)}
             </p>
           )}
-          <EventLimits />
           <button
             disabled={busy || connection !== 'ready'}
             className="button primary create-submit"

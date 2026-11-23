@@ -11,6 +11,9 @@
   font-weight: 500;
   min-height: 44px;
 }
+.calendar-selects .calendar-year input {
+  padding-inline: 4px;
+}
 .editable-select-toggle {
   position: absolute;
   inset: 0 0 0 auto;
@@ -64,6 +67,9 @@
   .calendar-selects .calendar-year input {
     font-size: 16px;
     padding-left: 8px;
+  }
+  .calendar-selects .calendar-year input {
+    padding-inline: 4px;
   }
   .editable-select-options > button {
     min-height: 44px;
