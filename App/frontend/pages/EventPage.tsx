@@ -137,13 +137,13 @@ export default function EventPage({ id }: { id: string }) {
         <button
           type="button"
           data-tour-share
-          className="button primary compact"
+          className="header-control"
           onClick={
             /* Open the page-owned sharing dialog from the shared header. */
             () => setShare(true)
           }
         >
-          <Link2 size={17} /> {t('Share Event')}
+          <Link2 size={16} /> {t('Share Event')}
         </button>
       </HeaderAction>
       <HeaderAction name="guide">

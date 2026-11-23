@@ -122,9 +122,6 @@
   .event-tour-panel p {
     font-size: 14px;
   }
-  .event-tour-trigger {
-    font-size: 12px !important;
-  }
 }
 @media (max-width: 360px) {
   .event-tour-panel {

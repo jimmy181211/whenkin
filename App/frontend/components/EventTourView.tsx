@@ -51,7 +51,7 @@ export default function EventTourView({
       <button
         ref={trigger}
         type="button"
-        className="button secondary compact quiet-action event-tour-trigger"
+        className="header-control event-tour-trigger"
         onClick={
           /* Open the guide's welcome card from the help button. */
           onStart

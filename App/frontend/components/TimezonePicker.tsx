@@ -71,14 +71,11 @@ export default function TimezonePicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  // Remember explicit selection so it is not labeled as automatic detection.
-  const [manual, setManual] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const detectedZone = deviceTimezone();
-  const usingDevice = !manual && value === detectedZone;
   /** Focus timezone search when the menu opens. */
   useEffect(() => {
     if (open) {
@@ -135,10 +132,9 @@ export default function TimezonePicker({
       ...popular,
     ])];
 
-  /** Commit a zone and return focus; fromDevice keeps the automatic-detection label. */
-  const choose = (zone: string, fromDevice = false) => {
+  /** Emit the IANA zone unchanged, clear the search, and restore trigger focus. */
+  const choose = (zone: string) => {
     onChange(zone);
-    setManual(!fromDevice);
     setOpen(false);
     setQuery('');
     trigger.current?.focus();
@@ -160,6 +156,7 @@ export default function TimezonePicker({
       <button
         ref={trigger}
         className="zone-trigger"
+        aria-label={`${t('Choose your time zone')}: ${zoneLabel(value)} ${zoneOffset(value, at)}`}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={
@@ -170,13 +167,6 @@ export default function TimezonePicker({
       >
         <Globe2 size={17} />
         <span>
-          <small>
-            {t(
-              usingDevice
-                ? 'Your Time Zone · Detected'
-                : 'Your Time Zone · Selected',
-            )}
-          </small>
           <strong>
             {zoneLabel(value)}{' '}
             <span className="zone-offset">{zoneOffset(value, at)}</span>
@@ -242,8 +232,8 @@ export default function TimezonePicker({
             type="button"
             className="device-zone"
             onClick={
-              /* Select the browser-detected timezone and retain its automatic label. */
-              () => choose(detectedZone, true)
+              /* Select the browser-detected timezone without changing its identifier. */
+              () => choose(detectedZone)
             }
           >
             <LocateFixed size={16} /> {t('Use Device Time Zone')}{' '}
@@ -252,8 +242,8 @@ export default function TimezonePicker({
           <div className="zone-options">
             {shown.map(
               /**
-               * @returns A timezone result button with its city label, IANA
-               * id, and offset.
+               * @returns A timezone result showing its city and offset;
+               * the selection retains the IANA id internally.
                */
               (z) => (
                 <button
@@ -269,7 +259,6 @@ export default function TimezonePicker({
                 >
                   <span>
                     <strong>{zoneLabel(z)}</strong>
-                    <small>{z}</small>
                   </span>
                   <small>{zoneOffset(z, at)}</small>
                   {value === z && <Check size={16} />}
