@@ -27,10 +27,12 @@ export default function SiteLayout({
   children,
   showNewEvent = false,
   showFooterTagline = true,
+  showEventExpiry = showNewEvent,
 }: {
   children: ReactNode;
   showNewEvent?: boolean;
   showFooterTagline?: boolean;
+  showEventExpiry?: boolean;
 }) {
   return (
     <RetentionPolicyProvider>
@@ -38,7 +40,7 @@ export default function SiteLayout({
         <SiteHeader showNewEvent={showNewEvent} />
         {children}
         <Footer
-          showEventExpiry={showNewEvent}
+          showEventExpiry={showEventExpiry}
           showTagline={showFooterTagline}
         />
       </HeaderActionsProvider>
@@ -81,10 +83,8 @@ function Footer({
 
   return (
     <>
-      <footer className="site-footer">
-        {showEventExpiry ? (
-          <EventLimits className="footer-expiry" />
-        ) : showTagline ? (
+      <footer className={`site-footer${showEventExpiry ? ' has-expiry' : ''}`}>
+        {!showEventExpiry && showTagline ? (
           <span>{t(BRAND.tagline)}</span>
         ) : null}
         <nav aria-label={copy.footer}>
@@ -106,10 +106,11 @@ function Footer({
           <PageLink href="/terms">{t('Terms of Use')}</PageLink>
           <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
         </nav>
-        <span>
+        <span className="footer-copyright">
           © {new Date().getFullYear()} {LEGAL.operator}
           <GlobeIcon />
         </span>
+        {showEventExpiry && <EventLimits className="footer-expiry" />}
       </footer>
       {shortcutOpen && <ShortcutDialog onClose={closeShortcut} />}
     </>

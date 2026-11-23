@@ -8,3 +8,21 @@
 .site-footer .footer-expiry svg {
   display: none;
 }
+.site-footer.has-expiry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: 12px;
+}
+.site-footer.has-expiry .footer-expiry {
+  grid-column: 1 / -1;
+  justify-content: center;
+  text-align: center;
+}
+@media (max-width: 699px) {
+  .site-footer.has-expiry {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    row-gap: 8px;
+  }
+}

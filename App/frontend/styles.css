@@ -562,7 +562,7 @@ small {
 }
 .create-submit {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 16px;
   justify-content: space-between;
   padding: 15px 18px;
 }
@@ -587,7 +587,7 @@ small {
   font-size: 10px;
   color: #899586;
 }
-.site-footer > span:last-child {
+.site-footer > .footer-copyright {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2290,34 +2290,27 @@ input[aria-invalid='true'] {
   }
 }
 
-/* Calendar jumps use the same native select controls as the event hours. */
+/* Calendar jumps stay compact instead of stretching across the date grid. */
 .calendar-heading {
-  gap: 8px;
+  gap: 8px 4px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 .calendar-heading .calendar-selects {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-columns: 7.75rem 4.25rem;
   gap: 8px;
-  flex: 1 1 210px;
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: 280px;
+  max-width: 100%;
 }
-.calendar-selects select {
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 10px 24px 10px 10px;
+html[lang='zh-CN'] .calendar-heading .calendar-selects {
+  grid-template-columns: 6rem 4.25rem;
 }
-.calendar-navigation {
+.calendar-heading .calendar-navigation {
   flex-shrink: 0;
-  margin-left: auto;
-}
-@media (max-width: 699px) {
-  .calendar-selects select {
-    font-size: 14px;
-    padding-left: 8px;
-  }
+  margin-left: 0;
+  gap: 0;
 }
 
 /* Shared expiry and capacity notice on desktop and mobile. */
@@ -2333,9 +2326,6 @@ input[aria-invalid='true'] {
 }
 .event-limits svg {
   margin-top: 2px;
-}
-.create-card .event-limits {
-  margin: 12px 0 8px;
 }
 .event-summary .event-limits {
   margin: 12px 0 0;

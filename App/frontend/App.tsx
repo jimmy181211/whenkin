@@ -45,6 +45,7 @@ export default function App() {
     <SiteLayout
       showNewEvent={!!eventId}
       showFooterTagline={route.kind !== 'home'}
+      showEventExpiry={route.kind === 'home' || !!eventId}
     >
       {eventId ? (
         <EventPage key={eventId} id={eventId} />
