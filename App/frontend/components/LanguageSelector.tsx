@@ -26,7 +26,7 @@ export function useLanguage() {
 export default function LanguageSelector() {
   const language = useLanguage();
   return (
-    <label className="language-selector">
+    <label className="language-selector header-control">
       <Languages size={16} aria-hidden="true" />
       <span className="sr-only">{t('Language')}</span>
       <select

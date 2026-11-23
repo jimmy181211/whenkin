@@ -77,10 +77,7 @@ export default function SiteHeader({
             {showNewEvent ? (
               <>
                 <HeaderActionSlot name="guide" />
-                <PageLink
-                  className="button secondary compact quiet-action"
-                  href="/"
-                >
+                <PageLink className="header-control" href="/">
                   <Plus size={16} /> {t('New Event')}
                 </PageLink>
               </>

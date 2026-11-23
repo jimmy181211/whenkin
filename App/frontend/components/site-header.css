@@ -9,13 +9,56 @@
   flex-wrap: nowrap;
   flex: 0 0 auto;
 }
-.site-header .header-navigation .button {
+.site-header .header-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
   min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
   font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.site-header .event-tour-trigger {
-  font-size: 0.875rem !important;
+.site-header .header-control:hover {
+  background: var(--soft);
+}
+.site-header .header-control:focus-visible,
+.site-header .header-control:has(select:focus-visible) {
+  outline: 3px solid var(--teal);
+  outline-offset: 3px;
+}
+.site-header .header-control select {
+  width: auto;
+  min-width: 0;
+  max-width: 130px;
+  min-height: 0;
+  height: 100%;
+  padding: 0 22px 0 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: inherit;
+}
+.site-header .header-control select:focus-visible {
+  outline: none;
+}
+.site-header .header-control > svg {
+  width: 16px;
+  height: 16px;
 }
 .header-share-slot,
 .header-guide-slot {
@@ -77,13 +120,10 @@
     align-items: stretch;
     gap: 8px;
   }
-  .header-secondary-panel .header-guide-slot .button,
-  .site-header[data-event='true'] .header-secondary-panel > .button {
+  .header-secondary-panel .header-guide-slot .header-control,
+  .site-header[data-event='true'] .header-secondary-panel > .header-control {
     width: 100%;
     justify-content: flex-start;
-  }
-  .site-header[data-event='true'] .header-secondary-panel .language-selector {
-    width: 100%;
   }
   .site-header[data-event='true']
     .header-secondary-panel
@@ -91,8 +131,6 @@
     select {
     width: 100%;
     max-width: none;
-    min-height: 40px;
-    font-size: 0.875rem;
   }
 }
 @media (max-width: 699px) {
@@ -108,9 +146,6 @@
   }
   .header-secondary-panel {
     gap: 8px;
-  }
-  .site-header .header-share-slot .button {
-    padding-inline: 10px;
   }
 }
 @media (max-width: 360px) {
