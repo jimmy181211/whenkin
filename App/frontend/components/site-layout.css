@@ -1,6 +1,21 @@
+/* Both event pages use this one footer layout and its responsive ordering. */
+.site-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  max-width: 1160px;
+  margin: auto;
+  border-top: 1px solid var(--line);
+  padding: 24px 20px 30px;
+  font-size: 10px;
+  color: #899586;
+}
 .site-footer .event-limits.footer-expiry {
+  grid-column: 1;
   margin: 0;
   padding: 0;
+  justify-content: flex-start;
   font-size: 11px;
   color: inherit;
   line-height: 1.6;
@@ -8,21 +23,72 @@
 .site-footer .footer-expiry svg {
   display: none;
 }
-.site-footer.has-expiry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  row-gap: 12px;
+.footer-tagline {
+  grid-column: 1;
 }
-.site-footer.has-expiry .footer-expiry {
-  grid-column: 1 / -1;
+.site-footer nav {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  text-align: center;
+  gap: 20px;
+}
+.footer-policy-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.site-footer nav a,
+.site-footer .shortcut-entry {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: var(--primary);
+}
+.footer-copyright {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
 }
 @media (max-width: 699px) {
-  .site-footer.has-expiry {
+  .site-footer {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    row-gap: 8px;
+    gap: 8px;
+    margin: 0 20px;
+    padding: 16px 0 20px;
+    text-align: center;
+  }
+  .site-footer .footer-expiry,
+  .footer-tagline,
+  .site-footer nav,
+  .footer-copyright {
+    grid-column: 1;
+    justify-self: center;
+  }
+  .site-footer .event-limits.footer-expiry {
+    justify-content: center;
+  }
+  .site-footer nav {
+    flex-direction: column;
+    gap: 0;
+  }
+  .footer-policy-links {
+    gap: 24px;
   }
 }

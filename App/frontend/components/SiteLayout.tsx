@@ -83,9 +83,11 @@ function Footer({
 
   return (
     <>
-      <footer className={`site-footer${showEventExpiry ? ' has-expiry' : ''}`}>
-        {!showEventExpiry && showTagline ? (
-          <span>{t(BRAND.tagline)}</span>
+      <footer className="site-footer">
+        {showEventExpiry ? (
+          <EventLimits className="footer-expiry" />
+        ) : showTagline ? (
+          <span className="footer-tagline">{t(BRAND.tagline)}</span>
         ) : null}
         <nav aria-label={copy.footer}>
           <button
@@ -103,14 +105,15 @@ function Footer({
           >
             {copy.title}
           </button>
-          <PageLink href="/terms">{t('Terms of Use')}</PageLink>
-          <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
+          <span className="footer-policy-links">
+            <PageLink href="/terms">{t('Terms of Use')}</PageLink>
+            <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
+          </span>
         </nav>
         <span className="footer-copyright">
           © {new Date().getFullYear()} {LEGAL.operator}
           <GlobeIcon />
         </span>
-        {showEventExpiry && <EventLimits className="footer-expiry" />}
       </footer>
       {shortcutOpen && <ShortcutDialog onClose={closeShortcut} />}
     </>
