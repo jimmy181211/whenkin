@@ -235,6 +235,8 @@ const pt: Record<string, string> = {
     'A disponibilidade precisa de data, hora e diferença de fuso horário.',
   'Please select complete 15-minute intervals.':
     'Selecione intervalos completos de 15 minutos.',
+  'Please select complete 30-minute intervals.':
+    'Selecione intervalos completos de 30 minutos.',
   'Too many overlapping selections. Please reload and try again.':
     'Há muitas seleções sobrepostas. Recarregue e tente novamente.',
   'Some selected times are outside this event. Reload the event and try again.':

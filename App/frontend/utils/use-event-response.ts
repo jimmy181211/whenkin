@@ -14,6 +14,7 @@ import {
   allSlots,
   deviceTimezone,
   slotsToRanges,
+  slotDuration,
 } from './time';
 import type {
   MeetingEvent,
@@ -118,7 +119,7 @@ export function useEventResponse(id: string) {
     if (previous && previous.schedule_revision !== result.schedule_revision) {
       const value = latestDraft.current;
       // After a schedule change, only these slot starts remain valid selections.
-      const allowed = new Set(allSlots(result.windows));
+      const allowed = new Set(allSlots(result.windows, slotDuration(result)));
       const person = result.responses.find(
         /** Find the edited reply in the updated event schedule. */
         (r) => r.id === editingIdRef.current,
@@ -130,7 +131,7 @@ export function useEventResponse(id: string) {
             (stamp) => allowed.has(stamp),
           ),
         )
-        : new Set(allSlots(person?.ranges || []));
+        : new Set(allSlots(person?.ranges || [], slotDuration(result)));
       setSelected(next);
       latestDraft.current = {
         ...value,
@@ -151,7 +152,7 @@ export function useEventResponse(id: string) {
       !savingRef.current &&
       current.revision !== responseRevisionRef.current
     ) {
-      const next = new Set(allSlots(current.ranges));
+      const next = new Set(allSlots(current.ranges, slotDuration(result)));
       responseRevisionRef.current = current.revision;
       responseZoneRef.current = current.timezone;
       latestDraft.current = {
@@ -298,7 +299,7 @@ export function useEventResponse(id: string) {
       const payload = {
         name: value.name,
         timezone: responseZoneRef.current ?? value.zone,
-        ranges: slotsToRanges(value.selected),
+        ranges: slotsToRanges(value.selected, slotDuration(eventRef.current)),
         // Reply and schedule revisions protect against two kinds of stale writes.
         revision: responseRevisionRef.current,
         schedule_revision: eventRef.current.schedule_revision,
@@ -416,7 +417,7 @@ export function useEventResponse(id: string) {
       const next = {
         name: person.name,
         zone: latestDraft.current.zone,
-        selected: new Set(allSlots(person.ranges)),
+        selected: new Set(allSlots(person.ranges, slotDuration(result))),
       };
       editingIdRef.current = person.id;
       responseRevisionRef.current = person.revision;

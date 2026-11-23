@@ -24,6 +24,8 @@ export type MeetingEvent = {
   organizer_name: string;
   timezone: string;
   schedule_mode?: 'dates' | 'weekdays';
+  /** Saved selection granularity; missing metadata belongs to the legacy 15-minute format. */
+  slot_minutes?: 15 | 30;
   /** All times offered by the event; a response must stay inside these windows. */
   windows: TimeRange[];
   responses: ResponseData[];

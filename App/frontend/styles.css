@@ -959,18 +959,6 @@ small {
 .time-cell.highlighted {
   box-shadow: inset 0 0 0 2px #133f3b;
 }
-.selection-guide {
-  position: fixed;
-  transform: translateX(-50%);
-  padding: 11px 13px;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  pointer-events: none;
-  z-index: 90;
-  max-width: calc(100vw - 20px);
-}
 .save-bar {
   display: flex;
   gap: 15px;
@@ -1614,14 +1602,6 @@ small {
   .time-label {
     font-size: 10px;
   }
-  .selection-guide {
-    font-size: 11px;
-    white-space: normal;
-    text-align: center;
-    min-width: 220px;
-    line-height: 1.5;
-    padding: 12px;
-  }
   .save-bar {
     flex-direction: row;
     align-items: center;
@@ -2000,10 +1980,6 @@ html[lang='zh-CN'] .intro h1 {
   }
   .save-bar > span {
     max-width: none;
-  }
-  .selection-guide {
-    min-width: 0;
-    width: max-content;
   }
   .time-grid {
     grid-template-columns: 58px repeat(var(--days), minmax(0, 1fr));

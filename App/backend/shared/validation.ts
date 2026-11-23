@@ -105,7 +105,7 @@ export function validateEvent(input: CreateInput) {
     }
     dates = input.dates;
   }
-  const validTime = /^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/;
+  const validTime = /^(?:[01]\d|2[0-3]):(?:00|30)$/;
   if (
     !validTime.test(input.startTime) ||
     !(validTime.test(input.endTime) || input.endTime === '24:00') ||
@@ -162,16 +162,21 @@ export function validateEvent(input: CreateInput) {
 }
 
 /**
- * Check that every selected 15-minute slot belongs to the event.
+ * Check that each complete saved slot belongs to the event's schedule.
+ * @param duration - Event-specific slot length in milliseconds; defaults to legacy slots.
  * @param windows - The event's allowed time ranges.
  * @returns Merged ISO ranges with duplicate selections removed.
  */
-export function validateRanges(input: unknown, windows: TimeRange[]) {
+export function validateRanges(
+  input: unknown,
+  windows: TimeRange[],
+  duration = SLOT,
+) {
   if (!Array.isArray(input) || input.length > 3000) {
     throw new Problem(400, 'Please choose valid availability.');
   }
   // Membership checks use instants, so different timezone offsets can mean the same slot.
-  const allowed = new Set(allSlots(windows));
+  const allowed = new Set(allSlots(windows, duration));
   const selected = new Set<number>();
   // Count before deduplication to bound the work caused by repeated overlapping ranges.
   let requestedSlots = 0;
@@ -195,19 +200,24 @@ export function validateRanges(input: unknown, windows: TimeRange[]) {
       !Number.isFinite(a) ||
       !Number.isFinite(b) ||
       b <= a ||
-      (b - a) % SLOT ||
+      (b - a) % duration ||
       b - a > 32 * 86400000
     ) {
-      throw new Problem(400, 'Please select complete 15-minute intervals.');
+      throw new Problem(
+        400,
+        duration === SLOT
+          ? 'Please select complete 15-minute intervals.'
+          : 'Please select complete 30-minute intervals.',
+      );
     }
-    requestedSlots += (b - a) / SLOT;
+    requestedSlots += (b - a) / duration;
     if (requestedSlots > allowed.size * 2) {
       throw new Problem(
         400,
         'Too many overlapping selections. Please reload and try again.',
       );
     }
-    for (let t = a; t < b; t += SLOT) {
+    for (let t = a; t < b; t += duration) {
       if (!allowed.has(t)) {
         throw new Problem(
           400,
@@ -217,5 +227,5 @@ export function validateRanges(input: unknown, windows: TimeRange[]) {
       selected.add(t);
     }
   }
-  return slotsToRanges(selected);
+  return slotsToRanges(selected, duration);
 }

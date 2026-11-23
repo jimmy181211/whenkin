@@ -19,7 +19,7 @@ export async function readEvent(
 ) {
   checkId(id);
   const rows = await database.query<MeetingEvent>(
-    `SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.created_at,e.expires_at,e.expires_at<=clock_timestamp() AS expired,e.schedule_revision,e.schedule_mode,
+    `SELECT e.id,e.title,e.description,e.organizer_name,e.timezone,e.created_at,e.expires_at,e.expires_at<=clock_timestamp() AS expired,e.schedule_revision,e.schedule_mode,e.slot_minutes,
       (SELECT count(*)::int FROM responses r WHERE r.event_id=e.id) AS response_count,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('start',w.starts_at,'end',w.ends_at) ORDER BY w.starts_at) FROM event_windows w WHERE w.event_id=e.id),'[]'::jsonb) AS windows,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',r.id,'name',r.name,'timezone',r.timezone,'revision',r.revision,

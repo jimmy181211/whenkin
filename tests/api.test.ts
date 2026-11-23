@@ -154,19 +154,20 @@ afterAll(
 /** Group the shared events and common ground checks. */
 describe('shared events and common ground', () => {
   /**
-   * Creates without a meeting length, including a single 15-minute event
+   * Creates without a meeting length, including a single 30-minute event
    * window.
    */
-  it('creates without a meeting length, including a single 15-minute event window', async () => {
+  it('creates without a meeting length, including a single 30-minute event window', async () => {
     const created = await create({
-      endTime: '09:15',
+      endTime: '09:30',
       organizer_name: '',
     });
     const event = await get(created.id);
     expect(event.organizer_name).toBe('');
     expect(
       Date.parse(event.windows[0].end) - Date.parse(event.windows[0].start),
-    ).toBe(15 * 60000);
+    ).toBe(30 * 60000);
+    expect(event.slot_minutes).toBe(30);
     expect(event).not.toHaveProperty('duration');
     expect(event).not.toHaveProperty('is_organizer');
     expect(event).not.toHaveProperty('admin_hash');
@@ -270,11 +271,11 @@ describe('shared events and common ground', () => {
 
     await respond(created.id, [range(0, 180)], 'Alice');
     await respond(created.id, [range(0, 180)], 'Bob');
-    await respond(created.id, [range(30, 45)], 'Charlie');
+    await respond(created.id, [range(30, 60)], 'Charlie');
     const result = await get(created.id);
     expect(result.candidates).toEqual([
       {
-        ...range(30, 45),
+        ...range(30, 60),
         available: result.responses.map(
           /* Read response ids for the expected shared-time membership check. */
           (r) => r.id,

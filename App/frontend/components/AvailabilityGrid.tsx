@@ -10,11 +10,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ArrowDownUp } from 'lucide-react';
 import {
-  displayRange,
   gridModel,
-  SLOT,
+  GRID_ROW_MINUTES,
+  slotDuration,
 } from '../utils/time';
 import type {
   MeetingEvent,
@@ -28,11 +27,8 @@ import { groupAvailability } from '../utils/group-availability';
 import { scrollGrid } from '../utils/grid-scroll';
 import type { SlotInspection } from './SlotDetails';
 import { projectWeekly } from '../../shared/weekly';
-import PopupSurface from './PopupSurface';
 
 const MOBILE_BREAKPOINT_PX = 700;
-// A displayed row spans 30 minutes; stored selections still use 15-minute slots.
-const GRID_ROW_MINUTES = 30;
 const MAX_UNDO_STEPS = 20;
 
 /**
@@ -106,11 +102,6 @@ export default function AvailabilityGrid({
   const editing = canEdit && !group;
   // Weekly timestamps encode weekday/clock positions; UTC prevents a second shift.
   const clockZone = weekly ? 'UTC' : zone;
-  const [selectionHint, setSelectionHint] = useState<{
-    text: string;
-    x: number;
-    y: number;
-  } | null>(null);
   /**
    * Weekly display slots may differ from storage slots; dated events need no
    * mapping.
@@ -124,6 +115,7 @@ export default function AvailabilityGrid({
       event.windows,
       event.timezone,
       event.created_at,
+      event.slot_minutes,
       zone,
     ],
   );
@@ -143,24 +135,30 @@ export default function AvailabilityGrid({
   const grid = useMemo(
     () =>
       gridModel(
-        projection?.windows ?? event.windows,
+        {
+          windows: projection?.windows ?? event.windows,
+          slot_minutes: event.slot_minutes,
+        },
         clockZone,
-        GRID_ROW_MINUTES,
       ),
     [
       projection,
       event.windows,
       clockZone,
+      event.slot_minutes,
     ],
   );
   const scroll = useRef<HTMLDivElement>(null);
   /**
-   * Number of available responders at each stored 15-minute slot start.
+   * Number of available responders at each stored slot start for this event.
    * @returns A lookup from stored slot starts to available responder counts.
    */
   const counts = useMemo(
-    () => groupAvailability(event.responses),
-    [event.responses],
+    () => groupAvailability(event.responses, slotDuration(event)),
+    [
+      event.responses,
+      event.slot_minutes,
+    ],
   );
   /**
    * Attach wheel handling that lets the surrounding page scroll at grid edges.
@@ -234,7 +232,6 @@ export default function AvailabilityGrid({
    */
   useEffect(() => {
     gesture.current = null;
-    setSelectionHint(null);
     setPage(0);
   }, [
     zone,
@@ -262,15 +259,8 @@ export default function AvailabilityGrid({
    * slots that are no longer inside it.
    * @param row - End row in the full grid.
    * @param col - End day column, including columns outside the current page.
-   * @param x - Horizontal pointer position in viewport pixels, used for the hint.
-   * @param y - Vertical pointer position in the same coordinate system.
    */
-  function updateGestureSelection(
-    row: number,
-    col: number,
-    x: number,
-    y: number,
-  ) {
+  function updateGestureSelection(row: number, col: number) {
     const currentGesture = gesture.current;
     if (!currentGesture || !editing) {
       return;
@@ -301,23 +291,6 @@ export default function AvailabilityGrid({
         currentGesture.remove,
       ),
     );
-    const first = Math.min(...stamps);
-    const last = Math.max(...stamps);
-    if (stamps.length) {
-      const range = {
-        start: new Date(first).toISOString(),
-        end: new Date(last + SLOT).toISOString(),
-      };
-      setSelectionHint({
-        text: `${t(currentGesture.remove ? 'Clear' : 'Available')} · ${displayRange(
-          range,
-          clockZone,
-          weekly,
-        )}`,
-        x: Math.max(140, Math.min(window.innerWidth - 140, x)),
-        y: Math.max(90, y - 70),
-      });
-    }
   }
 
   /**
@@ -362,7 +335,7 @@ export default function AvailabilityGrid({
     };
     e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
-    updateGestureSelection(row, col, e.clientX, e.clientY);
+    updateGestureSelection(row, col);
   }
 
   /** Extend the current drag using the same add/remove action as its first cell. */
@@ -378,16 +351,13 @@ export default function AvailabilityGrid({
       updateGestureSelection(
         Number(target.dataset.row),
         Number(target.dataset.col),
-        e.clientX,
-        e.clientY,
       );
     }
   }
 
-  /** End the drag and hide its range hint. */
+  /** End the drag when its pointer is released, canceled, or loses capture. */
   function finishSelection() {
     gesture.current = null;
-    setSelectionHint(null);
   }
 
   /** Restore the last selection through the normal change/autosave callback. */
@@ -456,19 +426,6 @@ export default function AvailabilityGrid({
         extendSelection={extendSelection}
         finishSelection={finishSelection}
       />
-      {selectionHint && (
-        <PopupSurface
-          className="selection-guide"
-          role="status"
-          style={{
-            left: selectionHint.x,
-            top: selectionHint.y,
-          }}
-        >
-          <ArrowDownUp size={15} />
-          {selectionHint.text}
-        </PopupSurface>
-      )}
     </section>
   );
 }

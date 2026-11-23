@@ -235,6 +235,8 @@ const de: Record<string, string> = {
     'Für die Verfügbarkeit werden Datum, Uhrzeit und Zeitzonenversatz benötigt.',
   'Please select complete 15-minute intervals.':
     'Wähle vollständige 15-Minuten-Intervalle.',
+  'Please select complete 30-minute intervals.':
+    'Wähle vollständige 30-Minuten-Intervalle.',
   'Too many overlapping selections. Please reload and try again.':
     'Zu viele überlappende Auswahlen. Lade die Seite neu und versuche es erneut.',
   'Some selected times are outside this event. Reload the event and try again.':

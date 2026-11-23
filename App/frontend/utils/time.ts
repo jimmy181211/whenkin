@@ -3,13 +3,19 @@ import {
   t,
 } from '../i18n';
 import { Temporal } from '@js-temporal/polyfill';
-import type { TimeRange } from '../../shared/types';
+import type {
+  MeetingEvent,
+  TimeRange,
+} from '../../shared/types';
 import {
   allSlots,
   localDate,
+  slotDuration,
 } from '../../shared/time';
 export {
   SLOT,
+  NEW_EVENT_SLOT_MINUTES,
+  slotDuration,
   isTimezone,
   localToUTC,
   localDate,
@@ -109,8 +115,11 @@ export function displayRange(range: TimeRange, zone: string, weekly = false) {
   )}`;
 }
 
+/** Display rows span 30 minutes for both new and legacy events. */
+export const GRID_ROW_MINUTES = 30;
+
 /**
- * One 15-minute calendar slot with its local date, clock position, and DST
+ * One saved calendar slot with its local date, clock position, and DST
  * occurrence.
  */
 export type GridCell = {
@@ -129,30 +138,55 @@ export type GridCell = {
 /**
  * Group slot instants by local date and build matching calendar rows.
  * Keep repeated DST hours separate so two different instants are never one cell.
- * @param interval - Minutes per displayed row; stored slots remain 15 minutes.
+ * Count each date/minute pair once per slot instead of rescanning its column.
+ * Display rows always span 30 minutes. Event metadata selects the stored slot size.
+ * @param schedule - Event windows and granularity, or a legacy windows-only array.
  * @returns Date columns of cells and ordered row keys shared by all columns.
  * Empty windows produce empty columns and rows.
  */
 export function gridModel(
-  windows: TimeRange[],
+  schedule: Pick<MeetingEvent, 'windows' | 'slot_minutes'> | TimeRange[],
   zone: string,
-  interval: 15 | 30 = 15,
 ) {
+  const event = Array.isArray(schedule)
+    ? {
+      windows: schedule,
+      slot_minutes: undefined,
+    }
+    : schedule;
   const days = new Map<string, GridCell[]>();
+  // Counts are per date: the same clock minute tomorrow is not a DST repeat.
+  const occurrences = new Map<string, number>();
   // Local hours needing a second set of rows when clocks move backward.
   const repeated = new Set<number>();
-  for (const stamp of allSlots(windows)) {
+  // Whole half-hour slots can start at :15 in a quarter-hour-offset display zone.
+  let rowOffset = 0;
+  // Empty input leaves these bounds inverted, producing no display rows.
+  let firstHour = Infinity;
+  let lastHour = -Infinity;
+  for (const stamp of allSlots(event.windows, slotDuration(event))) {
     const t =
       Temporal.Instant.fromEpochMilliseconds(stamp).toZonedDateTimeISO(zone);
-    const date = t.toPlainDate().toString();
-    const minute = t.hour * 60 + t.minute;
-    const col = days.get(date) || [];
-    const occurrence = col.filter(
-      /* Count earlier occurrences of this local minute to distinguish DST repeats. */
-      (c) => c.minute === minute,
-    ).length;
+    // Resolve local calendar fields once; zoned getters each repeat that work.
+    const local = t.toPlainDateTime();
+    const date = local.toPlainDate().toString();
+    const hour = local.hour;
+    const minute = hour * 60 + local.minute;
+    if (!days.size && event.slot_minutes === 30) {
+      rowOffset = minute % GRID_ROW_MINUTES;
+    }
+    const clockKey = `${date}:${minute}`;
+    const occurrence = occurrences.get(clockKey) ?? 0;
+    occurrences.set(clockKey, occurrence + 1);
+    firstHour = Math.min(firstHour, hour);
+    lastHour = Math.max(lastHour, hour);
     if (occurrence) {
-      repeated.add(t.hour);
+      repeated.add(hour);
+    }
+    let col = days.get(date);
+    if (!col) {
+      col = [];
+      days.set(date, col);
     }
     col.push({
       stamp,
@@ -162,31 +196,36 @@ export function gridModel(
       offset: t.offset,
       key: `${minute}:${occurrence}`,
     });
-    days.set(date, col);
   }
+  return {
+    days: [...days.entries()].sort(
+      /* Order calendar columns by their local YYYY-MM-DD date. */
+      ([a], [b]) => a.localeCompare(b),
+    ),
+    rows: gridRows(firstHour, lastHour, repeated, rowOffset),
+  };
+}
+
+/**
+ * Build shared clock rows for the observed hour range, including gaps.
+ * A repeated hour receives two complete row groups, even for a half-hour rollback.
+ * @param firstHour - Earliest local hour, or Infinity when no slots exist.
+ * @param lastHour - Latest local hour, or -Infinity when no slots exist.
+ * @param offset - Minute offset within a half-hour row, for shifted display zones.
+ * @returns Ordered clock rows; inverted bounds produce an empty array.
+ */
+function gridRows(
+  firstHour: number,
+  lastHour: number,
+  repeated: Set<number>,
+  offset: number,
+) {
   const rows: { key: string;
     minute: number;
     occurrence: number }[] = [];
-  const cells = [...days.values()].flat();
-  const min = Math.floor(
-    Math.min(
-      ...cells.map(
-        /* Read local clock minutes to find the earliest displayed hour. */
-        (c) => c.minute,
-      ),
-    ) / 60,
-  );
-  const max = Math.floor(
-    Math.max(
-      ...cells.map(
-        /* Read the same clock values to find the latest displayed hour. */
-        (c) => c.minute,
-      ),
-    ) / 60,
-  );
-  for (let h = min; h <= max; h++) {
+  for (let h = firstHour; h <= lastHour; h++) {
     for (let n = 0; n < (repeated.has(h) ? 2 : 1); n++) {
-      for (let m = 0; m < 60; m += interval) {
+      for (let m = offset; m < 60; m += GRID_ROW_MINUTES) {
         rows.push({
           key: `${h * 60 + m}:${n}`,
           minute: h * 60 + m,
@@ -195,11 +234,5 @@ export function gridModel(
       }
     }
   }
-  return {
-    days: [...days.entries()].sort(
-      /* Order calendar columns by their local YYYY-MM-DD date. */
-      ([a], [b]) => a.localeCompare(b),
-    ),
-    rows,
-  };
+  return rows;
 }

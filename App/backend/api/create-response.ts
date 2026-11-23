@@ -1,5 +1,8 @@
 /** Validates and inserts a response with its availability in one SQL statement. */
-import { isTimezone } from '../../shared/time.js';
+import {
+  isTimezone,
+  slotDuration,
+} from '../../shared/time.js';
 import {
   Problem,
   text,
@@ -39,7 +42,11 @@ export default function createResponse(
         'The event schedule changed. Reload before saving your changes.',
       );
     }
-    const ranges = validateRanges(input.ranges, event.windows);
+    const ranges = validateRanges(
+      input.ranges,
+      event.windows,
+      slotDuration(event),
+    );
     const id = crypto.randomUUID();
     // "gate" locks/checks the event; no reply or availability is inserted if it fails.
     const created = await database.query(

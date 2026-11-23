@@ -122,9 +122,9 @@ export default function AvailabilityGridBody({
           (row, r) => (
             <GridRow key={row.key}>
               <div
-                className={`time-label ${row.minute % 60 === 0 ? 'hour-label' : ''}`}
+                className={`time-label ${row.minute % 60 < 30 ? 'hour-label' : ''}`}
               >
-                {row.minute % 60 === 0 ? (
+                {row.minute % 60 < 30 ? (
                   <>
                     {clockLabel(row.minute)}
                     {row.occurrence > 0 && <small>{t('again')}</small>}
@@ -169,14 +169,17 @@ function GridRow({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Format the hour corresponding to minutes since midnight.
- * @returns A localized hour label for the supplied minutes since midnight.
+ * Format a row's clock label, including minutes for quarter-hour zone shifts.
+ * @returns A localized hour, or hour/minute label when the row is not on the hour.
  */
 function clockLabel(minute: number) {
   return new Intl.DateTimeFormat(getLocale(), {
     timeZone: 'UTC',
     hour: 'numeric',
-  }).format(new Date(Date.UTC(2000, 0, 1, Math.floor(minute / 60))));
+    minute: minute % 60 ? '2-digit' : undefined,
+  }).format(
+    new Date(Date.UTC(2000, 0, 1, Math.floor(minute / 60), minute % 60)),
+  );
 }
 
 /**

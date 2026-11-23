@@ -1,7 +1,7 @@
 /** Renders one time block, including selection, shared highlights, and inspection. */
 import { t } from '../i18n/index';
 import {
-  SLOT,
+  slotDuration,
   formatDay,
   formatTime,
   zoneLabel,
@@ -42,7 +42,7 @@ export type AvailabilityCellContext = {
  * block.
  */
 type Props = {
-  /** Underlying 15-minute slots grouped into this one visible calendar block. */
+  /** Saved slots in this block: one for new events, up to two for legacy events. */
   cells: GridCell[];
   rowMinute: number;
   rowIndex: number;
@@ -52,8 +52,8 @@ type Props = {
 
 /**
  * Calendar block component for personal selections and group availability. A
- * 30-minute block contains two 15-minute slots, so it can be partly selected
- * or show different availability counts in its upper and lower halves.
+ * New events select a whole 30-minute slot. Legacy events retain their two
+ * quarter-hour parts, including partial selection and availability counts.
  * @returns An interactive time block with selection, heatmap, and highlight
  * indicators, or an empty placeholder when no slots exist.
  */
@@ -90,8 +90,8 @@ export default function AvailabilityCell({
       />
     );
   }
-  // End bounds are exclusive: the final slot contributes its full 15 minutes.
-  const blockEnd = cells.at(-1)!.stamp + SLOT;
+  // End bounds are exclusive; the final slot contributes its event-specific duration.
+  const blockEnd = cells.at(-1)!.stamp + slotDuration(event);
   const selectedCells = cells.filter(
     /* Select this block's underlying slots that are marked available. */
     (c) => selected.has(canonicalStamp(c.stamp)),

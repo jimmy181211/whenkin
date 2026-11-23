@@ -14,6 +14,129 @@ import {
 } from '../App/frontend/utils/time';
 import { validateRanges } from '../App/backend/shared/validation';
 
+/** Preserve grid boundaries and occurrence indexes while optimizing slot grouping. */
+describe('30-minute grid grouping', () => {
+  /** No complete slots means no columns or rows. */
+  it('returns an empty model for empty or incomplete windows', () => {
+    expect(gridModel([], 'UTC')).toEqual({
+      days: [],
+      rows: [],
+    });
+    expect(
+      gridModel(
+        [
+          {
+            start: '2027-01-15T09:00Z',
+            end: '2027-01-15T09:10Z',
+          },
+        ],
+        'UTC',
+      ),
+    ).toEqual({
+      days: [],
+      rows: [],
+    });
+  });
+
+  /** Overlaps are deduplicated; identical clock minutes on separate dates stay ordinary. */
+  it('keeps dates sorted and resets occurrence counts for each date', () => {
+    const windows = [
+      {
+        start: '2027-01-16T09:00Z',
+        end: '2027-01-16T10:00Z',
+      },
+      {
+        start: '2027-01-15T09:00Z',
+        end: '2027-01-15T10:00Z',
+      },
+      {
+        start: '2027-01-15T09:15Z',
+        end: '2027-01-15T09:45Z',
+      },
+    ];
+    const before = JSON.stringify(windows);
+    const model = gridModel(windows, 'UTC');
+    expect(model.days.map(([date]) => date)).toEqual([
+      '2027-01-15',
+      '2027-01-16',
+    ]);
+    for (const [, cells] of model.days) {
+      expect(cells).toHaveLength(4);
+      expect(cells.map((cell) => cell.occurrence)).toEqual([
+        0,
+        0,
+        0,
+        0,
+      ]);
+    }
+    expect(model.rows).toHaveLength(2);
+    expect(JSON.stringify(windows)).toBe(before);
+  });
+
+  /** Blank hours between offered ranges still need display rows. */
+  it('retains gap rows and rounds the observed range to whole hours', () => {
+    const model = gridModel(
+      [
+        {
+          start: '2027-01-15T12:00Z',
+          end: '2027-01-15T12:30Z',
+        },
+        {
+          start: '2027-01-15T09:15Z',
+          end: '2027-01-15T09:45Z',
+        },
+      ],
+      'UTC',
+    );
+    expect(model.rows).toHaveLength(8);
+    expect(model.rows[0]).toEqual({
+      key: '540:0',
+      minute: 540,
+      occurrence: 0,
+    });
+    expect(model.rows.at(-1)?.minute).toBe(750);
+    expect(model.days[0][1]).toHaveLength(4);
+  });
+
+  /** Lord Howe rolls back thirty minutes; repeated instants must remain distinct. */
+  it('preserves partial-hour DST repeats and the existing complete-hour row groups', () => {
+    const model = gridModel(
+      [
+        {
+          start: '2026-04-04T14:00Z',
+          end: '2026-04-04T16:00Z',
+        },
+      ],
+      'Australia/Lord_Howe',
+    );
+    const cells = model.days[0][1];
+    expect(model.days[0][0]).toBe('2026-04-05');
+    expect(cells.map((cell) => cell.minute)).toEqual([
+      60,
+      75,
+      90,
+      105,
+      90,
+      105,
+      120,
+      135,
+    ]);
+    expect(cells.map((cell) => cell.occurrence)).toEqual([
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+    ]);
+    expect(new Set(cells.map((cell) => cell.offset)).size).toBe(2);
+    expect(model.rows.filter((row) => row.minute === 90)).toHaveLength(2);
+    expect(model.rows.filter((row) => row.minute === 60)).toHaveLength(2);
+  });
+});
+
 /**
  * Build an ISO time-range fixture without additional metadata.
  * @returns A time-range fixture containing the supplied start and end strings.
@@ -178,15 +301,18 @@ describe('whole meetings and compact storage', () => {
 
 /** Group the 30-minute display with 15-minute storage checks. */
 describe('30-minute display with 15-minute storage', () => {
-  /** Halves display rows without dropping saved quarter-hours. */
-  it('halves display rows without dropping saved quarter-hours', () => {
+  /** Fixed half-hour rows must not drop saved quarter-hours. */
+  it('uses fixed half-hour rows without dropping saved quarter-hours', () => {
     const windows = [span('2027-01-15T09:15:00Z', '2027-01-15T10:45:00Z')];
-    const fine = gridModel(windows, 'UTC');
-    const coarse = gridModel(windows, 'UTC', 30);
-    expect(coarse.rows).toHaveLength(fine.rows.length / 2);
-    expect(coarse.days).toEqual(fine.days);
+    const model = gridModel(windows, 'UTC');
+    expect(model.rows.map((row) => row.minute)).toEqual([
+      540,
+      570,
+      600,
+      630,
+    ]);
     expect(
-      coarse.days[0][1].map(
+      model.days[0][1].map(
         /* Compare the underlying instants retained by the coarser grid. */
         (c) => c.stamp,
       ),
@@ -203,7 +329,7 @@ describe('30-minute display with 15-minute storage', () => {
         localToUTC('2026-11-01', '04:00', 'America/Los_Angeles'),
       ),
     ];
-    const model = gridModel(windows, 'America/Los_Angeles', 30);
+    const model = gridModel(windows, 'America/Los_Angeles');
     expect(
       model.rows.filter(
         /* Select repeated clock-minute rows in the coarse DST grid. */
