@@ -747,6 +747,10 @@ export const messages: Record<string, [string, string]> = {
     '请选择完整的 15 分钟时段。',
     'Selecciona intervalos completos de 15 minutos.',
   ],
+  'Please select complete 30-minute intervals.': [
+    '请选择完整的 30 分钟时段。',
+    'Selecciona intervalos completos de 30 minutos.',
+  ],
   'Too many overlapping selections. Please reload and try again.': [
     '重叠选择过多。请刷新后重试。',
     'Hay demasiadas selecciones superpuestas. Recarga e inténtalo de nuevo.',

@@ -20,6 +20,20 @@ The optional Caddy service listens on 80/443 and manages HTTPS for the configure
 
 ## Updating
 
+The half-hour event release requires migration `010_event_slot_minutes.sql` and
+its matching API/frontend code. Existing events receive `slot_minutes=15`; their
+windows, replies, availability, and expiry timestamps are unchanged. New events
+use `slot_minutes=30`. Coordinate creation during the schema/API switchover,
+since the older API still accepts quarter-hour creation times. Do not round
+existing ranges or edit old migrations.
+
+Use a brief creation pause, or a compatible rolling sequence: apply migration
+010 and set the column default back to 15 in the same transaction, deploy the
+new API (which explicitly inserts 30), then restore the default to 30 after old
+API instances have been replaced. This keeps any old-version inserts marked as
+legacy events. If rolling back to the old API, first restore the default to 15;
+keep the new column and existing event values.
+
 From the dedicated checkout, first back up the database. Fetch and check out the reviewed release commit, then run:
 
 ```sh

@@ -2,8 +2,19 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { TimeRange } from './types.js';
 
-/** Duration of one saved availability slot, in milliseconds. */
+/** Legacy slot duration, retained for old events and helper callers without metadata. */
 export const SLOT = 15 * 60 * 1000;
+
+/** New events use half-hour choices and saved slots. */
+export const NEW_EVENT_SLOT_MINUTES = 30;
+
+/**
+ * Resolve an event's saved slot duration without changing legacy ranges.
+ * @returns Milliseconds per slot; absent metadata means the original 15-minute format.
+ */
+export function slotDuration(event: { slot_minutes?: 15 | 30 }) {
+  return event.slot_minutes === 30 ? NEW_EVENT_SLOT_MINUTES * 60 * 1000 : SLOT;
+}
 
 /**
  * Check whether the runtime recognizes this time-zone identifier.
@@ -51,18 +62,19 @@ export function localDate(value: string | number, zone: string) {
 }
 
 /**
- * Expand ranges into sorted, unique 15-minute start timestamps in milliseconds.
+ * Expand ranges into sorted, unique slot-start timestamps in milliseconds.
  * Overlapping ranges do not duplicate slots; an incomplete trailing slot is skipped.
  * Input ranges are assumed parseable; event-bound and alignment checks happen separately.
+ * @param duration - Milliseconds per slot; defaults to the legacy format.
  * @returns Slot starts in milliseconds, or an empty list when no complete slots exist.
  */
-export function allSlots(windows: TimeRange[]): number[] {
+export function allSlots(windows: TimeRange[], duration = SLOT): number[] {
   const result = new Set<number>();
   for (const w of windows) {
     for (
       let t = Date.parse(w.start);
-      t + SLOT <= Date.parse(w.end);
-      t += SLOT
+      t + duration <= Date.parse(w.end);
+      t += duration
     ) {
       result.add(t);
     }
@@ -76,7 +88,8 @@ export function allSlots(windows: TimeRange[]): number[] {
 /**
  * Merge adjacent selected slots, keeping gaps as separate ranges.
  * This conversion does not check whether slots belong to an event's allowed schedule.
- * @param slots - Valid start timestamps in milliseconds, each covering 15 minutes.
+ * @param slots - Valid start timestamps in milliseconds.
+ * @param duration - Milliseconds covered by each slot; defaults to the legacy format.
  * @returns Sorted UTC ISO ranges with exclusive end times, or an empty list
  * when no slots are selected.
  * @example
@@ -85,7 +98,10 @@ export function allSlots(windows: TimeRange[]): number[] {
  * // Two adjacent 15-minute slots become one 30-minute range.
  * ```
  */
-export function slotsToRanges(slots: Set<number> | number[]): TimeRange[] {
+export function slotsToRanges(
+  slots: Set<number> | number[],
+  duration = SLOT,
+): TimeRange[] {
   const result: TimeRange[] = [];
   for (const t of [...new Set(slots)].sort(
     /* Merge selected slots in chronological order after removing duplicates. */
@@ -93,11 +109,11 @@ export function slotsToRanges(slots: Set<number> | number[]): TimeRange[] {
   )) {
     const last = result.at(-1);
     if (last && Date.parse(last.end) === t) {
-      last.end = new Date(t + SLOT).toISOString();
+      last.end = new Date(t + duration).toISOString();
     } else {
       result.push({
         start: new Date(t).toISOString(),
-        end: new Date(t + SLOT).toISOString(),
+        end: new Date(t + duration).toISOString(),
       });
     }
   }

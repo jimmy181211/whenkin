@@ -104,6 +104,28 @@ export default function CreateEventPage() {
     };
   }, []);
 
+  /** Update selected dates and clear only their missing-selection warning. */
+  function handleDatesChange(next: string[]) {
+    setDates(next);
+    if (next.length) {
+      setError(
+        /* Clear only the date-selection warning, preserving unrelated errors. */
+        (current) => (current === scheduleErrors.dates ? '' : current),
+      );
+    }
+  }
+
+  /** Update selected weekdays and clear only their missing-selection warning. */
+  function handleWeekdaysChange(next: number[]) {
+    setWeekdays(next);
+    if (next.length) {
+      setError(
+        /* Clear only the weekday-selection warning. */
+        (current) => (current === scheduleErrors.weekdays ? '' : current),
+      );
+    }
+  }
+
   /**
    * Check the name, API readiness, selected days, and time order before submitting.
    * Send local dates/clock times with the event timezone; the backend validates and
@@ -239,33 +261,9 @@ export default function CreateEventPage() {
               }
             }
             dates={dates}
-            onDatesChange={
-              /* Update selected dates and clear the missing-date warning once a date is chosen. */
-              (next) => {
-                setDates(next);
-                if (next.length) {
-                  setError(
-                    /* Clear only the date-selection warning, preserving unrelated errors. */
-                    (current) =>
-                      current === scheduleErrors.dates ? '' : current,
-                  );
-                }
-              }
-            }
+            onDatesChange={handleDatesChange}
             weekdays={weekdays}
-            onWeekdaysChange={
-              /* Update selected weekdays and clear their required-selection warning. */
-              (next) => {
-                setWeekdays(next);
-                if (next.length) {
-                  setError(
-                    /* Clear only the weekday-selection warning. */
-                    (current) =>
-                      current === scheduleErrors.weekdays ? '' : current,
-                  );
-                }
-              }
-            }
+            onWeekdaysChange={handleWeekdaysChange}
             timezone={zone}
           />
           <TimeRangePicker

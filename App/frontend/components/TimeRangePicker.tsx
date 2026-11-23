@@ -3,14 +3,15 @@ import {
   getLocale,
   t,
 } from '../i18n/index';
+import { NEW_EVENT_SLOT_MINUTES } from '../../shared/time';
 
-// Quarter-hour clock choices from 00:00 through 24:00, including next-day midnight.
+// Half-hour choices include next-day midnight, which is only offered as an end.
 const times = Array.from(
-  { length: 97 },
-  /** Generate quarter-hour clock choices through 24:00. */
+  { length: (24 * 60) / NEW_EVENT_SLOT_MINUTES + 1 },
+  /** Generate half-hour clock choices through 24:00. */
   (_, i) =>
-    `${String(Math.floor(i / 4)).padStart(2, '0')}:${String(
-      (i % 4) * 15,
+    `${String(Math.floor((i * NEW_EVENT_SLOT_MINUTES) / 60)).padStart(2, '0')}:${String(
+      (i * NEW_EVENT_SLOT_MINUTES) % 60,
     ).padStart(2, '0')}`,
 );
 
@@ -39,7 +40,7 @@ type TimeRangePickerProps = {
 };
 
 /**
- * Time-range control using quarter-hour choices. Start excludes 24:00; end
+ * Time-range control using half-hour choices. Start excludes 24:00; end
  * includes it as next-day midnight. Changes retain the HH:mm string format.
  * @returns Localized From/Until dropdowns; the parent validates start < end.
  */

@@ -3,7 +3,10 @@ import {
   X,
 } from 'lucide-react';
 import { t } from '../i18n/index';
-import { displayRange } from '../utils/time';
+import {
+  displayRange,
+  slotDuration,
+} from '../utils/time';
 import { inspectAvailability } from '../utils/group-availability';
 import type {
   MeetingEvent,
@@ -40,6 +43,7 @@ export default function SlotDetails({
   } = inspectAvailability(
     event.responses,
     inspection.stamps,
+    slotDuration(event),
   );
   const free = new Set(
     available.map(

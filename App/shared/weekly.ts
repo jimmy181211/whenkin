@@ -2,6 +2,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import {
   allSlots,
   slotsToRanges,
+  slotDuration,
 } from './time.js';
 import type {
   MeetingEvent,
@@ -30,7 +31,10 @@ export function weekdayDate(day: number) {
  * @returns Display windows and mappings back to the organizer's stored slots.
  */
 export function projectWeekly(
-  event: Pick<MeetingEvent, 'windows' | 'timezone' | 'created_at'>,
+  event: Pick<
+    MeetingEvent,
+    'windows' | 'timezone' | 'created_at' | 'slot_minutes'
+  >,
   zone: string,
 ) {
   const parsed = Date.parse(event.created_at ?? '');
@@ -91,6 +95,9 @@ export function projectWeekly(
     toDisplay,
     toCanonical,
     range,
-    windows: slotsToRanges(allSlots(event.windows).map(toDisplay)),
+    windows: slotsToRanges(
+      allSlots(event.windows, slotDuration(event)).map(toDisplay),
+      slotDuration(event),
+    ),
   };
 }

@@ -50,10 +50,10 @@ afterAll(
 /** Group the PostgreSQL migration runner checks. */
 describe('PostgreSQL migration runner', () => {
   /**
-   * Applies nine migrations once and preserves the original migration
+   * Applies ten migrations once and preserves the original migration
    * checksums.
    */
-  it('applies nine migrations once and preserves the original migration checksums', async () => {
+  it('applies ten migrations once and preserves the original migration checksums', async () => {
     await migrate(
       client,
       undefined,
@@ -62,7 +62,7 @@ describe('PostgreSQL migration runner', () => {
     );
     expect(
       (await pg.query('SELECT name FROM schema_migrations')).rows,
-    ).toHaveLength(9);
+    ).toHaveLength(10);
     await pg.query(
       "INSERT INTO events(id,title,organizer_name,timezone) VALUES(gen_random_uuid(),'Retained','','UTC')",
     );
@@ -77,7 +77,7 @@ describe('PostgreSQL migration runner', () => {
     ]);
     expect(
       (await pg.query('SELECT name FROM schema_migrations')).rows,
-    ).toHaveLength(9);
+    ).toHaveLength(10);
   });
   /** Rolls back failed schema changes together with their migration record. */
   it('rolls back failed schema changes together with their migration record', async () => {

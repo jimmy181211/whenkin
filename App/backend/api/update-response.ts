@@ -1,5 +1,8 @@
 /** Updates a response and its ranges while checking the expected revision. */
-import { isTimezone } from '../../shared/time.js';
+import {
+  isTimezone,
+  slotDuration,
+} from '../../shared/time.js';
 import {
   Problem,
   checkId,
@@ -64,7 +67,11 @@ export default function updateResponse(
         'The event schedule changed. Reload before saving your changes.',
       );
     }
-    const ranges = validateRanges(input.ranges, event.windows);
+    const ranges = validateRanges(
+      input.ranges,
+      event.windows,
+      slotDuration(event),
+    );
     // One statement checks revisions, removes old ranges, and inserts replacements.
     // The new ranges are inserted only for the reply accepted by "target".
     const updated = await database.query<{
