@@ -2309,7 +2309,7 @@ html[lang='zh-CN'] .calendar-heading .calendar-selects {
 }
 .calendar-heading .calendar-navigation {
   flex-shrink: 0;
-  margin-left: 0;
+  margin-left: auto;
   gap: 0;
 }
 
