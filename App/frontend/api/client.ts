@@ -17,10 +17,7 @@ export class ApiError extends Error {
  * @param options - Fetch options; callers serialize request bodies with JSON.stringify.
  * @returns The parsed response body; throws ApiError on failure.
  */
-export async function api<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`/api${path}`, {
@@ -32,10 +29,7 @@ export async function api<T>(
       },
     });
   } catch {
-    throw new ApiError(
-      'We couldn’t reach Whenkin. Please check your connection and try again.',
-      0,
-    );
+    throw new ApiError('We couldn’t reach Whenkin. Please check your connection and try again.', 0);
   }
   const body: unknown = await response.json().catch(
     /* Treat an unreadable JSON response as invalid API output. */

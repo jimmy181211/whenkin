@@ -41,21 +41,9 @@ export const checkId = (value: string) => {
  * @param optional - Allow an empty string, but still require a string value.
  * @returns The trimmed field value; invalid input throws Problem.
  */
-export const text = (
-  value: unknown,
-  label: string,
-  max: number,
-  optional = false,
-) => {
-  if (
-    typeof value !== 'string' ||
-    value.trim().length > max ||
-    (!optional && !value.trim())
-  ) {
-    throw new Problem(
-      400,
-      `Please enter ${label} (${max} characters or fewer).`,
-    );
+export const text = (value: unknown, label: string, max: number, optional = false) => {
+  if (typeof value !== 'string' || value.trim().length > max || (!optional && !value.trim())) {
+    throw new Problem(400, `Please enter ${label} (${max} characters or fewer).`);
   }
   return value.trim();
 };
@@ -68,12 +56,7 @@ export const text = (
 export function validateEvent(input: CreateInput) {
   const title = text(input.title, 'an event name', 100);
   const organizer = text(input.organizer_name ?? '', 'your name', 60, true);
-  const description = text(
-    input.description ?? '',
-    'a description',
-    1000,
-    true,
-  );
+  const description = text(input.description ?? '', 'a description', 1000, true);
   if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
     throw new Problem(400, 'Please choose a valid time zone.');
   }
@@ -114,54 +97,11 @@ export function validateEvent(input: CreateInput) {
     !(validTime.test(input.endTime) || input.endTime === '24:00') ||
     input.endTime <= input.startTime
   ) {
-    throw new Problem(
-      400,
-      'The end time must be after the start time on the same day.',
-    );
+    throw new Problem(400, 'The end time must be after the start time on the same day.');
   }
   const windows: TimeRange[] = dates.map(
     /* Validate each chosen date and convert its local clock times to an event window. */
-    (date) => {
-      if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        throw new Problem(400, 'Please choose valid dates.');
-      }
-      try {
-        const d = Temporal.PlainDate.from(date);
-        const today = Temporal.Now.plainDateISO(input.timezone);
-        if (mode === 'dates' && !isEventDateAllowed(d, today)) {
-          throw new Problem(
-            400,
-            'Choose dates from today through December 31, 9999.',
-          );
-        }
-        const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
-        const start = localToUTC(date, input.startTime, clockZone);
-        const end = localToUTC(date, input.endTime, clockZone);
-        // The final local day can cross into year 10000 after timezone conversion.
-        // Reject that boundary explicitly rather than passing unsupported ISO text to SQL.
-        if (
-          Temporal.Instant.from(end).toZonedDateTimeISO('UTC').year >
-          LAST_EVENT_DATE.year
-        ) {
-          throw new Problem(
-            400,
-            'Choose times within the supported year range.',
-          );
-        }
-        return {
-          start,
-          end,
-        };
-      } catch (error) {
-        if (error instanceof Problem) {
-          throw error;
-        }
-        throw new Problem(
-          400,
-          'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.',
-        );
-      }
-    },
+    (date) => validateEventWindow(date, input, mode),
   );
   return {
     title,
@@ -176,16 +116,54 @@ export function validateEvent(input: CreateInput) {
 }
 
 /**
+ * Convert one offered local date/time into UTC without accepting DST ambiguity.
+ * @returns An allowed event window; invalid dates or unsupported instants throw Problem.
+ */
+function validateEventWindow(
+  date: string,
+  input: Pick<CreateInput, 'timezone' | 'startTime' | 'endTime'>,
+  mode: 'dates' | 'weekdays',
+): TimeRange {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Problem(400, 'Please choose valid dates.');
+  }
+  try {
+    const d = Temporal.PlainDate.from(date);
+    const today = Temporal.Now.plainDateISO(input.timezone);
+    if (mode === 'dates' && !isEventDateAllowed(d, today)) {
+      throw new Problem(400, 'Choose dates from today through December 31, 9999.');
+    }
+    const clockZone = mode === 'weekdays' ? 'UTC' : input.timezone;
+    const start = localToUTC(date, input.startTime, clockZone);
+    const end = localToUTC(date, input.endTime, clockZone);
+    // The final local day can cross into year 10000 after timezone conversion.
+    // Reject that boundary explicitly rather than passing unsupported ISO text to SQL.
+    if (Temporal.Instant.from(end).toZonedDateTimeISO('UTC').year > LAST_EVENT_DATE.year) {
+      throw new Problem(400, 'Choose times within the supported year range.');
+    }
+    return {
+      start,
+      end,
+    };
+  } catch (error) {
+    if (error instanceof Problem) {
+      throw error;
+    }
+    throw new Problem(
+      400,
+      'A chosen time is invalid or repeats during a daylight saving ' +
+        'change. Choose a different start or end time.',
+    );
+  }
+}
+
+/**
  * Check that each complete saved slot belongs to the event's schedule.
  * @param duration - Event-specific slot length in milliseconds; defaults to legacy slots.
  * @param windows - The event's allowed time ranges.
  * @returns Merged ISO ranges with duplicate selections removed.
  */
-export function validateRanges(
-  input: unknown,
-  windows: TimeRange[],
-  duration = SLOT,
-) {
+export function validateRanges(input: unknown, windows: TimeRange[], duration = SLOT) {
   if (!Array.isArray(input) || input.length > 3000) {
     throw new Problem(400, 'Please choose valid availability.');
   }
@@ -202,10 +180,7 @@ export function validateRanges(
       !/(Z|[+-]\d\d:\d\d)$/.test(range.start) ||
       !/(Z|[+-]\d\d:\d\d)$/.test(range.end)
     ) {
-      throw new Problem(
-        400,
-        'Availability needs a date, time, and time-zone offset.',
-      );
+      throw new Problem(400, 'Availability needs a date, time, and time-zone offset.');
     }
     // Parsed start/end instants in milliseconds; timezone offsets are resolved here.
     const a = Date.parse(range.start);
@@ -226,10 +201,7 @@ export function validateRanges(
     }
     requestedSlots += (b - a) / duration;
     if (requestedSlots > allowed.size * 2) {
-      throw new Problem(
-        400,
-        'Too many overlapping selections. Please reload and try again.',
-      );
+      throw new Problem(400, 'Too many overlapping selections. Please reload and try again.');
     }
     for (let t = a; t < b; t += duration) {
       if (!allowed.has(t)) {

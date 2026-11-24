@@ -1,10 +1,11 @@
 {
-  "printWidth": 80,
+  "printWidth": 100,
   "tabWidth": 2,
   "useTabs": false,
   "singleQuote": true,
   "trailingComma": "all",
   "endOfLine": "lf",
   "objectWrap": "preserve",
-  "embeddedLanguageFormatting": "off"
+  "embeddedLanguageFormatting": "off",
+  "proseWrap": "always"
 }

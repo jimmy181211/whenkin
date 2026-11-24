@@ -1,12 +1,11 @@
 import { useId } from 'react';
 import {
-  Check,
-  Copy,
   Link2,
   X,
 } from 'lucide-react';
-import { t } from '../../i18n/index';
-import PopupSurface from '../PopupSurface';
+import { langService } from '../../i18n/language';
+import ModalSurface from '../ModalSurface';
+import CopyLinkControl from '../CopyLinkControl';
 
 /** Shareable URL, copy feedback, and actions supplied by the event page. */
 type Props = {
@@ -32,69 +31,32 @@ export default function ShareEventDialog({
 }: Props) {
   const id = useId();
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <PopupSurface
-        className="share-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('Share Event')}
-        onClick={
-          /* Keep clicks on sharing controls from closing the dialog backdrop. */
-          (e) => e.stopPropagation()
-        }
-        onKeyDown={
-          /* Close the sharing dialog when Escape is pressed. */
-          (e) => {
-            if (e.key === 'Escape') {
-              onClose();
-            }
-          }
-        }
+    <ModalSurface className="share-modal" label={langService.t('Share Event')} onClose={onClose}>
+      <button
+        className="icon-button modal-close"
+        aria-label={langService.t('Close sharing')}
+        onClick={onClose}
       >
-        <button
-          className="icon-button modal-close"
-          aria-label={t('Close sharing')}
-          onClick={onClose}
-        >
-          <X size={20} />
-        </button>
-        <div className="share-heading">
-          <div className="heading-icon" aria-hidden="true">
-            <Link2 size={23} />
-          </div>
-          <label htmlFor={id}>{t('Event Link')}</label>
+        <X size={20} />
+      </button>
+      <div className="share-heading">
+        <div className="heading-icon" aria-hidden="true">
+          <Link2 size={23} />
         </div>
-        <input
-          id={id}
-          className="share-link-input"
-          readOnly
-          value={eventLink}
-          onFocus={
-            /* Select the event URL for manual copying. */
-            (e) => e.target.select()
-          }
-        />
-        <button
-          type="button"
-          className="button primary"
-          onClick={
-            /* Copy the event link and identify which control should show success feedback. */
-            () => void onCopy(eventLink, 'event')
-          }
-        >
-          {copied === 'event' ? (
-            <>
-              <Check size={17} />
-              {t('Link Copied')}
-            </>
-          ) : (
-            <>
-              <Copy size={17} />
-              {t('Copy Event Link')}
-            </>
-          )}
-        </button>
-      </PopupSurface>
-    </div>
+        <label htmlFor={id}>{langService.t('Event Link')}</label>
+      </div>
+      <CopyLinkControl
+        id={id}
+        value={eventLink}
+        inputClassName="share-link-input"
+        copied={copied === 'event'}
+        copyLabel={langService.t('Copy Event Link')}
+        copiedLabel={langService.t('Link Copied')}
+        onCopy={
+          /** Preserve the event page's clipboard action and feedback owner. */
+          () => onCopy(eventLink, 'event')
+        }
+      />
+    </ModalSurface>
   );
 }

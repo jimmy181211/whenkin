@@ -1,0 +1,49 @@
+/* Use the calendar's available width rather than the whole screen for wrapping. */
+.availability-section {
+  container-type: inline-size;
+}
+.grid-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.grid-edit-controls {
+  flex: 1 1 auto;
+}
+.grid-tool-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.grid-pager {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  align-items: center;
+}
+.grid-pager > div {
+  display: flex;
+}
+@container (max-width: 34rem) {
+  .grid-tools .grid-pager {
+    flex-basis: 100%;
+  }
+}
+@container (max-width: 18rem) {
+  .grid-tools {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+  .grid-edit-controls {
+    grid-column: 1 / -1;
+  }
+  .grid-tool-actions {
+    margin-left: 0;
+  }
+  .grid-tools .grid-pager {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}

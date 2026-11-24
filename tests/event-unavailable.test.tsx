@@ -6,14 +6,11 @@ import {
   it,
 } from 'vitest';
 import EventUnavailablePage from '../App/frontend/pages/EventUnavailablePage';
-import {
-  setLanguage,
-  t,
-} from '../App/frontend/i18n/index';
+import { langService } from '../App/frontend/i18n/language';
 
 afterEach(
   /* Restore English after unavailable-event page checks. */
-  () => setLanguage('en'),
+  () => langService.setLanguage('en'),
 );
 /** Group the expired and missing event pages checks. */
 describe('expired and missing event pages', () => {
@@ -32,21 +29,17 @@ describe('expired and missing event pages', () => {
         'en',
         'zh',
       ] as const) {
-        setLanguage(language);
-        const html = renderToStaticMarkup(
-          <EventUnavailablePage reason={reason} />,
-        );
+        langService.setLanguage(language);
+        const html = renderToStaticMarkup(<EventUnavailablePage reason={reason} />);
         expect(html).toContain(
-          t(
+          langService.t(
             reason === 'expired'
               ? 'This event link has expired.'
               : 'This event has expired or could not be found.',
           ),
         );
-        expect(html).toContain(t('Link expiry follows the retention policy.'));
-        expect(html).toContain(
-          t('Expired events and their responses may be removed.'),
-        );
+        expect(html).toContain(langService.t('Link expiry follows the retention policy.'));
+        expect(html).toContain(langService.t('Expired events and their responses may be removed.'));
         for (const path of [
           '/',
           '/terms',
@@ -57,7 +50,7 @@ describe('expired and missing event pages', () => {
         expect(html).not.toContain('404');
         expect(
           html.includes(
-            t('Check the link with your organizer, or create a new event.'),
+            langService.t('Check the link with your organizer, or create a new event.'),
           ),
         ).toBe(reason === 'missing');
       }

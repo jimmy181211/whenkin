@@ -2,7 +2,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   displayRange,
   slotDuration,
@@ -66,9 +66,9 @@ export default function SlotDetails({
     <section
       id="slot-details"
       className="slot-details"
-      aria-label={t('Availability at This Time')}
+      aria-label={langService.t('Availability at This Time')}
     >
-      <h2>{t('Availability at This Time')}</h2>
+      <h2>{langService.t('Availability at This Time')}</h2>
       <p className="slot-detail-time">
         {displayRange(
           inspection.range,
@@ -77,7 +77,7 @@ export default function SlotDetails({
         )}
       </p>
       <p className="slot-detail-count">
-        {t('{count} of {total} available', {
+        {langService.t('{count} of {total} available', {
           count: available.length,
           total: event.responses.length,
         })}
@@ -92,18 +92,14 @@ export default function SlotDetails({
             <li key={person.id}>
               <span className="slot-responder-name">
                 {person.name}
-                {partial.has(person.id) && (
-                  <small>{t('Partly available')}</small>
-                )}
+                {partial.has(person.id) && <small>{langService.t('Partly available')}</small>}
               </span>
               <span
                 className={
-                  free.has(person.id)
-                    ? 'slot-presence available'
-                    : 'slot-presence unavailable'
+                  free.has(person.id) ? 'slot-presence available' : 'slot-presence unavailable'
                 }
                 role="img"
-                aria-label={t(
+                aria-label={langService.t(
                   free.has(person.id)
                     ? 'Available'
                     : partial.has(person.id)

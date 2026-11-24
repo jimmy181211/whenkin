@@ -10,9 +10,8 @@ import {
 import ParticipantName from '../components/ParticipantName';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
-import PageLink from '../components/PageLink';
 import { projectWeekly } from '../../shared/weekly';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import EventResults from '../components/event/EventResults';
 import ShareEventDialog from '../components/event/ShareEventDialog';
 import EventTour from '../components/EventTour';
@@ -52,15 +51,12 @@ export default function EventPage({ id }: { id: string }) {
     error,
     unavailableReason,
     unavailable,
-    saveState,
     view,
     inspection,
     highlightShared,
-    conflictRef,
-    setName,
-    setEditNotice,
+    canRetrySave,
+    changeName,
     dismissNotice,
-    updateDraft,
     changeZone,
     updateSelection,
     requestEditing,
@@ -89,9 +85,7 @@ export default function EventPage({ id }: { id: string }) {
         COPY_FEEDBACK_MS,
       );
     } catch {
-      setError(
-        'Copy did not work. Select the link in the sharing panel and copy it manually.',
-      );
+      setError('Copy did not work. Select the link in the sharing panel and copy it manually.');
     }
   }
 
@@ -100,8 +94,7 @@ export default function EventPage({ id }: { id: string }) {
    * @returns A weekly display projection, or null for a dated event.
    */
   const weeklyView = useMemo(
-    () =>
-      event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null,
+    () => (event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null),
     [
       event,
       zone,
@@ -115,16 +108,16 @@ export default function EventPage({ id }: { id: string }) {
       <main className="loading-page">
         {error ? (
           <>
-            <h1>{t('We Couldn’t Open That Event.')}</h1>
-            <p role="alert">{t(error)}</p>
-            <PageLink href="/" className="button secondary">
-              {t('Back to Home')}
-            </PageLink>
+            <h1>{langService.t('We Couldn’t Open That Event.')}</h1>
+            <p role="alert">{langService.t(error)}</p>
+            <a href="/" className="button secondary">
+              {langService.t('Back to Home')}
+            </a>
           </>
         ) : (
           <>
             <LoaderCircle className="spin" />
-            <p>{t('Finding your shared time…')}</p>
+            <p>{langService.t('Finding your shared time…')}</p>
           </>
         )}
       </main>
@@ -143,14 +136,11 @@ export default function EventPage({ id }: { id: string }) {
             () => setShare(true)
           }
         >
-          <Link2 size={16} /> {t('Share Event')}
+          <Link2 size={16} /> {langService.t('Share Event')}
         </button>
       </HeaderAction>
       <HeaderAction name="guide">
-        <EventTour
-          onOpen={menu.closeAndFocus}
-          onRestoreFocus={menu.closeAndFocus}
-        />
+        <EventTour onOpen={menu.closeAndFocus} onRestoreFocus={menu.closeAndFocus} />
       </HeaderAction>
       {view === 'group' && inspection && (
         <AvailabilityPopover
@@ -179,14 +169,12 @@ export default function EventPage({ id }: { id: string }) {
                 <h1>{event.title}</h1>
               </div>
             </div>
-            {event.description && (
-              <p className="event-description">{event.description}</p>
-            )}
+            {event.description && <p className="event-description">{event.description}</p>}
           </header>
           {error && (
             <div className="error-message" role="alert">
-              {t(error)}{' '}
-              {saveState === 'error' && !conflictRef.current && (
+              {langService.t(error)}{' '}
+              {canRetrySave && (
                 <button
                   type="button"
                   className="text-button"
@@ -196,7 +184,7 @@ export default function EventPage({ id }: { id: string }) {
                     () => void save()
                   }
                 >
-                  {t('Retry')}
+                  {langService.t('Retry')}
                 </button>
               )}
             </div>
@@ -207,28 +195,16 @@ export default function EventPage({ id }: { id: string }) {
               disabled={switching}
               inputRef={nameInput}
               editNotice={editNotice}
-              onChange={
-                /* Update the draft name and clear old name-validation feedback. */
-                (value) => {
-                  setName(value);
-                  setEditNotice(false);
-                  dismissNotice();
-                  updateDraft({ name: value });
-                }
-              }
+              onChange={changeName}
             />
             <TimezonePicker
               value={zone}
               onChange={changeZone}
-              at={
-                weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)
-              }
+              at={weeklyView?.referenceTime ?? Date.parse(event.windows[0].start)}
             />
           </div>
           <AvailabilityGrid
-            key={
-              event.id + ':' + event.schedule_revision + ':' + responseSession
-            }
+            key={event.id + ':' + event.schedule_revision + ':' + responseSession}
             event={event}
             zone={zone}
             selected={selected}
@@ -279,13 +255,11 @@ export default function EventPage({ id }: { id: string }) {
                 requestAnimationFrame(
                   /* Scroll to a highlighted block after React has rendered the new group view. */
                   () =>
-                    document
-                      .querySelector<HTMLElement>('.time-cell.highlighted')
-                      ?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center',
-                        inline: 'nearest',
-                      }),
+                    document.querySelector<HTMLElement>('.time-cell.highlighted')?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'center',
+                      inline: 'nearest',
+                    }),
                 );
               }
             }

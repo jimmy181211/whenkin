@@ -4,16 +4,14 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import {
-  getLocale,
-  t,
-} from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   FIRST_EVENT_DATE,
   LAST_EVENT_DATE,
 } from '../../shared/date-limits';
-import EditableSelect from './EditableSelect';
 import CalendarYearInput from './CalendarYearInput';
+import OptionSelect from './OptionSelect';
+import { useMediaQuery } from '../utils/use-media-query';
 
 /** Visible month and validated navigation action supplied by the calendar. */
 type CalendarControlsProps = {
@@ -22,10 +20,10 @@ type CalendarControlsProps = {
 };
 
 /**
- * Calendar navigation component. Month names use searchable choices;
+ * Calendar navigation component. Months use a selection-only list opening below;
  * years use bounded numeric input without an option list.
  * The parent clamps requested months to the same supported date range.
- * @returns A month combobox, year field, and bounded previous/next buttons.
+ * @returns A downward month selector, year field, and bounded navigation buttons.
  */
 export default function CalendarControls({
   month,
@@ -33,39 +31,34 @@ export default function CalendarControls({
 }: CalendarControlsProps) {
   const first = FIRST_EVENT_DATE;
   const last = LAST_EVENT_DATE.with({ day: 1 });
-  const monthNames = Array.from(
+  const narrow = useMediaQuery('(max-width: 699px)');
+  const monthFormat = {
+    month: narrow ? 'short' : 'long',
+    timeZone: 'UTC',
+  } as const;
+  const localMonths = new Intl.DateTimeFormat(langService.getLocale(), monthFormat);
+  const monthOptions = Array.from(
     { length: 12 },
-    /* Build localized month labels without applying a local timezone shift. */
-    (_, i) =>
-      new Intl.DateTimeFormat(getLocale(), {
-        month: 'long',
-        timeZone: 'UTC',
-      }).format(new Date(Date.UTC(2000, i, 1))),
+    /* Pair each month number with its localized display label. */
+    (_, i) => {
+      const date = new Date(Date.UTC(2000, i, 1));
+      return {
+        label: localMonths.format(date),
+        value: String(i + 1),
+      };
+    },
   );
   return (
     <div className="calendar-heading">
       <div className="calendar-selects">
-        <EditableSelect
-          label={t('Month')}
+        <OptionSelect
+          label={langService.t('Month')}
           value={String(month.month)}
-          options={monthNames.map(
-            /* Pair each localized month label with its number and English search alias. */
-            (label, i) => ({
-              label,
-              value: String(i + 1),
-              keywords: [
-                new Intl.DateTimeFormat('en', {
-                  month: 'long',
-                  timeZone: 'UTC',
-                }).format(new Date(Date.UTC(2000, i, 1))),
-              ],
-            }),
-          )}
+          options={monthOptions}
           onChange={
-            /* Apply the validated month number from the editable dropdown. */
+            /** Apply the month number chosen from the downward option list. */
             (value) => setMonth(month.with({ month: Number(value) }))
           }
-          invalidMessage={t('Choose a valid month.')}
         />
         <CalendarYearInput
           value={month.year}
@@ -79,7 +72,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={t('Previous month')}
+          aria-label={langService.t('Previous month')}
           disabled={month.equals(first)}
           onClick={
             /* Move the visible calendar back one month. */
@@ -91,7 +84,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={t('Next month')}
+          aria-label={langService.t('Next month')}
           disabled={month.equals(last)}
           onClick={
             /* Move the visible calendar forward one month. */

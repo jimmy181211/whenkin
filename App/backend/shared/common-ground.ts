@@ -8,8 +8,10 @@ import type {
  * Changes in open event windows and responder ranges at one sweep
  * boundary.
  */
-type Edge = { windows: number;
-  people: Map<string, number> };
+type Edge = {
+  windows: number;
+  people: Map<string, number>;
+};
 
 /**
  * Sweep time boundaries to find when all respondents are free within the event.
@@ -17,10 +19,7 @@ type Edge = { windows: number;
  * @param windows - Allowed event ranges that bound the shared-time search.
  * @returns Merged UTC ISO ranges listing every responder id, or [] if none match.
  */
-export function commonGround(
-  windows: TimeRange[],
-  responses: ResponseData[],
-): Candidate[] {
+export function commonGround(windows: TimeRange[], responses: ResponseData[]): Candidate[] {
   if (!responses.length) {
     return [];
   }
@@ -70,8 +69,10 @@ export function commonGround(
     /* Visit time boundaries from earliest to latest. */
     (a, b) => a - b,
   );
-  const matches: { start: number;
-    end: number }[] = [];
+  const matches: {
+    start: number;
+    end: number;
+  }[] = [];
   // Number of event windows covering the interval between this boundary and the next.
   let inside = 0;
   // Number of distinct people whose open range count is positive.

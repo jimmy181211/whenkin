@@ -31,10 +31,7 @@ export function weekdayDate(day: number) {
  * @returns Display windows and mappings back to the organizer's stored slots.
  */
 export function projectWeekly(
-  event: Pick<
-    MeetingEvent,
-    'windows' | 'timezone' | 'created_at' | 'slot_minutes'
-  >,
+  event: Pick<MeetingEvent, 'windows' | 'timezone' | 'created_at' | 'slot_minutes'>,
   zone: string,
 ) {
   const parsed = Date.parse(event.created_at ?? '');
@@ -47,8 +44,7 @@ export function projectWeekly(
    * instant.
    * @returns The zone's signed offset from UTC in milliseconds.
    */
-  const offset = (value: string) =>
-    instant.toZonedDateTimeISO(value).offsetNanoseconds / 1_000_000;
+  const offset = (value: string) => instant.toZonedDateTimeISO(value).offsetNanoseconds / 1_000_000;
 
   // Clock difference in milliseconds; positive means the viewer's clock is ahead.
   const shift = offset(zone) - offset(event.timezone);
@@ -60,8 +56,7 @@ export function projectWeekly(
    * @returns The same weekly clock position within the storage week, including
    * when the input shifted before Monday or after Sunday.
    */
-  const wrap = (stamp: number) =>
-    base + ((((stamp - base) % week) + week) % week);
+  const wrap = (stamp: number) => base + ((((stamp - base) % week) + week) % week);
 
   /**
    * Shift a stored weekly slot to the viewer's clock and wrap it into the
@@ -84,9 +79,7 @@ export function projectWeekly(
     const start = toDisplay(Date.parse(value.start));
     return {
       start: new Date(start).toISOString(),
-      end: new Date(
-        start + Date.parse(value.end) - Date.parse(value.start),
-      ).toISOString(),
+      end: new Date(start + Date.parse(value.end) - Date.parse(value.start)).toISOString(),
     };
   };
 

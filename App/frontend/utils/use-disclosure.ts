@@ -48,10 +48,7 @@ export function useDisclosure() {
 
     /** Close when the pointer is outside this disclosure. */
     const outside = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !container.current?.contains(event.target)
-      ) {
+      if (event.target instanceof Node && !container.current?.contains(event.target)) {
         close();
       }
     };

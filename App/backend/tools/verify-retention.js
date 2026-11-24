@@ -9,9 +9,7 @@ import { resolve } from 'node:path';
 import { EventCleanup } from './cleanup.js';
 
 // Isolated synthetic data only. This program never reads DATABASE_URL.
-const output = resolve(
-  process.argv[2] || 'outputs/retention-months-verification',
-);
+const output = resolve(process.argv[2] || 'outputs/retention-months-verification');
 const pg = new PGlite();
 const clock = '2026-11-05T12:00:00Z';
 
@@ -21,12 +19,7 @@ const clock = '2026-11-05T12:00:00Z';
  * @returns The fixture query's rows after execution against the isolated database.
  */
 const query = async (sql, params = []) =>
-  (
-    await pg.query(
-      sql.replaceAll('statement_timestamp()', `'${clock}'::timestamptz`),
-      params,
-    )
-  ).rows;
+  (await pg.query(sql.replaceAll('statement_timestamp()', `'${clock}'::timestamptz`), params)).rows;
 
 const report = {
   run_at: new Date().toISOString(),
@@ -44,29 +37,18 @@ const check = (value, message) => {
 };
 
 try {
-  for (const name of (
-    await readdir(new URL('../db/migrations/', import.meta.url))
-  )
+  for (const name of (await readdir(new URL('../db/migrations/', import.meta.url)))
     .filter(
       /* Select SQL migrations to prepare the isolated test database. */
       (name) => name.endsWith('.sql'),
     )
     .sort()) {
-    await pg.exec(
-      await readFile(
-        new URL('../db/migrations/' + name, import.meta.url),
-        'utf8',
-      ),
-    );
+    await pg.exec(await readFile(new URL('../db/migrations/' + name, import.meta.url), 'utf8'));
   }
   const definition = (
-    await query(
-      "SELECT pg_get_functiondef('purge_expired_events(integer)'::regprocedure) AS sql",
-    )
+    await query("SELECT pg_get_functiondef('purge_expired_events(integer)'::regprocedure) AS sql")
   )[0].sql;
-  await pg.exec(
-    definition.replaceAll('statement_timestamp()', `'${clock}'::timestamptz`),
-  );
+  await pg.exec(definition.replaceAll('statement_timestamp()', `'${clock}'::timestamptz`));
   for (const months of [
     1,
     2,
@@ -77,19 +59,33 @@ try {
     check(cleanup.getTime() === 12, 'Constructor default changed');
     await cleanup.setTime(months);
     await query(
-      "INSERT INTO events(id,title,organizer_name,timezone) SELECT gen_random_uuid(),'Fixture '||n,'','UTC' FROM generate_series(1,210) n",
+      `INSERT INTO events(id, title, organizer_name, timezone)
+SELECT gen_random_uuid(), 'Fixture ' || n, '', 'UTC'
+FROM generate_series(1, 210) n`,
     );
     await query(
-      "INSERT INTO event_windows(event_id,starts_at,ends_at) SELECT id,'2027-01-15 09:00Z'::timestamptz+n*interval '2 hours','2027-01-15 10:00Z'::timestamptz+n*interval '2 hours' FROM events CROSS JOIN generate_series(0,1) n",
+      `INSERT INTO event_windows(event_id, starts_at, ends_at)
+SELECT id,
+  '2027-01-15 09:00Z'::timestamptz + n * interval '2 hours',
+  '2027-01-15 10:00Z'::timestamptz + n * interval '2 hours'
+FROM events CROSS JOIN generate_series(0, 1) n`,
     );
     await query(
-      "INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT gen_random_uuid(),id,'Synthetic responder','UTC','' FROM events CROSS JOIN generate_series(1,2)",
+      `INSERT INTO responses(id, event_id, name, timezone, edit_hash)
+SELECT gen_random_uuid(), id, 'Synthetic responder', 'UTC', ''
+FROM events CROSS JOIN generate_series(1, 2)`,
     );
     await query(
-      "INSERT INTO availability(response_id,starts_at,ends_at) SELECT id,'2027-01-15 09:00Z'::timestamptz+n*interval '2 hours','2027-01-15 10:00Z'::timestamptz+n*interval '2 hours' FROM responses CROSS JOIN generate_series(0,1) n",
+      `INSERT INTO availability(response_id, starts_at, ends_at)
+SELECT id,
+  '2027-01-15 09:00Z'::timestamptz + n * interval '2 hours',
+  '2027-01-15 10:00Z'::timestamptz + n * interval '2 hours'
+FROM responses CROSS JOIN generate_series(0, 1) n`,
     );
     await query(
-      `UPDATE events SET created_at='${clock}'::timestamptz-make_interval(months=>$1)-interval '1 second',expires_at='${clock}'::timestamptz-interval '1 second'`,
+      `UPDATE events
+SET created_at='${clock}'::timestamptz-make_interval(months=>$1)-interval '1 second',
+    expires_at='${clock}'::timestamptz-interval '1 second'`,
       [months],
     );
     const fixtures = [
@@ -120,13 +116,10 @@ try {
       ],
     ];
     for (const [name, created, expiry] of fixtures) {
-      await query(
-        `UPDATE events SET created_at=${created},expires_at=${expiry} WHERE title=$2`,
-        [
-          months,
-          name,
-        ],
-      );
+      await query(`UPDATE events SET created_at=${created},expires_at=${expiry} WHERE title=$2`, [
+        months,
+        name,
+      ]);
     }
 
     /**
@@ -157,15 +150,11 @@ try {
       before.events
         .filter(
           /** Select fixture events expected to expire at the simulated deadline. */
-          (row) =>
-            Number(row.title.slice(8)) <= 206 || row.title === 'Fixture 210',
+          (row) => Number(row.title.slice(8)) <= 206 || row.title === 'Fixture 210',
         )
         .map(/* Collect the ids expected to be removed. */ (row) => row.id),
     );
-    check(
-      (await cleanup.dryRun()).eligibleEvents === 207,
-      'Dry run count mismatch',
-    );
+    check((await cleanup.dryRun()).eligibleEvents === 207, 'Dry run count mismatch');
     const batches = [];
 
     /**
@@ -241,10 +230,7 @@ try {
         table + ' preserved data changed',
       );
     }
-    check(
-      (await cleanup.run()).deletedEvents === 0,
-      'Second cleanup must be idempotent',
-    );
+    check((await cleanup.run()).deletedEvents === 0, 'Second cleanup must be idempotent');
     report.scenarios.push({
       months,
       status: 'PASS',
@@ -286,20 +272,57 @@ try {
   await pg.close();
 }
 await mkdir(output, { recursive: true });
-await writeFile(
-  resolve(output, 'retention-evidence.json'),
-  JSON.stringify(report, null, 2),
-);
+await writeFile(resolve(output, 'retention-evidence.json'), JSON.stringify(report, null, 2));
 await writeFile(
   resolve(output, 'retention-evidence.html'),
-  `<!doctype html><meta charset="utf-8"><title>Whenkin 清理验证</title><style>body{font:16px system-ui;max-width:960px;margin:40px auto;padding:20px;color:#183d35}table{width:100%;border-collapse:collapse}th,td{border:1px solid #dce5dc;padding:12px;text-align:left}</style><h1>按月配置的清理验证：${report.status}</h1><p>测试时间（人为模拟）：${clock}。仅使用本地合成数据，正式数据库未修改。</p><table><tr><th>保留期限</th><th>应删除活动行</th><th>实际删除活动行</th><th>漏删行</th><th>误删行</th></tr>${report.scenarios
-    .map(
-      /* Render each retention scenario's expected and actual deletion counts. */
-      (row) =>
-        `<tr><td>${row.months} 个月</td><td>${row.expected_deleted_event_rows}</td><td>${row.actual_deleted_event_rows}</td><td>${row.missing_deletions}</td><td>${row.excess_deletions}</td></tr>`,
-    )
-    .join(
-      '',
-    )}</table><p>通过项同时验证关联记录清理、保留记录完整、到期边界，以及重复运行不再删除数据。</p>`,
+  /* HTML */ `<!doctype html><meta charset="utf-8" /><title>
+      Whenkin 清理验证</title
+    ><style>
+      body {
+        font: 16px system-ui;
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 20px;
+        color: #183d35;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #dce5dc;
+        padding: 12px;
+        text-align: left;
+      }
+    </style>
+    <h1>按月配置的清理验证：${report.status}</h1>
+    <p>
+      测试时间（人为模拟）：${clock}。仅使用本地合成数据，正式数据库未修改。
+    </p>
+    <table>
+      <tr>
+        <th>保留期限</th>
+        <th>应删除活动行</th>
+        <th>实际删除活动行</th>
+        <th>漏删行</th>
+        <th>误删行</th>
+      </tr>
+      ${report.scenarios
+        .map(
+          /* Render each retention scenario's expected and actual deletion counts. */
+          (row) => /* HTML */ `<tr>
+              <td>${row.months} 个月</td>
+              <td>${row.expected_deleted_event_rows}</td>
+              <td>${row.actual_deleted_event_rows}</td>
+              <td>${row.missing_deletions}</td>
+              <td>${row.excess_deletions}</td>
+            </tr>`,
+        )
+        .join('')}
+    </table>
+    <p>
+      通过项同时验证关联记录清理、保留记录完整、到期边界，以及重复运行不再删除数据。
+    </p>`,
 );
 console.log(JSON.stringify(report, null, 2));

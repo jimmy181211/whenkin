@@ -125,10 +125,7 @@
     width: 100%;
     justify-content: flex-start;
   }
-  .site-header[data-event='true']
-    .header-secondary-panel
-    .language-selector
-    select {
+  .site-header[data-event='true'] .header-secondary-panel .language-selector select {
     width: 100%;
     max-width: none;
   }

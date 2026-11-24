@@ -8,10 +8,10 @@ import {
   LAST_EVENT_DATE,
   parseEventYear,
 } from '../../shared/date-limits';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import { useNotice } from '../utils/use-notice';
 import Toast from './Toast';
-import './editable-select.css';
+import './option-select.css';
 
 /** Saved year and the parent-owned action for moving the calendar. */
 type Props = {
@@ -42,7 +42,7 @@ export default function CalendarYearInput({
   const finish = () => {
     if (draft !== null && parseEventYear(draft) === null) {
       notify(
-        t('Choose a year from {first} to {last}.', {
+        langService.t('Choose a year from {first} to {last}.', {
           first: String(FIRST_EVENT_DATE.year),
           last: String(LAST_EVENT_DATE.year),
         }),
@@ -58,7 +58,7 @@ export default function CalendarYearInput({
         ref={input}
         type="number"
         inputMode="numeric"
-        aria-label={t('Year')}
+        aria-label={langService.t('Year')}
         autoComplete="off"
         min={FIRST_EVENT_DATE.year}
         max={LAST_EVENT_DATE.year}

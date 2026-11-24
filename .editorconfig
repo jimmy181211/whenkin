@@ -6,7 +6,7 @@ indent_style = space
 indent_size = 2
 end_of_line = lf
 insert_final_newline = true
-max_line_length = 80
+max_line_length = 100
 
 [App/backend/db/migrations/*.sql]
 # Applied migrations retain their original bytes and checksums.

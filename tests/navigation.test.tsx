@@ -9,14 +9,13 @@ import SiteLayout from '../App/frontend/components/SiteLayout';
 import AvailabilityGridTools from '../App/frontend/components/AvailabilityGridTools';
 import EventResults from '../App/frontend/components/event/EventResults';
 import {
+  langService,
   languageOptions,
-  setLanguage,
-  t,
-} from '../App/frontend/i18n/index';
+} from '../App/frontend/i18n/language';
 import type { MeetingEvent } from '../App/shared/types';
 
 /** Restore the default interface language for the next test file. */
-afterEach(() => setLanguage('en'));
+afterEach(() => langService.setLanguage('en'));
 
 const emptyEvent: MeetingEvent = {
   id: 'empty',
@@ -30,11 +29,9 @@ const emptyEvent: MeetingEvent = {
 
 /** Header help remains reachable without a duplicate footer slogan. */
 it('keeps help and language access on create pages without an unnecessary menu', () => {
-  const html = renderToStaticMarkup(
-    <SiteLayout showFooterTagline={false}>Form</SiteLayout>,
-  );
+  const html = renderToStaticMarkup(<SiteLayout showFooterTagline={false}>Form</SiteLayout>);
   expect(html).toContain('href="/how-it-works"');
-  expect(html).toContain('aria-label="Language"');
+  expect(html).toContain('<span class="sr-only">Language</span><select');
   expect(html).not.toContain('header-menu-toggle');
   expect(html).not.toContain('Find Your Shared Time.');
   expect(html).toContain('Privacy Policy');
@@ -42,20 +39,18 @@ it('keeps help and language access on create pages without an unnecessary menu',
 
 /** Mobile event navigation exposes secondary actions through one labeled trigger. */
 it('provides a labeled event menu while retaining the visible sharing target', () => {
-  const html = renderToStaticMarkup(
-    <SiteLayout showNewEvent>Event</SiteLayout>,
-  );
+  const html = renderToStaticMarkup(<SiteLayout showNewEvent>Event</SiteLayout>);
   expect(html).toContain('header-share-slot');
   expect(html).toMatch(/aria-label="Menu" aria-expanded="false"/);
   expect(html).toContain('header-guide-slot');
   expect(html).toContain('New Event');
-  expect(html).toContain('aria-label="Language"');
+  expect(html).toContain('<span class="sr-only">Language</span><select');
 });
 
 /** Zero shared ranges use one localized status instead of an unusable action. */
 it('keeps an empty shared-time section compact in all supported languages', () => {
   for (const { value } of languageOptions) {
-    setLanguage(value);
+    langService.setLanguage(value);
     const html = renderToStaticMarkup(
       <EventResults
         event={emptyEvent}
@@ -75,9 +70,9 @@ it('keeps an empty shared-time section compact in all supported languages', () =
         }
       />,
     );
-    expect(html).toContain(t('No shared free time yet.'));
+    expect(html).toContain(langService.t('No shared free time yet.'));
     expect(html).not.toContain('highlight-shared-times');
-    expect(html).not.toContain(t('{count} shared time periods', { count: 0 }));
+    expect(html).not.toContain(langService.t('{count} shared time periods', { count: 0 }));
     expect(html).toContain('role="status"');
   }
 });

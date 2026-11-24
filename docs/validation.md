@@ -1,21 +1,73 @@
 # Validation
 
-The original baseline passed 110 tests before refactoring. The current Express version passes 131 tests and TypeScript checks. Vitest uses two workers with a bounded 30-second timeout so Docker builds do not starve test processes on development laptops.
+The original baseline passed 110 tests before refactoring. The current Express version passes 131
+tests and TypeScript checks. Vitest uses two workers with a bounded 30-second timeout so Docker
+builds do not starve test processes on development laptops.
 
-Both builds pass: Vite/Node for Docker and the retained Worker artifact for the current hosted environment. `pnpm test:sites` exercises the actual built Worker/Express runtime using disposable PGlite data and an intercepted Neon transport. It covers all six endpoints, shared times, revision conflicts, expiry, origin and request-size checks, direct links and asset routing. It never accesses production.
+Both builds pass: Vite/Node for Docker and the retained Worker artifact for the current hosted
+environment. `pnpm test:sites` exercises the actual built Worker/Express runtime using disposable
+PGlite data and an intercepted Neon transport. It covers all six endpoints, shared times, revision
+conflicts, expiry, origin and request-size checks, direct links and asset routing. It never accesses
+production.
 
-Docker Desktop and WSL are installed and the Linux engine is running. The independent `whenkin-refactor-qa` stack built successfully with real PostgreSQL 17. The database and application containers are healthy, all eight migrations completed, and `tests/smoke.js` passed event creation/read, response creation/update/deletion, shared times, stale-write protection and direct page links. Rebuilding and rerunning migrations preserved the existing test event and skipped unchanged migration files.
+Docker Desktop and WSL are installed and the Linux engine is running. The independent
+`whenkin-refactor-qa` stack built successfully with real PostgreSQL 17. The database and application
+containers are healthy, all eight migrations completed, and `tests/smoke.js` passed event
+creation/read, response creation/update/deletion, shared times, stale-write protection and direct
+page links. Rebuilding and rerunning migrations preserved the existing test event and skipped
+unchanged migration files.
 
-The manual retention verifier passed simulated one-calendar-year and ten-day scenarios in disposable PostgreSQL data: exactly 207 expected event rows were deleted in each scenario, related rows cascaded correctly, younger data remained unchanged, and no orphans remained. Production data and retention policy were not changed.
+The manual retention verifier passed simulated one-calendar-year and ten-day scenarios in disposable
+PostgreSQL data: exactly 207 expected event rows were deleted in each scenario, related rows
+cascaded correctly, younger data remained unchanged, and no orphans remained. Production data and
+retention policy were not changed.
 
-Browser verification of the compiled Express application checked event creation, automatic saving, everyone-free highlighting and block inspection. The Chinese layout was inspected at 390px with no horizontal page overflow. Existing English/Chinese/Spanish presentation and time-zone cases also pass in the automated suite.
+Browser verification of the compiled Express application checked event creation, automatic saving,
+everyone-free highlighting and block inspection. The Chinese layout was inspected at 390px with no
+horizontal page overflow. Existing English/Chinese/Spanish presentation and time-zone cases also
+pass in the automated suite.
 
-All eight migration files retain their original SQL contents. Their committed blob IDs match the original files. The migration runner accepts equivalent LF/CRLF historical checksums across operating systems and rejects substantive edits. The current hosted deployment identity, root `.dev.vars` support and Neon transport are retained. No production database migration, DNS change or EC2 cutover has been performed.
+All eight migration files retain their original SQL contents. Their committed blob IDs match the
+original files. The migration runner accepts equivalent LF/CRLF historical checksums across
+operating systems and rejects substantive edits. The current hosted deployment identity, root
+`.dev.vars` support and Neon transport are retained. No production database migration, DNS change or
+EC2 cutover has been performed.
 
-The guide and popup update retains all three original guide entries verbatim and adds Responders and When Everyone Is Free before Share Event. All 119 tests and TypeScript checks pass. Browser checks verified the five-step flow, event creation, responder autosave, matching event-name and responder-name notices, sharing and the small deletion confirmation. English, Chinese and Spanish layouts were checked, including 390px and 320px mobile widths. At the page bottom, the guide card moves above its target so the shared-free-time section stays visible; the measured overlap was zero. All popup surfaces share the same reusable white/teal styling. Production builds and the built Worker smoke test pass using disposable data.
+The guide and popup update retains all three original guide entries verbatim and adds Responders and
+When Everyone Is Free before Share Event. All 119 tests and TypeScript checks pass. Browser checks
+verified the five-step flow, event creation, responder autosave, matching event-name and
+responder-name notices, sharing and the small deletion confirmation. English, Chinese and Spanish
+layouts were checked, including 390px and 320px mobile widths. At the page bottom, the guide card
+moves above its target so the shared-free-time section stays visible; the measured overlap was zero.
+All popup surfaces share the same reusable white/teal styling. Production builds and the built
+Worker smoke test pass using disposable data.
 
-The production blank-event-page regression was reproduced: event creation and its JSON read succeeded, but the event document was an empty HTTP 200 with a leftover Location header. Hosted assets redirected `/index.html` to `/`; the previous fallback had converted that empty redirect into HTTP 200. The Worker now fetches a successful HTML document from `/` or `/index.html` internally, preserving the event URL and never accepting a redirect as a document. If neither document exists, it returns an explicit HTTP 503. The Worker smoke test first reproduced the failure under canonical HTML handling, then passed both `none` and `auto-trailing-slash` modes with the fix. It checks complete HTML and absence of Location headers for the homepage, event links with and without a trailing slash, the guide and legal pages. All 119 application tests and TypeScript checks pass.
+The production blank-event-page regression was reproduced: event creation and its JSON read
+succeeded, but the event document was an empty HTTP 200 with a leftover Location header. Hosted
+assets redirected `/index.html` to `/`; the previous fallback had converted that empty redirect into
+HTTP 200. The Worker now fetches a successful HTML document from `/` or `/index.html` internally,
+preserving the event URL and never accepting a redirect as a document. If neither document exists,
+it returns an explicit HTTP 503. The Worker smoke test first reproduced the failure under canonical
+HTML handling, then passed both `none` and `auto-trailing-slash` modes with the fix. It checks
+complete HTML and absence of Location headers for the homepage, event links with and without a
+trailing slash, the guide and legal pages. All 119 application tests and TypeScript checks pass.
 
-Subsequent interface refinements shorten guide steps 2–5 in English, Chinese and Spanish and retain step 1. Both required-name fields now scroll before focusing or displaying a notice; desktop and 390px mobile browser checks confirmed no notice or field focus during motion, followed by focus and the notice after settling. The creation-page shared-editing footnote is removed and the time-zone/expiry gap measures 12px. Editable month/year controls support typing, suggestions, Enter and mouse selection; checks cover J → January, valid years, leap day, malformed years, 2022/2051 rejection and localized labels. Dedicated expired/missing event pages provide policy and new-event links; local disposable records verified HTTP 410 and 404 states without misclassifying network failures. Their Chinese and Spanish mobile layouts have no horizontal overflow. The full suite passes 131 tests; final affected tests, production builds and both Worker asset-mode checks pass. No production retention policy or data was changed by these refinements.
+Subsequent interface refinements shorten guide steps 2–5 in English, Chinese and Spanish and retain
+step 1. Both required-name fields now scroll before focusing or displaying a notice; desktop and
+390px mobile browser checks confirmed no notice or field focus during motion, followed by focus and
+the notice after settling. The creation-page shared-editing footnote is removed and the
+time-zone/expiry gap measures 12px. Editable month/year controls support typing, suggestions, Enter
+and mouse selection; checks cover J → January, valid years, leap day, malformed years, 2022/2051
+rejection and localized labels. Dedicated expired/missing event pages provide policy and new-event
+links; local disposable records verified HTTP 410 and 404 states without misclassifying network
+failures. Their Chinese and Spanish mobile layouts have no horizontal overflow. The full suite
+passes 131 tests; final affected tests, production builds and both Worker asset-mode checks pass. No
+production retention policy or data was changed by these refinements.
 
-Desktop/mobile follow-up: explicit 650ms easing replaces browser-dependent smooth-scroll duration. Desktop browser samples showed continuous intermediate scroll positions with no focus or notice during motion, followed by focus and the reminder at completion. Mobile checks passed the same ordering. The expiry notice now has 12px above it and an effective 12px gap to the submit button. Selecting the first date or weekday removes its required-selection error immediately; removing that selection does not revive the old error, and changing a day does not hide a time-range error. The full 131-test suite and type checks pass.
+Desktop/mobile follow-up: explicit 650ms easing replaces browser-dependent smooth-scroll duration.
+Desktop browser samples showed continuous intermediate scroll positions with no focus or notice
+during motion, followed by focus and the reminder at completion. Mobile checks passed the same
+ordering. The expiry notice now has 12px above it and an effective 12px gap to the submit button.
+Selecting the first date or weekday removes its required-selection error immediately; removing that
+selection does not revive the old error, and changing a day does not hide a time-range error. The
+full 131-test suite and type checks pass.

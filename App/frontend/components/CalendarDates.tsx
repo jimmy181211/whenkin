@@ -1,6 +1,6 @@
 /** Renders a selectable month grid using the calendar's controlled selection. */
 import { Temporal } from '@js-temporal/polyfill';
-import { getLocale } from '../i18n/index';
+import { langService } from '../i18n/language';
 import { isEventDateAllowed } from '../../shared/date-limits';
 
 /** Visible dates and selected-date values; all selection updates go to the parent. */
@@ -24,6 +24,11 @@ export default function CalendarDates({
 }: CalendarDatesProps) {
   // Convert Monday-based Temporal numbering to the calendar's Sunday-first columns.
   const offset = month.dayOfWeek % 7;
+  const weekdayFormat = new Intl.DateTimeFormat(langService.getLocale(), {
+    weekday: 'narrow',
+    timeZone: 'UTC',
+  });
+  const todayKey = today.toString();
   const dates = Array.from(
     { length: Math.ceil((offset + month.daysInMonth) / 7) * 7 },
     /** Fill complete calendar weeks around the currently visible month. */
@@ -34,11 +39,7 @@ export default function CalendarDates({
       {Array.from(
         { length: 7 },
         /* Build Sunday-first weekday headings in the selected language. */
-        (_, i) =>
-          new Intl.DateTimeFormat(getLocale(), {
-            weekday: 'narrow',
-            timeZone: 'UTC',
-          }).format(new Date(Date.UTC(2023, 0, 1 + i))),
+        (_, i) => weekdayFormat.format(new Date(Date.UTC(2023, 0, 1 + i))),
       ).map(
         /**
          * @returns One localized weekday heading in the calendar.
@@ -58,6 +59,11 @@ export default function CalendarDates({
           const key = d.toString();
           const selected = value.includes(key);
           const disabled = !isEventDateAllowed(d, today);
+          const dateClasses = [
+            'calendar-day',
+            d.month !== month.month ? 'other-month' : '',
+            key === todayKey ? 'today' : '',
+          ].join(' ');
           return (
             <button
               type="button"
@@ -65,7 +71,7 @@ export default function CalendarDates({
               aria-label={key}
               aria-pressed={selected}
               disabled={disabled}
-              className={`calendar-day ${d.month !== month.month ? 'other-month' : ''} ${key === today.toString() ? 'today' : ''}`}
+              className={dateClasses}
               onClick={
                 /* Toggle this date while enforcing the 31-date selection limit. */
                 () =>

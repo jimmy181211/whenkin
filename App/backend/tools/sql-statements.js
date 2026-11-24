@@ -58,9 +58,7 @@ export function sqlStatements(source) {
     } else if (ch === "'" || ch === '"') {
       quote = ch;
     } else if (ch === '$') {
-      const delimiter = source
-        .slice(i)
-        .match(/^\$(?:[A-Za-z_][A-Za-z_0-9]*)?\$/)?.[0];
+      const delimiter = source.slice(i).match(/^\$(?:[A-Za-z_][A-Za-z_0-9]*)?\$/)?.[0];
       if (delimiter) {
         dollar = delimiter;
         i += delimiter.length - 1;

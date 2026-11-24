@@ -42,9 +42,7 @@ const app = createApp(
   /* Supply the query adapter used by this API fixture. */
   () => ({ query }),
 );
-const date = Temporal.Now.plainDateISO('America/Los_Angeles')
-  .add({ days: 3 })
-  .toString();
+const date = Temporal.Now.plainDateISO('America/Los_Angeles').add({ days: 3 }).toString();
 const input = {
   title: 'Team together',
   organizer_name: 'Alex',
@@ -59,12 +57,7 @@ const input = {
  * Send a JSON API request with optional authentication fixture headers.
  * @returns The HTTP response, including error statuses; connection failures reject the promise.
  */
-async function request(
-  path: string,
-  method = 'GET',
-  data?: unknown,
-  token?: string,
-) {
+async function request(path: string, method = 'GET', data?: unknown, token?: string) {
   return app.request(
     'http://localhost/api' + path,
     {
@@ -113,26 +106,23 @@ async function respond(id: string, ranges: TimeRange[], name = 'Sam') {
     ranges,
   });
   expect(result.status).toBe(201);
-  return (await result.json()) as { id: string;
-    revision: number };
+  return (await result.json()) as {
+    id: string;
+    revision: number;
+  };
 }
 
 beforeAll(
   /* Apply migrations before this suite uses its isolated fixture database. */
   async () => {
-    for (const name of (
-      await readdir(new URL('../App/backend/db/migrations/', import.meta.url))
-    )
+    for (const name of (await readdir(new URL('../App/backend/db/migrations/', import.meta.url)))
       .filter(
         /* Select SQL migration files for API fixture setup. */
         (n) => n.endsWith('.sql'),
       )
       .sort()) {
       await pg.exec(
-        await readFile(
-          new URL('../App/backend/db/migrations/' + name, import.meta.url),
-          'utf8',
-        ),
+        await readFile(new URL('../App/backend/db/migrations/' + name, import.meta.url), 'utf8'),
       );
     }
   },
@@ -164,9 +154,7 @@ describe('shared events and common ground', () => {
     });
     const event = await get(created.id);
     expect(event.organizer_name).toBe('');
-    expect(
-      Date.parse(event.windows[0].end) - Date.parse(event.windows[0].start),
-    ).toBe(30 * 60000);
+    expect(Date.parse(event.windows[0].end) - Date.parse(event.windows[0].start)).toBe(30 * 60000);
     expect(event.slot_minutes).toBe(30);
     expect(event).not.toHaveProperty('duration');
     expect(event).not.toHaveProperty('is_organizer');
@@ -182,94 +170,91 @@ describe('shared events and common ground', () => {
     ).toBe(400);
   });
   /** Store and reload future dates through 9999; reject dates outside the supported range. */
-  it('stores future dates through 9999 and rejects unsupported dates and UTC overflow', async () => {
-    for (const value of [
-      '2028-02-29',
-      '2070-12-31',
-      '9999-12-31',
-    ]) {
-      const created = await request('/events', 'POST', {
+  it(
+    'stores future dates through 9999 and rejects unsupported dates and ' + 'UTC overflow',
+    async () => {
+      for (const value of [
+        '2028-02-29',
+        '2070-12-31',
+        '9999-12-31',
+      ]) {
+        const created = await request('/events', 'POST', {
+          ...input,
+          dates: [value],
+        });
+        expect(created.status).toBe(201);
+        const event = await get((await created.json()).id);
+        expect(event.windows[0].start.slice(0, 4)).toBe(value.slice(0, 4));
+      }
+      for (const date of [
+        '2025-12-31',
+        '10000-01-01',
+        '2070.5-01-01',
+      ]) {
+        expect(
+          (
+            await request('/events', 'POST', {
+              ...input,
+              dates: [date],
+            })
+          ).status,
+        ).toBe(400);
+      }
+      const overflow = await request('/events', 'POST', {
         ...input,
-        dates: [value],
+        dates: ['9999-12-31'],
+        startTime: '23:00',
+        endTime: '24:00',
       });
-      expect(created.status).toBe(201);
-      const event = await get((await created.json()).id);
-      expect(event.windows[0].start.slice(0, 4)).toBe(value.slice(0, 4));
-    }
-    for (const date of [
-      '2025-12-31',
-      '10000-01-01',
-      '2070.5-01-01',
-    ]) {
-      expect(
-        (
-          await request('/events', 'POST', {
-            ...input,
-            dates: [date],
-          })
-        ).status,
-      ).toBe(400);
-    }
-    const overflow = await request('/events', 'POST', {
-      ...input,
-      dates: ['9999-12-31'],
-      startTime: '23:00',
-      endTime: '24:00',
-    });
-    expect(overflow.status).toBe(400);
-    expect(await overflow.json()).toMatchObject({
-      error: 'Choose times within the supported year range.',
-    });
-  });
+      expect(overflow.status).toBe(400);
+      expect(await overflow.json()).toMatchObject({
+        error: 'Choose times within the supported year range.',
+      });
+    },
+  );
   /**
    * Shows the same group responses and matches with a shared link or an
    * old organizer token.
    */
-  it('shows the same group responses and matches with a shared link or an old organizer token', async () => {
-    const created = await create();
-    const event = await get(created.id);
-    const alice = await respond(created.id, event.windows, 'Alice');
-    await respond(created.id, event.windows, 'Bob');
-    const shared = await get(created.id);
-    const legacy = await (
-      await request(
-        `/events/${created.id}`,
-        'GET',
-        undefined,
-        'old-organizer-token',
-      )
-    ).json();
-    expect(legacy).toEqual(shared);
-    expect(
-      shared.responses.map(
-        /* Compare saved responder names without depending on other response fields. */
-        (r) => r.name,
-      ),
-    ).toEqual([
-      'Alice',
-      'Bob',
-    ]);
-    expect(shared.candidates).toHaveLength(1);
-    expect(shared.candidates![0]).toMatchObject({
-      start: new Date(event.windows[0].start).toISOString(),
-      end: new Date(event.windows[0].end).toISOString(),
-      available: shared.responses.map(
-        /* Compare the responder ids returned by the shared event. */
-        (r) => r.id,
-      ),
-      missing: [],
-    });
-    expect(alice).not.toHaveProperty('editToken');
-    expect(JSON.stringify(shared)).not.toContain('edit_hash');
-    const own = await (
-      await request(
-        `/events/${created.id}?response_id=${alice.id}`,
-        'GET',
-        undefined,
-      )
-    ).json();
-    expect(own).toEqual(shared);
-  });
+  it(
+    'shows the same group responses and matches with a shared link or ' + 'an old organizer token',
+    async () => {
+      const created = await create();
+      const event = await get(created.id);
+      const alice = await respond(created.id, event.windows, 'Alice');
+      await respond(created.id, event.windows, 'Bob');
+      const shared = await get(created.id);
+      const legacy = await (
+        await request(`/events/${created.id}`, 'GET', undefined, 'old-organizer-token')
+      ).json();
+      expect(legacy).toEqual(shared);
+      expect(
+        shared.responses.map(
+          /* Compare saved responder names without depending on other response fields. */
+          (r) => r.name,
+        ),
+      ).toEqual([
+        'Alice',
+        'Bob',
+      ]);
+      expect(shared.candidates).toHaveLength(1);
+      expect(shared.candidates![0]).toMatchObject({
+        start: new Date(event.windows[0].start).toISOString(),
+        end: new Date(event.windows[0].end).toISOString(),
+        available: shared.responses.map(
+          /* Compare the responder ids returned by the shared event. */
+          (r) => r.id,
+        ),
+        missing: [],
+      });
+      expect(alice).not.toHaveProperty('editToken');
+      expect(JSON.stringify(shared)).not.toContain('edit_hash');
+      const own = await (
+        await request(`/events/${created.id}?response_id=${alice.id}`, 'GET', undefined)
+      ).json();
+      expect(own).toEqual(shared);
+    },
+  );
   /** Returns only everyone-free intersections, with no secondary periods. */
   it('returns only everyone-free intersections, with no secondary periods', async () => {
     const created = await create();
@@ -278,7 +263,8 @@ describe('shared events and common ground', () => {
 
     /**
      * Build an ISO range using minute offsets from the event's start.
-     * @returns An ISO range whose boundaries are the supplied minute offsets from the fixture start.
+     * @returns An ISO range whose boundaries are the supplied minute offsets from the
+     * fixture start.
      */
     const range = (a: number, b: number) => ({
       start: new Date(start + a * 60000).toISOString(),
@@ -304,21 +290,27 @@ describe('shared events and common ground', () => {
    * Counts empty saved responses and does not show a match when nobody or
    * too few people are free.
    */
-  it('counts empty saved responses and does not show a match when nobody or too few people are free', async () => {
-    const created = await create();
-    const event = await get(created.id);
-    expect(event.candidates).toEqual([]);
-    await respond(created.id, []);
-    expect((await get(created.id)).candidates).toEqual([]);
-    await respond(created.id, [], 'Other');
-    await respond(created.id, event.windows, 'Third');
-    expect((await get(created.id)).candidates).toEqual([]);
-  });
+  it(
+    'counts empty saved responses and does not show a match when nobody ' +
+      'or too few people are free',
+    async () => {
+      const created = await create();
+      const event = await get(created.id);
+      expect(event.candidates).toEqual([]);
+      await respond(created.id, []);
+      expect((await get(created.id)).candidates).toEqual([]);
+      await respond(created.id, [], 'Other');
+      await respond(created.id, event.windows, 'Third');
+      expect((await get(created.id)).candidates).toEqual([]);
+    },
+  );
   /** Has no participant cap in the API or database. */
   it('has no participant cap in the API or database', async () => {
     const created = await create();
     await query(
-      `INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT gen_random_uuid(),$1,'Guest '||n,'UTC','test' FROM generate_series(1,1001) n`,
+      `INSERT INTO responses(id , event_id , name , timezone , edit_hash) SELECT
+  gen_random_uuid() , $1 , 'Guest ' ||n , 'UTC' , 'test' FROM generate_series(1 , 1001)
+  n`,
       [created.id],
     );
     await respond(created.id, [], 'Still welcome');
@@ -337,13 +329,9 @@ describe('shared events and common ground', () => {
     });
     const event = await get(created.id);
     expect(event.schedule_mode).toBe('weekdays');
-    expect(new Date(event.windows[0].start).toISOString()).toBe(
-      '2000-01-03T09:00:00.000Z',
-    );
+    expect(new Date(event.windows[0].start).toISOString()).toBe('2000-01-03T09:00:00.000Z');
     const person = await respond(created.id, event.windows);
-    expect((await get(created.id)).candidates![0].available).toEqual([
-      person.id,
-    ]);
+    expect((await get(created.id)).candidates![0].available).toEqual([person.id]);
     for (const path of [
       '/schedule',
       '/settings',
@@ -369,167 +357,165 @@ describe('response editing and validation', () => {
    * Lets anyone edit an existing response without a private token and
    * rejects stale writes.
    */
-  it('lets anyone edit an existing response without a private token and rejects stale writes', async () => {
-    const created = await create();
-    const event = await get(created.id);
-    const person = await respond(created.id, event.windows);
-    await query(
-      "UPDATE responses SET edit_hash='legacy-unused-hash' WHERE id=$1",
-      [person.id],
-    );
-    const path = `/events/${created.id}/responses/${person.id}`;
-    const payload = {
-      name: 'Updated Sam',
-      timezone: 'Europe/London',
-      ranges: [],
-      revision: 1,
-    };
-    expect((await request(path, 'PUT', payload)).status).toBe(200);
-    expect(
-      (
-        await request(path, 'PUT', {
-          ...payload,
-          ranges: event.windows,
-        })
-      ).status,
-    ).toBe(409);
-    expect((await get(created.id)).responses[0]).toMatchObject({
-      name: 'Updated Sam',
-      revision: 2,
-      timezone: 'Europe/London',
-      ranges: [],
-    });
-    const latest = await get(created.id);
-    expect(
-      (
-        await request(path, 'PUT', {
-          ...payload,
-          revision: latest.responses[0].revision,
-          ranges: event.windows,
-        })
-      ).status,
-    ).toBe(200);
-    expect((await get(created.id)).responses[0].ranges).toHaveLength(1);
-  });
+  it(
+    'lets anyone edit an existing response without a private token and ' + 'rejects stale writes',
+    async () => {
+      const created = await create();
+      const event = await get(created.id);
+      const person = await respond(created.id, event.windows);
+      await query("UPDATE responses SET edit_hash='legacy-unused-hash' WHERE id=$1", [person.id]);
+      const path = `/events/${created.id}/responses/${person.id}`;
+      const payload = {
+        name: 'Updated Sam',
+        timezone: 'Europe/London',
+        ranges: [],
+        revision: 1,
+      };
+      expect((await request(path, 'PUT', payload)).status).toBe(200);
+      expect(
+        (
+          await request(path, 'PUT', {
+            ...payload,
+            ranges: event.windows,
+          })
+        ).status,
+      ).toBe(409);
+      expect((await get(created.id)).responses[0]).toMatchObject({
+        name: 'Updated Sam',
+        revision: 2,
+        timezone: 'Europe/London',
+        ranges: [],
+      });
+      const latest = await get(created.id);
+      expect(
+        (
+          await request(path, 'PUT', {
+            ...payload,
+            revision: latest.responses[0].revision,
+            ranges: event.windows,
+          })
+        ).status,
+      ).toBe(200);
+      expect((await get(created.id)).responses[0].ranges).toHaveLength(1);
+    },
+  );
   /**
    * Never edits a response through a different event or creates one for an
    * unknown ID.
    */
-  it('never edits a response through a different event or creates one for an unknown ID', async () => {
-    const first = await create();
-    const second = await create();
-    const person = await respond(first.id, []);
-    const payload = {
-      name: 'Wrong event',
-      timezone: 'UTC',
-      ranges: [],
-      revision: 1,
-    };
-    expect(
-      (
-        await request(
-          `/events/${second.id}/responses/${person.id}`,
-          'PUT',
-          payload,
-        )
-      ).status,
-    ).toBe(404);
-    expect(
-      (
-        await request(
-          `/events/${second.id}/responses/${crypto.randomUUID()}`,
-          'PUT',
-          payload,
-        )
-      ).status,
-    ).toBe(404);
-    expect((await get(first.id)).responses[0]).toMatchObject({
-      name: 'Sam',
-      revision: 1,
-    });
-    expect((await get(second.id)).responses).toEqual([]);
-  });
+  it(
+    'never edits a response through a different event or creates one ' + 'for an unknown ID',
+    async () => {
+      const first = await create();
+      const second = await create();
+      const person = await respond(first.id, []);
+      const payload = {
+        name: 'Wrong event',
+        timezone: 'UTC',
+        ranges: [],
+        revision: 1,
+      };
+      expect(
+        (await request(`/events/${second.id}/responses/${person.id}`, 'PUT', payload)).status,
+      ).toBe(404);
+      expect(
+        (await request(`/events/${second.id}/responses/${crypto.randomUUID()}`, 'PUT', payload))
+          .status,
+      ).toBe(404);
+      expect((await get(first.id)).responses[0]).toMatchObject({
+        name: 'Sam',
+        revision: 1,
+      });
+      expect((await get(second.id)).responses).toEqual([]);
+    },
+  );
   /**
    * Checks schedule revisions and rejects forged ranges without destroying
    * saved data.
    */
-  it('checks schedule revisions and rejects forged ranges without destroying saved data', async () => {
-    const created = await create();
-    const event = await get(created.id);
-    expect(
-      (
-        await request(`/events/${created.id}/responses`, 'POST', {
-          name: 'Sam',
-          timezone: 'UTC',
-          schedule_revision: 9,
-          ranges: [],
-        })
-      ).status,
-    ).toBe(409);
-    expect(
-      (
-        await request(`/events/${created.id}/responses`, 'POST', {
-          name: 'Sam',
-          timezone: 'UTC',
-          ranges: [
-            {
-              start: '2000-01-01T00:00Z',
-              end: '2000-01-01T00:15Z',
-            },
-          ],
-        })
-      ).status,
-    ).toBe(400);
-    const person = await respond(created.id, event.windows);
-    expect(person.revision).toBe(1);
-  });
+  it(
+    'checks schedule revisions and rejects forged ranges without ' + 'destroying saved data',
+    async () => {
+      const created = await create();
+      const event = await get(created.id);
+      expect(
+        (
+          await request(`/events/${created.id}/responses`, 'POST', {
+            name: 'Sam',
+            timezone: 'UTC',
+            schedule_revision: 9,
+            ranges: [],
+          })
+        ).status,
+      ).toBe(409);
+      expect(
+        (
+          await request(`/events/${created.id}/responses`, 'POST', {
+            name: 'Sam',
+            timezone: 'UTC',
+            ranges: [
+              {
+                start: '2000-01-01T00:00Z',
+                end: '2000-01-01T00:15Z',
+              },
+            ],
+          })
+        ).status,
+      ).toBe(400);
+      const person = await respond(created.id, event.windows);
+      expect(person.revision).toBe(1);
+    },
+  );
   /**
    * Rejects cross-origin writes, malformed bodies, invalid dates, and
    * invalid time zones.
    */
-  it('rejects cross-origin writes, malformed bodies, invalid dates, and invalid time zones', async () => {
-    expect(
-      (
-        await app.request(
-          'http://localhost/api/events',
-          {
-            method: 'POST',
-            headers: { Origin: 'https://elsewhere.example' },
-            body: JSON.stringify(input),
-          },
-          {},
-        )
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await app.request(
-          'http://localhost/api/events',
-          {
-            method: 'POST',
-            body: '{',
-          },
-          {},
-        )
-      ).status,
-    ).toBe(400);
-    for (const extra of [
-      { timezone: 'not-a-zone' },
-      { endTime: '08:00' },
-      { dates: ['2026-02-31'] },
-      { schedule_mode: 'monthly' },
-    ]) {
+  it(
+    'rejects cross-origin writes, malformed bodies, invalid dates, and ' + 'invalid time zones',
+    async () => {
       expect(
         (
-          await request('/events', 'POST', {
-            ...input,
-            ...extra,
-          })
+          await app.request(
+            'http://localhost/api/events',
+            {
+              method: 'POST',
+              headers: { Origin: 'https://elsewhere.example' },
+              body: JSON.stringify(input),
+            },
+            {},
+          )
+        ).status,
+      ).toBe(403);
+      expect(
+        (
+          await app.request(
+            'http://localhost/api/events',
+            {
+              method: 'POST',
+              body: '{',
+            },
+            {},
+          )
         ).status,
       ).toBe(400);
-    }
-    expect((await request('/events/not-an-id')).status).toBe(404);
-  });
+      for (const extra of [
+        { timezone: 'not-a-zone' },
+        { endTime: '08:00' },
+        { dates: ['2026-02-31'] },
+        { schedule_mode: 'monthly' },
+      ]) {
+        expect(
+          (
+            await request('/events', 'POST', {
+              ...input,
+              ...extra,
+            })
+          ).status,
+        ).toBe(400);
+      }
+      expect((await request('/events/not-an-id')).status).toBe(404);
+    },
+  );
 });
 
 /** Group the one-year expiry and manual cleanup checks. */
@@ -539,10 +525,7 @@ describe('one-year expiry and manual cleanup', () => {
    * @returns A promise resolving to the UPDATE result rows, normally an empty list.
    */
   const expire = (id: string) =>
-    query(
-      "UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1",
-      [id],
-    );
+    query("UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1", [id]);
 
   /**
    * Make a fixture old enough for cleanup as well as expired.
@@ -550,7 +533,8 @@ describe('one-year expiry and manual cleanup', () => {
    */
   const age = (id: string) =>
     query(
-      "UPDATE events SET created_at=now()-interval '1 year'-interval '1 second',expires_at=now()-interval '1 second' WHERE id=$1",
+      `UPDATE events SET created_at=now()-interval '1 year' -interval '1 second' ,
+  expires_at=now()-interval '1 second' WHERE id=$1`,
       [id],
     );
 
@@ -564,7 +548,8 @@ describe('one-year expiry and manual cleanup', () => {
     expect(
       (
         await query<{ correct: boolean }>(
-          `SELECT expires_at=(((created_at AT TIME ZONE 'UTC')+interval '1 year') AT TIME ZONE 'UTC') AS correct FROM events WHERE id=$1`,
+          `SELECT expires_at=(((created_at AT TIME ZONE 'UTC' )+interval '1 year' ) AT TIME ZONE
+  'UTC' ) AS correct FROM events WHERE id=$1`,
           [created.id],
         )
       )[0].correct,
@@ -624,12 +609,11 @@ describe('one-year expiry and manual cleanup', () => {
     ] as const) {
       expect((await request(path, method, data, token)).status).toBe(410);
     }
-    expect(
-      await query('SELECT id FROM responses WHERE event_id=$1', [created.id]),
-    ).toHaveLength(1);
+    expect(await query('SELECT id FROM responses WHERE event_id=$1', [created.id])).toHaveLength(1);
     await expect(
       query(
-        `INSERT INTO responses(id,event_id,name,timezone,edit_hash) VALUES(gen_random_uuid(),$1,'Late','UTC','test')`,
+        `INSERT INTO responses(id , event_id , name , timezone , edit_hash)
+  VALUES(gen_random_uuid() , $1 , 'Late' , 'UTC' , 'test' )`,
         [created.id],
       ),
     ).rejects.toMatchObject({ code: 'WK001' });
@@ -670,10 +654,7 @@ describe('one-year expiry and manual cleanup', () => {
     expect(result.status).toBe(410);
     expect(
       (
-        await query<{ revision: number }>(
-          'SELECT revision FROM responses WHERE id=$1',
-          [person.id],
-        )
+        await query<{ revision: number }>('SELECT revision FROM responses WHERE id=$1', [person.id])
       )[0].revision,
     ).toBe(1);
   });
@@ -698,21 +679,16 @@ describe('one-year expiry and manual cleanup', () => {
       'responses',
     ]) {
       expect(
-        await query(
-          `SELECT id FROM ${table} WHERE ${table === 'events' ? 'id' : 'event_id'}=$1`,
-          [old.id],
-        ),
+        await query(`SELECT id FROM ${table} WHERE ${table === 'events' ? 'id' : 'event_id'}=$1`, [
+          old.id,
+        ]),
       ).toEqual([]);
     }
-    expect(
-      await query('SELECT id FROM availability WHERE response_id=$1', [
-        oldPerson.id,
-      ]),
-    ).toEqual([]);
+    expect(await query('SELECT id FROM availability WHERE response_id=$1', [oldPerson.id])).toEqual(
+      [],
+    );
     expect((await get(young.id)).response_count).toBe(1);
-    expect(
-      await query('SELECT id FROM events WHERE id=$1', [misconfigured.id]),
-    ).toHaveLength(1);
+    expect(await query('SELECT id FROM events WHERE id=$1', [misconfigured.id])).toHaveLength(1);
     expect(await (await EventCleanup.load(query)).run()).toEqual({
       deletedEvents: 0,
     });
@@ -722,7 +698,8 @@ describe('one-year expiry and manual cleanup', () => {
   it('uses creation age even with an incorrect future expiry', async () => {
     const old = await create();
     await query(
-      "UPDATE events SET created_at=now()-interval '1 year'-interval '1 second',expires_at=now()+interval '1 year' WHERE id=$1",
+      `UPDATE events SET created_at=now()-interval '1 year' -interval '1 second' ,
+  expires_at=now()+interval '1 year' WHERE id=$1`,
       [old.id],
     );
     expect(await (await EventCleanup.load(query)).run()).toEqual({
@@ -732,7 +709,9 @@ describe('one-year expiry and manual cleanup', () => {
   /** Cleans the complete backlog across multiple bounded batches. */
   it('cleans the complete backlog across multiple bounded batches', async () => {
     await query(
-      `INSERT INTO events(id,title,organizer_name,timezone,created_at,expires_at) SELECT gen_random_uuid(),'Old','','UTC',now()-interval '1 year'-interval '1 second',now()-interval '1 second' FROM generate_series(1,205)`,
+      `INSERT INTO events(id , title , organizer_name , timezone , created_at , expires_at)
+  SELECT gen_random_uuid() , 'Old' , '' , 'UTC' , now()-interval '1 year' -interval
+  '1 second' , now()-interval '1 second' FROM generate_series(1 , 205)`,
     );
     expect(await (await EventCleanup.load(query)).run()).toEqual({
       deletedEvents: 205,
@@ -745,71 +724,59 @@ describe('deleting a shared response', () => {
    * Removes only the selected response and its availability, then
    * recalculates shared times.
    */
-  it('removes only the selected response and its availability, then recalculates shared times', async () => {
-    const created = await create();
-    const event = await get(created.id);
-    const alice = await respond(created.id, event.windows, 'Alice');
-    const bob = await respond(created.id, [], 'Bob');
-    expect((await get(created.id)).candidates).toEqual([]);
-    expect(
-      (
-        await request(
-          '/events/' + created.id + '/responses/' + bob.id,
-          'DELETE',
-          { revision: 1 },
-        )
-      ).status,
-    ).toBe(200);
-    expect(
-      (await get(created.id)).responses.map(
-        /* Collect the remaining responder ids after fixture deletion. */
-        (r) => r.id,
-      ),
-    ).toEqual([alice.id]);
-    expect((await get(created.id)).candidates).toHaveLength(1);
-    expect(
-      (
-        await request(
-          '/events/' + created.id + '/responses/' + alice.id,
-          'DELETE',
-          { revision: 1 },
-        )
-      ).status,
-    ).toBe(200);
-    expect(
-      await query('SELECT id FROM availability WHERE response_id=$1', [
-        alice.id,
-      ]),
-    ).toEqual([]);
-    expect((await get(created.id)).responses).toEqual([]);
-    expect((await get(created.id)).windows).toEqual(event.windows);
-    expect((await get(created.id)).candidates).toEqual([]);
-    expect(
-      (
-        await request(
-          '/events/' + created.id + '/responses/' + alice.id,
-          'PUT',
-          {
+  it(
+    'removes only the selected response and its availability, then ' + 'recalculates shared times',
+    async () => {
+      const created = await create();
+      const event = await get(created.id);
+      const alice = await respond(created.id, event.windows, 'Alice');
+      const bob = await respond(created.id, [], 'Bob');
+      expect((await get(created.id)).candidates).toEqual([]);
+      expect(
+        (await request('/events/' + created.id + '/responses/' + bob.id, 'DELETE', { revision: 1 }))
+          .status,
+      ).toBe(200);
+      expect(
+        (await get(created.id)).responses.map(
+          /* Collect the remaining responder ids after fixture deletion. */
+          (r) => r.id,
+        ),
+      ).toEqual([alice.id]);
+      expect((await get(created.id)).candidates).toHaveLength(1);
+      expect(
+        (
+          await request('/events/' + created.id + '/responses/' + alice.id, 'DELETE', {
+            revision: 1,
+          })
+        ).status,
+      ).toBe(200);
+      expect(await query('SELECT id FROM availability WHERE response_id=$1', [alice.id])).toEqual(
+        [],
+      );
+      expect((await get(created.id)).responses).toEqual([]);
+      expect((await get(created.id)).windows).toEqual(event.windows);
+      expect((await get(created.id)).candidates).toEqual([]);
+      expect(
+        (
+          await request('/events/' + created.id + '/responses/' + alice.id, 'PUT', {
             name: 'Alice',
             timezone: 'UTC',
             revision: 1,
             ranges: [],
-          },
-        )
-      ).status,
-    ).toBe(404);
-    expect(
-      (
-        await request(
-          '/events/' + created.id + '/responses/' + alice.id,
-          'DELETE',
-          { revision: 1 },
-        )
-      ).status,
-    ).toBe(404);
-    await respond(created.id, event.windows, 'New response');
-    expect((await get(created.id)).response_count).toBe(1);
-  });
+          })
+        ).status,
+      ).toBe(404);
+      expect(
+        (
+          await request('/events/' + created.id + '/responses/' + alice.id, 'DELETE', {
+            revision: 1,
+          })
+        ).status,
+      ).toBe(404);
+      await respond(created.id, event.windows, 'New response');
+      expect((await get(created.id)).response_count).toBe(1);
+    },
+  );
   /**
    * Rejects stale confirmations, wrong-event targets, and invalid
    * revisions.
@@ -820,13 +787,8 @@ describe('deleting a shared response', () => {
     const person = await respond(first.id, []);
     const path = '/events/' + first.id + '/responses/' + person.id;
     expect(
-      (
-        await request(
-          '/events/' + second.id + '/responses/' + person.id,
-          'DELETE',
-          { revision: 1 },
-        )
-      ).status,
+      (await request('/events/' + second.id + '/responses/' + person.id, 'DELETE', { revision: 1 }))
+        .status,
     ).toBe(404);
     expect((await request(path, 'DELETE', { revision: 0 })).status).toBe(400);
     expect(
@@ -884,10 +846,9 @@ describe('deleting a shared response', () => {
          */
         query: async <T>(sql: string, params: unknown[] = []) => {
           if (sql.includes('WITH gate AS')) {
-            await query(
-              "UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1",
-              [created.id],
-            );
+            await query("UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1", [
+              created.id,
+            ]);
           }
           return query<T>(sql, params);
         },
@@ -906,9 +867,7 @@ describe('deleting a shared response', () => {
         )
       ).status,
     ).toBe(410);
-    expect(
-      await query('SELECT id FROM responses WHERE id=$1', [person.id]),
-    ).toHaveLength(1);
+    expect(await query('SELECT id FROM responses WHERE id=$1', [person.id])).toHaveLength(1);
     expect((await request(path, 'DELETE', { revision: 1 })).status).toBe(410);
   });
 });

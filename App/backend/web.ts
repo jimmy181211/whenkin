@@ -22,9 +22,7 @@ export function createWebApp(
   options: AppOptions & { staticRoot?: string } = {},
 ) {
   const app = createApp(database, options);
-  const root =
-    options.staticRoot ??
-    fileURLToPath(new URL('../../client/', import.meta.url));
+  const root = options.staticRoot ?? fileURLToPath(new URL('../../client/', import.meta.url));
   // Load the built HTML once per app instance; requests share the same read promise.
   let document: Promise<string> | undefined;
   app.use(

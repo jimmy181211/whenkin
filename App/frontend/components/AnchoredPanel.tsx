@@ -1,3 +1,4 @@
+import { observeOverlayLayout } from '../utils/observe-overlay-layout';
 import {
   useEffect,
   useLayoutEffect,
@@ -7,7 +8,10 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { anchoredPanelPosition } from '../utils/anchored-panel-position';
+import {
+  anchoredPanelPosition,
+  visibleViewport,
+} from '../utils/anchored-panel-position';
 import PopupSurface from './PopupSurface';
 
 /** Trigger, content, and close behavior for a small anchored popup. */
@@ -58,13 +62,7 @@ export default function AnchoredPanel({
         return;
       }
       // The visible viewport can shrink or shift when a mobile keyboard opens.
-      const vv = window.visualViewport;
-      const viewport = {
-        left: vv?.offsetLeft ?? 0,
-        top: vv?.offsetTop ?? 0,
-        width: vv?.width ?? innerWidth,
-        height: vv?.height ?? innerHeight,
-      };
+      const viewport = visibleViewport();
       const box = panel.current.getBoundingClientRect();
       setPosition({
         ...anchoredPanelPosition(anchor.getBoundingClientRect(), box, viewport),
@@ -72,24 +70,10 @@ export default function AnchoredPanel({
       });
     };
 
-    place();
-    window.addEventListener('scroll', place, true);
-    window.addEventListener('resize', place);
-    window.visualViewport?.addEventListener('resize', place);
-    window.visualViewport?.addEventListener('scroll', place);
-    const observer = new ResizeObserver(place);
-    if (panel.current) {
-      observer.observe(panel.current);
-    }
-    observer.observe(anchor);
-    // Disconnect panel measurements and scroll/resize listeners when the anchor changes.
-    return () => {
-      window.removeEventListener('scroll', place, true);
-      window.removeEventListener('resize', place);
-      window.visualViewport?.removeEventListener('resize', place);
-      window.visualViewport?.removeEventListener('scroll', place);
-      observer.disconnect();
-    };
+    return observeOverlayLayout(place, [
+      panel.current,
+      anchor,
+    ]);
   }, [anchor]);
   /**
    * Handle focus, Escape, and outside clicks for the open panel.
@@ -101,9 +85,7 @@ export default function AnchoredPanel({
     // Focus target to restore when this panel was opened with focusOnOpen.
     const previous = document.activeElement;
     if (focusOnOpen) {
-      node
-        ?.querySelector<HTMLElement>('[data-panel-autofocus]')
-        ?.focus({ preventScroll: true });
+      node?.querySelector<HTMLElement>('[data-panel-autofocus]')?.focus({ preventScroll: true });
     }
 
     /** Close the panel when the user presses Escape. */
@@ -116,11 +98,7 @@ export default function AnchoredPanel({
 
     /** Close only when the pointer is outside both the panel and its trigger. */
     const outside = (e: PointerEvent) => {
-      if (
-        e.target instanceof Node &&
-        !node?.contains(e.target) &&
-        !anchor.contains(e.target)
-      ) {
+      if (e.target instanceof Node && !node?.contains(e.target) && !anchor.contains(e.target)) {
         close.current();
       }
     };

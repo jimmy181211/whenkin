@@ -27,10 +27,7 @@ const serverOutput = resolve(root, 'dist/node');
 if (serverOutput !== join(resolve(root), 'dist', 'node')) {
   throw new Error('Invalid build output.');
 }
-if (
-  existsSync(join(root, 'dist')) &&
-  lstatSync(join(root, 'dist')).isSymbolicLink()
-) {
+if (existsSync(join(root, 'dist')) && lstatSync(join(root, 'dist')).isSymbolicLink()) {
   throw new Error('Build output must stay inside the checkout.');
 }
 // Remove only generated backend output, so deleted source modules cannot remain in a build.
@@ -79,15 +76,9 @@ for (const args of commands) {
 }
 if (mode !== 'server') {
   mkdirSync(join(root, 'dist/.openai'), { recursive: true });
-  copyFileSync(
-    join(root, '.openai/hosting.json'),
-    join(root, 'dist/.openai/hosting.json'),
-  );
+  copyFileSync(join(root, '.openai/hosting.json'), join(root, 'dist/.openai/hosting.json'));
   const worker = JSON.parse(readFileSync(join(root, 'wrangler.json'), 'utf8'));
   worker.main = './index.js';
   worker.assets.directory = '../client';
-  writeFileSync(
-    join(root, 'dist/server/wrangler.json'),
-    JSON.stringify(worker, null, 2) + '\n',
-  );
+  writeFileSync(join(root, 'dist/server/wrangler.json'), JSON.stringify(worker, null, 2) + '\n');
 }

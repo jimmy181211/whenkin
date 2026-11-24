@@ -22,7 +22,8 @@ const client = {
   /**
    * Adapt fixture queries to PGlite while leaving session-lock checks to
    * Docker tests.
-   * @returns A driver-style query result; simulated advisory-lock operations have an empty rows list.
+   * @returns A driver-style query result; simulated advisory-lock operations have an empty
+   * rows list.
    */
   query: async (sql: string, params: unknown[] = []) => {
     // PGlite is single-session; PostgreSQL session locks are exercised by the Docker check.
@@ -60,11 +61,10 @@ describe('PostgreSQL migration runner', () => {
       /* Suppress routine migration logs while checking first application. */
       () => {},
     );
-    expect(
-      (await pg.query('SELECT name FROM schema_migrations')).rows,
-    ).toHaveLength(10);
+    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(10);
     await pg.query(
-      "INSERT INTO events(id,title,organizer_name,timezone) VALUES(gen_random_uuid(),'Retained','','UTC')",
+      `INSERT INTO events(id , title , organizer_name , timezone) VALUES(gen_random_uuid() ,
+  'Retained' , '' , 'UTC' )`,
     );
     await migrate(
       client,
@@ -72,12 +72,8 @@ describe('PostgreSQL migration runner', () => {
       /* Suppress the repeated-run logs while checking migration idempotence. */
       () => {},
     );
-    expect((await pg.query('SELECT title FROM events')).rows).toEqual([
-      { title: 'Retained' },
-    ]);
-    expect(
-      (await pg.query('SELECT name FROM schema_migrations')).rows,
-    ).toHaveLength(10);
+    expect((await pg.query('SELECT title FROM events')).rows).toEqual([{ title: 'Retained' }]);
+    expect((await pg.query('SELECT name FROM schema_migrations')).rows).toHaveLength(10);
   });
   /** Rolls back failed schema changes together with their migration record. */
   it('rolls back failed schema changes together with their migration record', async () => {
@@ -93,15 +89,11 @@ describe('PostgreSQL migration runner', () => {
         () => {},
       ),
     ).rejects.toThrow();
+    expect((await pg.query("SELECT to_regclass('rollback_probe') AS name")).rows).toEqual([
+      { name: null },
+    ]);
     expect(
-      (await pg.query("SELECT to_regclass('rollback_probe') AS name")).rows,
-    ).toEqual([{ name: null }]);
-    expect(
-      (
-        await pg.query(
-          "SELECT name FROM schema_migrations WHERE name='009_failure.sql'",
-        )
-      ).rows,
+      (await pg.query("SELECT name FROM schema_migrations WHERE name='009_failure.sql'")).rows,
     ).toEqual([]);
   });
   /**
@@ -117,38 +109,30 @@ describe('PostgreSQL migration runner', () => {
       /* Suppress logs while recording the original migration checksum. */
       () => {},
     );
-    const legacy = createHash('sha256')
-      .update(source.replaceAll('\n', '\r\n'))
-      .digest('hex');
-    await pg.query(
-      "UPDATE schema_migrations SET checksum=$1 WHERE name='009_failure.sql'",
-      [legacy],
-    );
+    const legacy = createHash('sha256').update(source.replaceAll('\n', '\r\n')).digest('hex');
+    await pg.query("UPDATE schema_migrations SET checksum=$1 WHERE name='009_failure.sql'", [
+      legacy,
+    ]);
     await migrate(
       client,
       pathToFileURL(temporary + '/'),
       /* Suppress logs while checking compatible line-ending checksums. */
       () => {},
     );
-    await writeFile(
-      join(temporary, '009_failure.sql'),
-      source.replaceAll('\n', '\r\n'),
-    );
+    await writeFile(join(temporary, '009_failure.sql'), source.replaceAll('\n', '\r\n'));
     await migrate(
       client,
       pathToFileURL(temporary + '/'),
       /* Keep altered-history rejection checks independent of routine logging. */
       () => {},
     );
-    expect(
-      (await pg.query("SELECT to_regclass('newline_probe') AS name")).rows,
-    ).toEqual([{ name: 'newline_probe' }]);
+    expect((await pg.query("SELECT to_regclass('newline_probe') AS name")).rows).toEqual([
+      { name: 'newline_probe' },
+    ]);
   });
   /** Rejects altered migration history. */
   it('rejects altered migration history', async () => {
-    await pg.query(
-      "UPDATE schema_migrations SET checksum='changed' WHERE name='001_initial.sql'",
-    );
+    await pg.query("UPDATE schema_migrations SET checksum='changed' WHERE name='001_initial.sql'");
     await expect(
       migrate(
         client,

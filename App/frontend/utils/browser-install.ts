@@ -9,11 +9,7 @@ interface InstallPromptEvent extends Event {
  * Installation outcome used to show feedback or fall back to manual
  * instructions.
  */
-export type InstallResult =
-  | 'accepted'
-  | 'dismissed'
-  | 'unavailable'
-  | 'pending';
+export type InstallResult = 'accepted' | 'dismissed' | 'unavailable' | 'pending';
 
 /** Keep a browser's one-use install prompt until the user clicks the shortcut button. */
 export class BrowserInstall {

@@ -41,13 +41,8 @@ export function isTimezone(zone: string) {
 export function localToUTC(date: string, time: string, zone: string) {
   const day = Temporal.PlainDate.from(date);
   const p =
-    time === '24:00'
-      ? day.add({ days: 1 }).toPlainDateTime('00:00')
-      : day.toPlainDateTime(time);
-  return p
-    .toZonedDateTime(zone, { disambiguation: 'reject' })
-    .toInstant()
-    .toString();
+    time === '24:00' ? day.add({ days: 1 }).toPlainDateTime('00:00') : day.toPlainDateTime(time);
+  return p.toZonedDateTime(zone, { disambiguation: 'reject' }).toInstant().toString();
 }
 
 /**
@@ -71,11 +66,7 @@ export function localDate(value: string | number, zone: string) {
 export function allSlots(windows: TimeRange[], duration = SLOT): number[] {
   const result = new Set<number>();
   for (const w of windows) {
-    for (
-      let t = Date.parse(w.start);
-      t + duration <= Date.parse(w.end);
-      t += duration
-    ) {
+    for (let t = Date.parse(w.start); t + duration <= Date.parse(w.end); t += duration) {
       result.add(t);
     }
   }
@@ -98,10 +89,7 @@ export function allSlots(windows: TimeRange[], duration = SLOT): number[] {
  * // Two adjacent 15-minute slots become one 30-minute range.
  * ```
  */
-export function slotsToRanges(
-  slots: Set<number> | number[],
-  duration = SLOT,
-): TimeRange[] {
+export function slotsToRanges(slots: Set<number> | number[], duration = SLOT): TimeRange[] {
   const result: TimeRange[] = [];
   for (const t of [...new Set(slots)].sort(
     /* Merge selected slots in chronological order after removing duplicates. */
@@ -127,11 +115,7 @@ export function slotsToRanges(
  * @param end - Excluded end timestamp; defaults to one saved slot after start.
  * @returns True when the ranges cover the entire interval without a gap.
  */
-export function contains(
-  ranges: TimeRange[],
-  start: number,
-  end = start + SLOT,
-) {
+export function contains(ranges: TimeRange[], start: number, end = start + SLOT) {
   // Everything before cursor is covered. A gap before the next range means failure.
   let cursor = start;
   for (const r of [...ranges].sort(

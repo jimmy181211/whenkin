@@ -42,8 +42,5 @@ export function webManifest(page: unknown) {
  * @returns HTML with its manifest link targeting the safe shortcut launch path.
  */
 export function documentWithManifest(html: string, pathname: string) {
-  return html.replace(
-    'href="/site.webmanifest"',
-    `href="${shortcutManifestHref(pathname)}"`,
-  );
+  return html.replace('href="/site.webmanifest"', `href="${shortcutManifestHref(pathname)}"`);
 }

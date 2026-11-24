@@ -1,9 +1,9 @@
-.editable-select,
+.option-select,
 .calendar-year {
   position: relative;
   min-width: 0;
 }
-.calendar-selects .editable-select input,
+.calendar-selects .option-select-trigger,
 .calendar-selects .calendar-year input {
   min-width: 0;
   padding: 10px 28px 10px 10px;
@@ -12,24 +12,33 @@
   min-height: 44px;
   text-align: center;
 }
-.calendar-selects .editable-select input {
-  /* Center in the text area, reserving 28px for the dropdown button. */
+.calendar-selects .option-select-trigger {
+  /* Reserve the same arrow space as before without using an editable field. */
   padding-inline: 4px 32px;
+  width: 100%;
+  border: 1px solid #dce3d8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+/* Pointer and keyboard focus use the same ring as the adjacent year field. */
+.calendar-selects .option-select-trigger:focus {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 .calendar-selects .calendar-year input {
   padding-inline: 4px;
 }
-.editable-select-toggle {
+.option-select-trigger > svg {
   position: absolute;
-  inset: 0 0 0 auto;
-  width: 28px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border-radius: 0 9px 9px 0;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--muted);
 }
-.editable-select-options {
+.option-select-options {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -42,7 +51,7 @@
   padding: 5px;
   overscroll-behavior: contain;
 }
-.editable-select-options > button {
+.option-select-options > button {
   display: block;
   width: 100%;
   min-height: 40px;
@@ -53,29 +62,26 @@
   white-space: nowrap;
   font-size: 13px;
 }
-.editable-select-options > button:hover,
-.editable-select-options > button[data-active='true'] {
+.calendar-selects .option-select-options > button {
+  text-align: center;
+}
+.option-select-options > button:hover,
+.option-select-options > button[data-active='true'] {
   background: var(--soft);
 }
-.editable-select-options > button[aria-selected='true'] {
+.option-select-options > button[aria-selected='true'] {
   font-weight: 700;
   color: var(--primary);
 }
-.editable-select-empty {
-  padding: 10px;
-  font-size: 12px;
-  white-space: normal;
-  margin: 0;
-}
 @media (max-width: 699px) {
-  .calendar-selects .editable-select input,
+  .calendar-selects .option-select-trigger,
   .calendar-selects .calendar-year input {
     font-size: 16px;
   }
   .calendar-selects .calendar-year input {
     padding-inline: 4px;
   }
-  .editable-select-options > button {
+  .option-select-options > button {
     min-height: 44px;
     font-size: 14px;
   }

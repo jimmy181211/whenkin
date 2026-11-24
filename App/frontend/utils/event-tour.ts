@@ -3,49 +3,56 @@ export const EVENT_TOUR_KEY = 'whenkin:event-tour:v1';
 export type TourOutcome = 'completed' | 'skipped';
 /** The optional storage operations needed to remember guide dismissal. */
 type TourStorage = Pick<Storage, 'getItem' | 'setItem'>;
-let dismissedThisSession = false;
 
-/**
- * Offer the guide unless it was dismissed in this session or a previous
- * visit.
- * @returns True when the welcome should be offered; unavailable storage does not block it.
- */
-export function shouldOfferTour(storage?: TourStorage | null) {
-  if (dismissedThisSession) {
-    return false;
+/** Own guide-dismissal state shared across event pages in the current session. */
+export class EventTourService {
+  private dismissedThisSession = false;
+
+  /**
+   * Offer the guide unless it was dismissed in this session or a previous
+   * visit.
+   * @returns True when the welcome should be offered; unavailable storage does not block it.
+   */
+  shouldOffer(storage?: TourStorage | null) {
+    if (this.dismissedThisSession) {
+      return false;
+    }
+    try {
+      const value = storage?.getItem(EVENT_TOUR_KEY);
+      return value !== 'completed' && value !== 'skipped';
+    } catch {
+      return true;
+    }
   }
-  try {
-    const value = storage?.getItem(EVENT_TOUR_KEY);
-    return value !== 'completed' && value !== 'skipped';
-  } catch {
-    return true;
+
+  /**
+   * Remember that the guide was completed or skipped, even without browser
+   * storage.
+   */
+  finish(outcome: TourOutcome, storage?: TourStorage | null) {
+    this.dismissedThisSession = true;
+    try {
+      storage?.setItem(EVENT_TOUR_KEY, outcome);
+    } catch {
+      /* Storage is optional. */
+    }
+  }
+
+  /**
+   * Read optional browser storage without failing when access is blocked.
+   * @returns The browser's local storage, or null when access is unavailable.
+   */
+  browserStorage() {
+    try {
+      return window.localStorage;
+    } catch {
+      return null;
+    }
   }
 }
 
-/**
- * Remember that the guide was completed or skipped, even without browser
- * storage.
- */
-export function finishTour(outcome: TourOutcome, storage?: TourStorage | null) {
-  dismissedThisSession = true;
-  try {
-    storage?.setItem(EVENT_TOUR_KEY, outcome);
-  } catch {
-    /* Storage is optional. */
-  }
-}
-
-/**
- * Read optional browser storage without failing when access is blocked.
- * @returns The browser's local storage, or null when access is unavailable.
- */
-export function browserTourStorage() {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
+// All event pages share dismissal state, including when browser storage is blocked.
+export const tourService = new EventTourService();
 
 export const tourSteps = [
   {

@@ -39,8 +39,7 @@ async function checkRuntime(htmlHandling) {
       binding: configuration.assets.binding,
       workerName: 'whenkin',
       routerConfig: {
-        invoke_user_worker_ahead_of_assets:
-          configuration.assets.run_worker_first,
+        invoke_user_worker_ahead_of_assets: configuration.assets.run_worker_first,
         has_user_worker: true,
       },
       assetConfig: {
@@ -65,7 +64,10 @@ async function checkRuntime(htmlHandling) {
           /* Encode each result row in the hosted database transport's array format. */
           (row) =>
             fields.map(
-              /* Encode a field's null, boolean, date, object, or scalar value as the transport expects. */
+              /*
+               * Encode a field's null, boolean, date, object, or scalar value as the
+               * transport expects.
+               */
               (field) => {
                 const value = row[field.name];
                 if (value === null || value === undefined) {
@@ -122,9 +124,7 @@ async function checkRuntime(htmlHandling) {
         status: response.status,
         text,
         headers: response.headers,
-        data: response.headers.get('content-type')?.includes('json')
-          ? JSON.parse(text)
-          : undefined,
+        data: response.headers.get('content-type')?.includes('json') ? JSON.parse(text) : undefined,
       };
     };
 
@@ -173,17 +173,10 @@ async function checkRuntime(htmlHandling) {
       ranges: event.windows,
       revision: bob.data.revision,
     };
-    const saved = await request(
-      path + '/responses/' + bob.data.id,
-      'PUT',
-      update,
-    );
+    const saved = await request(path + '/responses/' + bob.data.id, 'PUT', update);
     assert.equal(saved.status, 200);
     assert.equal((await request(path)).data.candidates[0].available.length, 2);
-    assert.equal(
-      (await request(path + '/responses/' + bob.data.id, 'PUT', update)).status,
-      409,
-    );
+    assert.equal((await request(path + '/responses/' + bob.data.id, 'PUT', update)).status, 409);
     assert.equal(
       (
         await request(path + '/responses/' + bob.data.id, 'DELETE', {
@@ -202,46 +195,36 @@ async function checkRuntime(htmlHandling) {
       200,
     );
     assert.equal((await request(path)).data.candidates.length, 0);
-    const crossOrigin = await mf.dispatchFetch(
-      'https://whenkin.test' + path + '/responses',
-      {
-        method: 'POST',
-        headers: {
-          Origin: 'https://other.test',
-          'Content-Type': 'application/json',
-        },
-        body: '{}',
+    const crossOrigin = await mf.dispatchFetch('https://whenkin.test' + path + '/responses', {
+      method: 'POST',
+      headers: {
+        Origin: 'https://other.test',
+        'Content-Type': 'application/json',
       },
-    );
+      body: '{}',
+    });
     assert.equal(crossOrigin.status, 403);
-    const malformed = await mf.dispatchFetch(
-      'https://whenkin.test/api/events',
-      {
-        method: 'POST',
-        headers: {
-          Origin: 'https://whenkin.test',
-          'Content-Type': 'application/json',
-        },
-        body: '{',
+    const malformed = await mf.dispatchFetch('https://whenkin.test/api/events', {
+      method: 'POST',
+      headers: {
+        Origin: 'https://whenkin.test',
+        'Content-Type': 'application/json',
       },
-    );
+      body: '{',
+    });
     assert.equal(malformed.status, 400);
-    const oversized = await mf.dispatchFetch(
-      'https://whenkin.test/api/events',
-      {
-        method: 'POST',
-        headers: {
-          Origin: 'https://whenkin.test',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title: 'x'.repeat(131073) }),
+    const oversized = await mf.dispatchFetch('https://whenkin.test/api/events', {
+      method: 'POST',
+      headers: {
+        Origin: 'https://whenkin.test',
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({ title: 'x'.repeat(131073) }),
+    });
     assert.equal(oversized.status, 413);
-    await pg.query(
-      "UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1",
-      [created.data.id],
-    );
+    await pg.query("UPDATE events SET expires_at=now()-interval '1 second' WHERE id=$1", [
+      created.data.id,
+    ]);
     assert.equal((await request(path)).status, 410);
     for (const route of [
       '/',
@@ -253,11 +236,7 @@ async function checkRuntime(htmlHandling) {
     ]) {
       const page = await request(route);
       assert.equal(page.status, 200, route + ' in ' + htmlHandling);
-      assert.match(
-        page.text,
-        /id="root"/,
-        route + ' must contain the React document',
-      );
+      assert.match(page.text, /id="root"/, route + ' must contain the React document');
       assert.match(page.headers.get('content-type') || '', /text\/html/);
       assert.equal(
         page.headers.get('location'),
@@ -277,8 +256,7 @@ async function checkRuntime(htmlHandling) {
     assert.equal(manifest.data.start_url, '/');
     assert.equal(manifest.data.icons.length, 2);
     assert.equal(
-      (await request('/site.webmanifest?page=https%3A%2F%2Fother.test')).data
-        .start_url,
+      (await request('/site.webmanifest?page=https%3A%2F%2Fother.test')).data.start_url,
       '/',
     );
     for (const [asset, size] of [
@@ -313,15 +291,17 @@ async function checkRuntime(htmlHandling) {
     assert.equal(Buffer.from(await favicon.arrayBuffer()).readUInt16LE(2), 1);
     assert.equal((await request('/e/not-an-id')).status, 404);
     assert.equal((await request('/api/missing')).status, 404);
-    const missingAsset = await mf.dispatchFetch(
-      'https://whenkin.test/assets/missing.js',
-    );
+    const missingAsset = await mf.dispatchFetch('https://whenkin.test/assets/missing.js');
     assert.equal(missingAsset.status, 404);
     assert.equal(missingAsset.headers.get('cache-control'), 'no-store');
     console.log(
       'PASS (' +
         htmlHandling +
-        '): built Worker + Express; API endpoints, read-only monthly retention, common times, revision conflicts, expiry, origin/body limits, direct links, shortcut manifest/icons and static routing. Disposable PostgreSQL; mocked Neon transport; no production access.',
+        '): built Worker + Express; API endpoints, read-only monthly ' +
+        'retention, common times, revision conflicts, expiry, origin/body ' +
+        'limits, direct links, shortcut manifest/icons and static routing. ' +
+        'Disposable PostgreSQL; mocked Neon transport; no production ' +
+        'access.',
     );
   } finally {
     await mf.dispose();

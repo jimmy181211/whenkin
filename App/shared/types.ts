@@ -1,6 +1,8 @@
 /** ISO timestamps with a timezone offset; start is included and end is excluded. */
-export type TimeRange = { start: string;
-  end: string };
+export type TimeRange = {
+  start: string;
+  end: string;
+};
 /**
  * One saved reply with its display name, timezone, revision, and available
  * ranges.

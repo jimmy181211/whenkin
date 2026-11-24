@@ -6,15 +6,8 @@
  * @returns The validated duration in whole calendar months.
  */
 export function validateRetentionMonths(value) {
-  if (
-    !Number.isInteger(value) ||
-    typeof value !== 'number' ||
-    value < 1 ||
-    value > 1200
-  ) {
-    throw new Error(
-      'Retention must be a whole number of months from 1 to 1200.',
-    );
+  if (!Number.isInteger(value) || typeof value !== 'number' || value < 1 || value > 1200) {
+    throw new Error('Retention must be a whole number of months from 1 to 1200.');
   }
   return value;
 }

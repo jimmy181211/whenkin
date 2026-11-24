@@ -4,8 +4,10 @@
  */
 export type PageRoute =
   | { kind: 'home' | 'guide' | 'terms' | 'privacy' | 'not-found' }
-  | { kind: 'event';
-    id: string };
+  | {
+    kind: 'event';
+    id: string;
+  };
 
 /**
  * Match a page path for server response status and React page selection.

@@ -1,105 +1,347 @@
-# Code readability
+# 通用代码、注释与项目结构规范
 
-Run `pnpm format` to apply the layout and `pnpm format:check` to verify it.
-The same check runs in GitHub Actions. Prettier handles ordinary wrapping;
-TypeScript-aware ESLint layout rules put object properties and array values on
-separate lines. Formatting never runs database commands.
+## 使用说明
 
-- Use two spaces and aim for 80 columns. Preserve literal text, URLs, SQL and
-  generated-report templates when wrapping would change their contents.
-- Put each object property and each item in a multi-item array on its own line.
-  Keep a state/setter destructuring pair together. Long argument lists wrap.
-- Leave a blank line between functions, including named arrow callbacks.
-- Use names that describe their role. Keep public API fields, database columns,
-  translation keys and CSS hooks stable.
-- Name values with domain meaning, such as `AUTOSAVE_DELAY_MS`.
-- Write for someone learning this codebase, not just for its original author.
-  Explain a module, component, hook, or helper's role and purpose. Keep useful
-  explanations of effects, timers, cleanup, and state coordination. Obvious small
-  internal callbacks do not need a second explanation of the surrounding logic.
-- Use `/** ... */` for function documentation so editors can show it on hover.
-  Start by identifying the declaration's role and what it does. Describe relevant
-  constraints, ordering, side effects, empty results, and failure behavior. Explain
-  cancellation, partial success, or partial changes when they matter to callers.
-  Accuracy and necessary context take priority over comment length. Prefer the
-  shorter wording only when it communicates the same complete meaning.
-  Add `@param` for units, accepted values, defaults, and other non-obvious input
-  rules. Do not repeat TypeScript types or describe every line of code.
-  Add `@returns` to authored value-returning functions, except obvious small
-  internal callbacks. Every React component or callback that returns JSX must
-  describe the returned interface with `@returns`, even for a small UI fragment.
-  Document what a returned promise resolves to, including empty/failure outcomes
-  where relevant. Void functions need their effects explained, not a filler
-  return-value tag. Document the overall result rather than each return statement.
-  Keep reusable component descriptions independent of their current callers.
-  Use a minimal, complete `@example` when it teaches a non-obvious usage or data
-  format. Include required props and any relevant state or language assumptions.
-  Do not maintain a list of current call sites in a reusable component's comment.
-  Explain abstract variables at their declaration: units, saved versus displayed
-  values, version counters, and why mutable refs are separate from React state.
-  Keep straightforward handlers brief; avoid repeating the same explanation.
-  Add variable comments only when a reader needs context beyond the name/type,
-  such as a flag's scope, a value's units, or the reason a snapshot is retained.
-  Leave obvious variables uncommented and avoid repeating explanations nearby.
-- Explain meaningful type aliases and interfaces by their role in the module.
-  Place callback comments beside the callback or on its owning declaration so
-  the reader can tell which operation is being explained. An effect's setup and
-  cleanup should each say what they manage.
-- Extract a responsibility when it can be named and understood independently.
-  Keep state that must change together in one owner. Line count alone does not
-  determine a split.
+本规范面向不同语言、框架和规模的项目，目标是让代码容易阅读、理解、修改和交接。它也可作为 AI 编写和整理代码时的指导。
 
-## Existing directories
+以下要求按职责分别说明。目录名称、代码示例和技术举例用于解释原则，不要求所有项目照搬同一套模板。已有项目应结合语言惯例、现有结构和实际需求实施，不为统一形式而做无收益的改造。
 
-- `App/frontend/pages`: URL-level page composition.
-- `App/frontend/components`: visible controls and reusable rendering.
-- `App/frontend/utils`: frontend hooks and calculation helpers.
-- `App/frontend/api`: browser HTTP transport.
-- `App/frontend/i18n` and `content`: translations and legal documents.
-- `App/backend/api`: one endpoint and its SQL per file.
-- `App/backend/shared`: reused backend validation and queries.
-- `App/backend/db`: connection code and migration history.
-- `App/backend/tools`: explicit development and maintenance commands.
-- `App/shared`: pure rules and types used across frontend/backend.
-- `infra`: builds, Docker, hosting adapters and source-formatting tools.
+实施前先确认本次任务范围和正在维护的源码，避免误改旧备份或打包产物。
 
-`package.json` declares `"type": "module"`, so JavaScript uses `.js` throughout.
-React components use `.tsx`; typed logic and hooks use `.ts`. Keep explicit
-`.js` imports where the compiled Node backend requires them.
+本规范不代表可以自行迁移技术栈、重排整个目录或批量改名；只处理任务需要或明确授权的问题。
 
-## Event page responsibilities
+框架约定和现有工具配置应结合具体项目使用，确有冲突时说明取舍，不为套用示例破坏正常运行。
 
-- `pages/EventPage.tsx` assembles the page, sharing feedback and display controls.
-- `utils/use-event-response.ts` owns draft edits, autosave, response switching
-  and deletion. They share revision/flight state and remain together.
-- `utils/use-event-sync.ts` owns initial loading, visible-page refresh and expiry.
-- `components/AvailabilityGrid.tsx` owns grid layout, drag gestures and undo.
-- `components/AvailabilityCell.tsx` renders one block and its inspection/highlight.
+文中的“优先”“通常”“可以”表示需要结合情况判断；明确要求保留的行为和必要说明，不能以“保持简单”为由省略。
 
-## UI boundaries
+**判断一项调整是否值得做，应看它是否让实际的阅读、开发和维护更容易，而不是看文件是否更多、代码是否更短、注释是否更多。**
 
-- `EventTour.tsx` owns guide progression, dismissal, and keyboard focus.
-  `EventTourView.tsx` renders its trigger and overlay;
-  `utils/use-tour-position.ts` manages target scrolling and viewport measurements.
-  The measured card ref still points to the actual popup element.
-- `Calendar.tsx` owns the visible month and composes the date picker.
-  `CalendarControls.tsx` renders month/year input and navigation;
-  `CalendarDates.tsx` renders weekday headings and controlled date choices.
-- `AvailabilityGrid.tsx` keeps selection gestures, undo, viewport state, and
-  shared cell context together. `AvailabilityGridTools.tsx` renders its controls;
-  `AvailabilityGridBody.tsx` renders headings and time cells, forwarding the
-  original scroll ref and pointer handlers to the same DOM surfaces.
-- `TimeRangePicker.tsx` renders quarter-hour From/Until choices.
-  `CreateEventPage.tsx` retains form state, time-order validation, and submission.
+## 1. 技术栈：尽量简单、常用，方便后续维护
 
-These boundaries do not introduce new DOM wrappers or change CSS hooks, saved
-values, API calls, or event order. Keep cohesive small components, including
-`DeleteResponsePopover`, together instead of making a view file for every return.
+选择技术时，先满足实际需求，再考虑后续维护者是否容易理解和接手。
 
-Keep existing SQL migrations byte-for-byte unchanged: their checksums are part
-of the migration ledger. Add a new migration for an actual schema change.
+- 在都能满足需求的方案中，优先考虑常用、成熟、文档清楚、维护团队熟悉的技术。
+- 尽量减少不必要的框架、依赖、外部服务和运行环境。现有能力足够时，不额外引入一套功能相近的工具。
+- 不只为了某项理论性能指标、技术新颖程度或假设中的未来扩展，选择学习和维护成本明显更高的方案。
+- 确有特殊需求时，可以选择更适合的技术，但应说明它解决的实际问题，以及维护者需要承担的成本。
+- 已有项目中稳定工作的技术，不因“另一种更常见”就自动迁移。更换技术栈应有明确收益，并考虑迁移风险和验证成本。
 
-Comment conventions follow the relevant parts of the
-[Google TypeScript guide](https://google.github.io/styleguide/tsguide.html),
-[Microsoft TSDoc](https://tsdoc.org/pages/tags/param/), and
-[VS Code JSDoc support](https://code.visualstudio.com/docs/languages/javascript#_jsdoc-support).
+例如：Express 和 Hono 都能满足某个 Node.js 后端的需求，而未来维护者更熟悉 Express、项目也没有必须使用 Hono 的条件时，优先选择 Express。
+
+这是在考虑实际维护条件，不是要求所有项目都使用 Express。
+
+**简单不等于功能最少或依赖数量最少，而是用足够满足需求、容易理解和维护的方案解决问题。**
+
+## 2. 项目结构：按职责组织，放在正确位置
+
+文件应放在与用途相符的位置。新增内容优先融入现有结构，确有独立职责时再增加目录。
+
+对于同时包含前后端的应用，可以参考以下职责划分。它展示职责，不规定必须逐层建目录；按业务功能组织或由框架规定结构的项目，也可以保持原有方式：
+
+```text
+应用代码/
+├── 前端/
+│   ├── 页面/          与网址或页面入口对应的组织代码
+│   ├── 组件/          界面组件
+│   ├── 请求/          前端 HTTP 请求及传输处理
+│   ├── 工具与 Hooks/  前端计算、辅助逻辑和状态协调
+│   └── 内容与语言/    静态内容、翻译等
+│
+├── 后端/
+│   ├── 接口/          请求处理及其专用逻辑
+│   ├── 共用逻辑/      后端复用的校验、查询等
+│   ├── 数据库/        连接、数据库定义和迁移
+│   └── 维护工具/      开发、迁移、清理、分析等命令
+│
+└── 共用代码/          前后端真正共用的类型和纯逻辑
+
+测试/
+文档/
+构建与部署配置/
+```
+
+- 不存在某类职责，或少量代码尚不需要单独归类时，不必建立对应目录。
+- 前后端通过清楚的接口连接；需要私有数据库凭据或特权的数据操作放在受控的服务端。本地应用或使用受访问控制保护的托管数据 SDK 时，按其架构组织，不因此强行新增后端。
+- 共用目录只放真正共用的内容，避免混入某一端专用的依赖。
+- 不为了看起来整齐，把不同职责的代码都塞进 `utils`、`lib` 或其他含义宽泛的目录。
+- 不随意增加新的顶层文件夹，也不为符合示例而重命名已有的清楚结构。
+
+## 3. 文件与函数：按职责拆分，避免过碎
+
+一个文件、函数或组件应围绕一个清楚的主要职责。
+
+- 文件或函数较长时，检查是否混合了可以独立理解的工作。
+- **行数是检查信号，不是强制拆分条件。拆分后职责更清楚、阅读和修改更省力，才值得拆。**
+- 不规定超过某个行数就必须拆成两三个文件，也不追求每个文件都很短。
+- 紧密协作、必须一起变化的状态，保持由同一个地方协调。
+- 专用辅助逻辑尽量就近组织，真正共用的部分再集中管理。职责独立且有助于阅读的部分，即使只使用一次，也可以提取。
+- 重复逻辑具有相同含义时可以复用；仅仅写法相似，不一定应该合并。
+
+较长的嵌套函数、匿名回调或多层条件应作为重点审查对象。
+
+能够独立命名和理解的计算、请求或渲染步骤，优先提取为具名函数，通常先放在同一模块；职责确实独立时再放入现有的对应目录。
+
+简单分支可用提前返回减少嵌套。
+
+嵌套本身并非错误。需要共享同一轮动画、监听器或编辑状态的短闭包可以保留；React
+Hook、Effect 等惯用结构也不因嵌套就强行拆开。不要用一大包内部状态、十几个参数或新的类来换取表面上的“无嵌套”。
+
+拆分时同时评估收益和代价：是否减少了职责混杂，还是只增加文件跳转、参数传递和薄薄的转发层。如果只是行数变少，理解反而更费力，就保持原样。不要求每个函数、类型或辅助逻辑都有独立文件。
+
+后端接口数量不多时，可以一个接口一个文件，将该接口专用的查询和辅助逻辑就近放置；这不是强制规则，简单且紧密相关的处理可以放在一起。项目规模增长后，再根据真实复杂度调整层次。
+
+## 4. 长界面代码：封装细节，保留清楚的数据流
+
+较长的 JSX、模板或其他界面代码，如果遮住了主要流程，可以提取成有明确名字的子组件。
+
+- 页面负责页面级组织，组件负责清楚的界面部分。
+- 界面渲染逻辑归界面模块管理，不因它“只是返回内容”就放进普通工具函数目录。模块内的渲染辅助函数或回调可以就近保留，不要求每段 JSX 都成为独立组件或文件。
+- 需要时分离状态与流程、界面展示、定位或计算等独立职责。
+- 小而完整的组件可以保持一个文件，不要求每个组件都有对应的 View 文件。
+- 子组件只接收实际需要的数据和回调。含义明确、自然成组的数据可以作为对象传递，但不为缩短参数列表而把所有上层内部状态塞进去。
+- 如果子组件几乎依赖上层的全部内部变量，应重新检查拆分边界。
+
+例如，外层可以通过以下方式表达整体意图，具体界面细节由子组件负责：
+
+```tsx
+return <GuideView step={step} position={position} onNext={next} onBack={back} />;
+```
+
+这是职责划分的示例，不是要求所有项目采用这一命名或参数结构。
+
+## 5. 排版：展开拥挤代码，留出阅读空间
+
+排版应让人容易看清结构，并与语言、框架及项目惯例一致。
+
+- 缩进统一，优先使用项目已有的格式化配置。新项目应明确缩进和行宽约定。
+- 对象属性和多元素数组通常按项分行，尤其是请求数据、配置和较长列表。
+- 较长的参数列表、导入列表和表达式适当换行。
+- 函数之间、不同逻辑段之间留合理空行，包括命名的箭头函数。
+- 避免把多个不同操作挤在一行，也不为增加空白而把相关内容分散得难以阅读。
+- 简单且清楚的惯用表达可以保留，例如 React 的 state 和 setter 成对解构。
+
+具体换行以项目已明确的格式配置为准。不要为一次局部修改顺便重排大量无关文件；需要统一格式时，应作为清楚的整理范围执行。
+
+```ts
+const payload = {
+  title,
+  timezone,
+  dates,
+  startTime,
+  endTime,
+};
+
+const options = [firstOption, secondOption, thirdOption];
+```
+
+自行维护的源代码和 Markdown 文档，每行不得超过 100 个字符，格式化工具也按 100 字符配置。
+
+范围包括应用代码、测试、维护与构建脚本、配置、SQL、注释、Markdown 中的代码示例，以及字符串模板内部的脚本和样式；不能因为代码包在字符串中就跳过检查。
+
+超长时先按语法和逻辑层次换行；若展开后仍难以理解，再调整表达或提取有明确职责的函数。
+
+长字符串可以在自然边界分段并拼接，但不得改变实际文案、空格、转义、翻译键或接口值。
+
+SQL 按字段、子查询和条件层次排版，不用机械切割制造另一种难读的代码。
+
+依赖、第三方原样代码和自动生成的产物不适用此排版要求。
+
+已经应用且按校验和记录的数据库迁移遵守历史不可变约束；明确列出检查例外，不能为了换行重写它们。
+
+确有不可安全拆分的其他内容时，应具体说明并讨论，不能悄悄豁免整类字符串或整份业务文件。
+
+长段落按意思分段，长命令使用所属语言的续行写法；过宽的 Markdown 表格可以改为列表。不随意截断链接、表格单元格或代码示例，也不为了行宽省略必要信息。
+
+## 6. 命名：名称应说明用途
+
+- 文件、组件、函数、变量和类型使用有意义的名称，遵循所用语言的命名惯例。
+- 名称尽量表达用途、状态或数据含义，避免只能靠上下文猜测的缩写。
+- 简单循环下标可以使用 `i`、`j` 等惯用名称。
+- 有业务含义的固定数值应考虑定义为有名字的常量，单位不明显时在名称或注释中说明。
+- 不为统一内部命名，随意修改外部 API 字段、数据库列名、翻译键、样式钩子等已有约定。
+
+例如，`AUTOSAVE_DELAY_MS` 比一个没有说明的 `1000` 更容易理解。
+
+## 7. 文件后缀与模块约定：保持一致，有依据地选择
+
+文件后缀、模块形式和导入路径应符合语言、运行环境和工具链的实际要求。
+
+例如，在 TypeScript / React 项目中：
+
+| 内容                | 常见后缀 |
+| ------------------- | -------- |
+| 含 JSX 的组件和页面 | `.tsx`   |
+| 类型化逻辑和 Hooks  | `.ts`    |
+| 普通 JavaScript     | `.js`    |
+| SQL 迁移            | `.sql`   |
+
+不要仅因不熟悉某个后缀就更换它。例如，是否需要
+`.mjs`，应结合模块配置判断；某些 Node.js 项目编译后的导入路径需要显式
+`.js`，不能只按源文件后缀修改。
+
+其他语言按其工具链选择，不要求照搬上述后缀。
+
+## 8. 注释表达：通俗、自然、准确、完整优先
+
+**注释写给人看，尤其要帮助对项目不熟悉的读者理解代码。**
+
+注释应满足：
+
+- **通俗易懂**：必要术语可以使用，但不要把读者必须知道的背景全部省略。
+- **明确、准确**：直接说明实际含义和行为，不含糊，也不作代码没有保证的承诺。
+- **自然、顺畅**：像人在向同事解释，逻辑连贯，避免机械复述、空泛套话和术语堆砌。
+- **信息完整**：包含正确理解和使用这段代码所需的内容。
+- **简洁**：去掉重复和无用表达，不堆砌与理解无关的内容。
+
+**只有当两种写法都同样满足上述要求、同样通俗和容易理解时，才选择较短的版本。较短的版本仍然可以比较长。**
+
+不能为了缩短注释，牺牲必要背景、通俗程度、执行顺序、副作用、空结果或失败行为。“短”不是独立的完成目标，也不设置机械的字数或行数上限。
+
+当前阶段要求每个自行编写的函数都有用途说明，但不以注释长度或标记数量衡量质量。不要因为自己或 AI 觉得简单，就省略函数说明；也不要为凑格式补充没有帮助的内容。
+
+## 9. 注释对象：分别说明什么
+
+| 对象                | 主要说明内容                     |
+| ------------------- | -------------------------------- |
+| 文件、模块          | 主要职责和用途                   |
+| 类                  | 负责什么，以及必要的使用条件     |
+| 组件                | 它是什么组件，提供什么界面能力   |
+| Hook 或状态管理单元 | 管理什么状态，协调什么行为       |
+| 函数、方法          | 用途，以及理解和使用它所需的信息 |
+| 有意义的类型、接口  | 描述什么数据、配置或交互约定     |
+| 不直观的变量        | 单位、范围、状态含义或保留原因   |
+
+这张表说明不同对象值得解释的内容，不是要求逐项生成固定模板。文件、类和函数之间不必反复解释相同背景，但每个函数自身仍应有简明的用途说明。
+
+**现阶段，每个自行编写的函数实现都必须有注释，说明它在做什么，包括普通函数、方法、构造函数、箭头函数、匿名回调，以及 Effect、计时器等使用的回调。**
+
+**简单函数一句自然的用途说明即可，不因函数短或名称直观而省略。**
+
+函数注释应放在函数定义、回调或其所属声明附近，让读者能对应到具体函数。这是当前阶段明确采用的要求；以后可以调整，但在规范被明确修改之前，不自行放宽。
+
+同一文件内有相似函数时，可以先解释共同背景，后面的函数简要说明差异，避免复制一整段注释。
+
+变量注释写在声明附近，补充名称和类型没有表达出的背景。
+
+例如时间单位、真实时间点与编码坐标、草稿与已保存版本、状态标志的作用，以及为什么保留 ref 或快照。
+
+普通计数、直接取值等已经清楚的变量，不必逐个添加说明。
+
+## 10. 重要行为：按实际需要解释，不能为简短而省略
+
+函数或组件存在以下行为时，应说明与读者正确使用有关的部分：
+
+| 内容         | 需要回答的问题                                   |
+| ------------ | ------------------------------------------------ |
+| 输入与约束   | 接受什么格式、单位、范围？有什么前提？           |
+| 执行顺序     | 哪些操作必须先做，哪些随后发生？                 |
+| 副作用       | 会更新状态、发请求、写数据、滚动或移动焦点吗？   |
+| 返回与空结果 | 结果表示什么？何时为空、为 `null` 或为 `false`？ |
+| 失败行为     | 会抛错、返回失败、保留旧数据，还是等待重试？     |
+| 取消与清理   | 会停止什么工作？已经发出的请求会不会继续？       |
+| 部分成功     | 后续失败时，之前完成的操作是否仍然有效？         |
+
+没有相关行为时，不必硬凑这些项目，也不要求每个函数都写一套相同模板。
+
+对于 Effect、定时器、监听器、异步回调和状态协调逻辑，尤其要说明何时运行、协调什么，以及必要的清理行为。不能只因为它是箭头函数或赋给了一个变量，就忽略其职责。
+
+## 11. 文档标记：参数、返回值和使用示例
+
+使用所用语言支持的文档注释形式，让编辑器和文档工具能显示说明。例如 JavaScript / TypeScript 中使用
+`/** ... */`。
+
+**每个函数必须有注释，但 `@param`、`@returns`、`@example`
+各自按需要选择，不是一套必须填满的模板。一个函数可以只有一句用途说明，不带任何标记。不能仅因函数存在参数、返回值或可以举例，就自动添加相应标记。**
+
+### 参数说明
+
+- 用 `@param` 或对应语言的标记，解释不明显的参数含义、单位、默认值和限制。
+- 不机械重复类型系统已经清楚表达的信息。
+- 非常直观、没有额外含义的普通参数，可以不单独说明。
+
+### 返回说明
+
+- 返回结果包含名称、类型和已有说明没有讲清楚的业务含义或约定时，用 `@returns`、`@return`
+  或对应语言的方式补充。不能只因出现 `return` 就添加返回标记。
+- 异步函数需要返回说明时，解释最终得到的结果，而不只是重复“返回一个 Promise”。
+- 有业务意义的 `false`、空数组、`null` 等结果要说明含义。
+- 返回 JSX 或其他界面内容的组件和回调，注释应让读者知道呈现什么界面。用途说明已经表达清楚时，不必为了格式再重复添加
+  `@returns`。
+- 说明整个函数或组件的结果即可，不要求对每一条 `return`
+  或每一层界面标签重复注释。相邻且含义相同的渲染回调各自简述用途，不复制一整套背景和标记。
+- 无返回值的函数同样要说明用途和必要的副作用，不填写没有信息量的返回说明。
+
+### 使用示例
+
+- 对不容易理解的用法、通用组件或特殊数据格式，必要时提供 `@example` 或等效示例。
+- 示例应简洁、完整、能正确使用，包含必要参数、状态和前提。
+- 不要求每个函数都添加示例，也不为展示例子引入额外复杂度。
+
+例如，直接返回两个数相加结果的简单函数，可以只注释“返回两个数的和”，不写 `@param`、`@returns` 或
+`@example`；负责延迟保存的函数可能需要说明等待时间和失败行为，但参数和返回值已经明确时，不必再补齐标记。界面组件也可以只用一句用途说明讲清呈现的界面。
+
+```ts
+/** 返回两个数的和。 */
+function add(a: number, b: number): number {
+  return a + b;
+}
+```
+
+## 12. 通用组件与工具：描述能力，避免绑定当前调用者
+
+注释先说明它是什么、提供什么能力，不把可复用代码写成仅属于某个当前页面的专用实现。
+
+例如，对于通用下拉输入组件，可以描述为“支持搜索选项并校验输入的可复用组合框”，而不是仅描述为“日历的月份和年份选择器”。
+
+- 必须存在的使用约束应明确说明。
+- 需要展示用法时，优先提供通用示例。
+- 不维护容易过时的“当前有哪些文件在使用它”的名单。
+- 修改实际行为时，同步核对注释是否仍然准确。
+
+注释原则可参考 Google、Microsoft 等成熟规范的相关部分，并结合语言惯例调整。本规范额外提出的学习和交接要求，例如界面返回说明，不应被描述成这些外部规范的统一强制要求。
+
+## 13. 重构边界：保留产品效果和用户修改
+
+当任务是改善结构、格式或可读性时，应保持原有功能、视觉效果、数据格式和外部行为一致，不夹带未经要求的功能变更。
+
+保持的是使用者和调用方观察到的效果及已有约定，不要求内部实现逐字不变。若发现无关功能问题，单独说明和处理，不混进纯重构中。
+
+- 界面重构注意布局、间距、颜色、文案、DOM 或模板结构和样式钩子。
+- 交互重构注意点击、悬停、拖选、键盘操作、弹窗、滚动和焦点行为。
+- 状态与接口重构注意自动保存、请求顺序、返回值、错误处理和数据库写入。
+- 状态模块尽量提供“修改名字”“删除回复”等完整动作，不让调用方组合多个内部 setter、版本标记或可变 ref 才能正确操作。紧密协调的状态仍由同一处管理，不为缩短文件把它们拆散。
+- 没有独立行为、约束或复用价值的转发层应检查是否值得保留；不为了套用架构而包装原生元素或简单调用。
+- 样式应围绕组件和状态组织，避免不断在文件末尾追加同一选择器的覆盖。合并前核对优先级、媒体查询和实际效果，不能只按选择器名称合并。
+- 拆分时保留必要的引用、监听器及其清理关系，不因移动文件而改变执行时机。
+- 以用户当前工作区为基础，不用旧版本覆盖用户已有修改。
+- 较大调整前保存合适的本地回退点。恢复时避免误丢尚未提交到远端的修改。
+
+## 14. 数据库、配置和脚本：兼顾历史与当前运行环境
+
+- 数据库代码的归属按第 2 节组织；本节补充其历史和运行约束。
+- 已经应用、被迁移系统记录或校验的迁移文件，遵守其历史约束；真正修改数据库结构时，新增迁移，不随意重写历史。
+- 当前环境仍然需要的配置不能提前删除。更换部署方式时，先验证新环境，再按迁移计划处理旧配置。
+- 本地开发、构建和部署步骤尽量清楚、可重复，避免后续维护者依赖原作者才能运行项目。
+- 维护脚本应说明用途、运行方法，以及必要的运行条件和写入影响；不要靠文件名猜测是否会修改或清理数据。
+- SQL 中的锁、事务或单语句原子性、参数位置、版本检查和执行依赖都属于行为约定。排版或提取时保持这些约定，不随意把一个原子写入拆成多次请求。
+- 不为应用每一种可能的部署方式提前建立一整套配置；保留实际使用或明确需要的方案。
+
+## 15. 验证与交付：检查结果要具体、真实
+
+根据改动范围和实际风险执行有意义的验证，不以“能编译”代替全部检查。
+
+优先利用已有验证；只有现有检查覆盖不到重要风险时，才补充有价值的测试。
+
+不要求每个新拆出的文件都配一个测试，也不为纯文档修改运行全部应用测试。
+
+- 使用项目适用的类型、Lint 和格式检查；行宽上限应有独立检查，不能把格式化工具的建议宽度当作已强制执行。检查必须覆盖模板内部代码，并说明排除范围。
+- 格式化工具优先使用已有、成熟的规则；只有现成规则无法表达的必要要求才保留少量自写处理。避免多套格式器反复改写同一段代码，整理工具后要验证重复运行结果稳定。
+- 运行与改动相关的测试，较大重构检查更完整的功能范围。
+- 完成必要的构建和运行验证。
+- 涉及界面时，检查相关屏幕尺寸；涉及多语言时，检查文字长度和布局。
+- 核对是否误改其他组件、用户本地修改、接口约定或迁移历史。
+- 自动批量修改要识别语法和上下文，不能只凭文字前缀或正则猜代码类型。必要时比较实际文案、翻译键、URL、SQL 和模板转义，不能以格式通过代替语义检查。
+- 提交和发布按任务授权执行，分别确认提交、自动检查和上线的实际结果。
+- 交付时说明改了什么、为什么改、如何验证，以及仍未验证的部分。不把尚未执行的步骤说成已完成，也不声称测试能够证明绝无问题。
+
+这些要求服务于实际维护。实施时应保留判断力：必要细节要清楚说明，不必要的重复、层次和形式要求可以省去。

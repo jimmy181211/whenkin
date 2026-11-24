@@ -16,11 +16,7 @@ export function clearsSelection(stamps: number[], selected: Set<number>) {
  * @param clear - Remove these stamps when true; otherwise add them.
  * @returns A new selection set; base is never mutated.
  */
-export function paintSelection(
-  base: Set<number>,
-  stamps: number[],
-  clear: boolean,
-) {
+export function paintSelection(base: Set<number>, stamps: number[], clear: boolean) {
   const next = new Set(base);
   for (const stamp of stamps) {
     if (clear) {

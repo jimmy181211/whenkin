@@ -4,8 +4,5 @@ export type Database = {
    * Execute SQL with bound values.
    * @returns Result rows after execution, rather than driver connection or status metadata.
    */
-  query: <T = Record<string, unknown>>(
-    sql: string,
-    params?: unknown[],
-  ) => Promise<T[]>;
+  query: <T = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<T[]>;
 };

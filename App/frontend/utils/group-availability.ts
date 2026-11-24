@@ -39,11 +39,7 @@ export function availabilityColor(count: number, total: number) {
  * @param duration - Slot length for this event, in milliseconds; defaults to legacy slots.
  * @returns Separate lists for full matches and unavailable/partial matches.
  */
-export function inspectAvailability(
-  responses: ResponseData[],
-  stamps: number[],
-  duration = SLOT,
-) {
+export function inspectAvailability(responses: ResponseData[], stamps: number[], duration = SLOT) {
   const available: ResponseData[] = [];
   const unavailable: (ResponseData & { partial: boolean })[] = [];
   for (const person of responses) {

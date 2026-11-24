@@ -1,7 +1,7 @@
-import { createDatabase } from './db/connection.js';
+import { PostgresDatabase } from './db/connection.js';
 import { createWebApp } from './web.js';
 
-const database = createDatabase();
+const database = new PostgresDatabase();
 const app = createWebApp(database, {
   publicOrigin: process.env.PUBLIC_ORIGIN,
   trustProxy: process.env.TRUST_PROXY === 'true',

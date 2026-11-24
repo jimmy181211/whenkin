@@ -40,15 +40,17 @@ describe('installable website metadata', () => {
    * Preserves the event destination and gives it a stable identity
    * independent of slash or case.
    */
-  it('preserves the event destination and gives it a stable identity independent of slash or case', () => {
-    const manifest = webManifest(event.toUpperCase() + '/');
-    expect(manifest.start_url).toBe(event);
-    expect(
-      webManifest('/e/' + event.slice(3).toUpperCase() + '/').start_url,
-    ).toBe(event);
-    expect(webManifest(event).id).toBe(event);
-    expect(webManifest(event + '/').start_url).toBe(event);
-  });
+  it(
+    'preserves the event destination and gives it a stable identity ' +
+      'independent of slash or case',
+    () => {
+      const manifest = webManifest(event.toUpperCase() + '/');
+      expect(manifest.start_url).toBe(event);
+      expect(webManifest('/e/' + event.slice(3).toUpperCase() + '/').start_url).toBe(event);
+      expect(webManifest(event).id).toBe(event);
+      expect(webManifest(event + '/').start_url).toBe(event);
+    },
+  );
   /** Check unsupported manifest inputs fall back to the home launch target. */
   it.each([
     'https://other.example/',
@@ -74,11 +76,14 @@ describe('installable website metadata', () => {
    * Points the initial HTML to the event manifest before the browser
    * considers installation.
    */
-  it('points the initial HTML to the event manifest before the browser considers installation', () => {
-    const html = '<link rel="manifest" href="/site.webmanifest" />';
-    const href = shortcutManifestHref(event);
-    expect(documentWithManifest(html, event)).toContain(`href="${href}"`);
-    expect(href).toBe('/site.webmanifest?page=' + encodeURIComponent(event));
-    expect(documentWithManifest(html, '/')).toBe(html);
-  });
+  it(
+    'points the initial HTML to the event manifest before the browser ' + 'considers installation',
+    () => {
+      const html = '<link rel="manifest" href="/site.webmanifest" />';
+      const href = shortcutManifestHref(event);
+      expect(documentWithManifest(html, event)).toContain(`href="${href}"`);
+      expect(href).toBe('/site.webmanifest?page=' + encodeURIComponent(event));
+      expect(documentWithManifest(html, '/')).toBe(html);
+    },
+  );
 });

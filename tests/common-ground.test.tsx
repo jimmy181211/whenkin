@@ -11,10 +11,7 @@ import type {
   ResponseData,
   TimeRange,
 } from '../App/shared/types';
-import {
-  setLanguage,
-  t,
-} from '../App/frontend/i18n/index';
+import { langService } from '../App/frontend/i18n/language';
 import { slotsToRanges } from '../App/frontend/utils/time';
 import EventResults from '../App/frontend/components/event/EventResults';
 import ShareEventDialog from '../App/frontend/components/event/ShareEventDialog';
@@ -43,7 +40,7 @@ const person = (id: string, ranges: TimeRange[]): ResponseData => ({
 
 afterEach(
   /* Restore English after localized shared-time rendering checks. */
-  () => setLanguage('en'),
+  () => langService.setLanguage('en'),
 );
 
 /** Group the everyone-free common ground checks. */
@@ -111,46 +108,41 @@ describe('everyone-free common ground', () => {
    * Returns only the full-group intersection, without extending into
    * partial availability.
    */
-  it('returns only the full-group intersection, without extending into partial availability', () => {
-    expect(
-      commonGround(
-        [range(0, 90)],
-        [
+  it(
+    'returns only the full-group intersection, without extending into ' + 'partial availability',
+    () => {
+      expect(
+        commonGround([range(0, 90)], [
           person('A', [range(0, 90)]),
           person('B', [range(30, 60)]),
-        ],
-      ),
-    ).toEqual([
-      {
-        ...range(30, 60),
-        available: [
-          'A',
-          'B',
-        ],
-      },
-    ]);
-  });
+        ]),
+      ).toEqual([
+        {
+          ...range(30, 60),
+          available: [
+            'A',
+            'B',
+          ],
+        },
+      ]);
+    },
+  );
   /** Supports zero, one, empty, and more than 1,000 respondents. */
   it('supports zero, one, empty, and more than 1,000 respondents', () => {
     expect(commonGround([range(0, 60)], [])).toEqual([]);
     expect(commonGround([range(0, 60)], [person('A', [])])).toEqual([]);
-    expect(
-      commonGround([range(0, 60)], [person('A', [range(15, 30)])]),
-    ).toEqual([
+    expect(commonGround([range(0, 60)], [person('A', [range(15, 30)])])).toEqual([
       {
         ...range(15, 30),
         available: ['A'],
       },
     ]);
-    expect(
-      commonGround(
-        [range(0, 60)],
-        [
-          person('A', [range(0, 60)]),
-          person('B', []),
-        ],
-      ),
-    ).toEqual([]);
+    expect(commonGround([range(0, 60)], [
+      person('A', [range(0, 60)]),
+      person('B', []),
+    ])).toEqual(
+      [],
+    );
     const result = commonGround(
       [range(0, 60)],
       Array.from(
@@ -170,13 +162,10 @@ describe('everyone-free common ground', () => {
       (_, n) => range(n * 30, n * 30 + 15),
     );
     expect(
-      commonGround(
-        [range(0, 240)],
-        [
-          person('A', [range(0, 240)]),
-          person('B', ranges),
-        ],
-      ).map(
+      commonGround([range(0, 240)], [
+        person('A', [range(0, 240)]),
+        person('B', ranges),
+      ]).map(
         /* Compare range boundaries independently of available-person metadata. */
         (c) => ({
           start: c.start,
@@ -259,53 +248,52 @@ describe('shared result and editing UI', () => {
    * Shows only everyone-available cards and makes every member selectable
    * in all languages.
    */
-  it('shows only everyone-available cards and makes every member selectable in all languages', () => {
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      setLanguage(language);
-      const html = renderToStaticMarkup(
-        <EventResults
-          onDeleteResponse={
-            /* Return a failed deletion result without changing this rendering fixture. */
-            async () => false
-          }
-          event={event}
-          editingId="B"
-          onEditResponse={
-            /* Leave the responder unchanged during this static rendering check. */
-            () => {}
-          }
-          highlighted={false}
-          suggestions={commonGround(event.windows, responses)}
-          onToggleHighlight={
-            /* Leave highlight state unchanged while checking result markup. */
-            () => {}
-          }
-        />,
-      );
-      expect(html).toContain(t('When Everyone Is Free'));
-      expect(html).toContain(t('Responders'));
-      expect(html).not.toContain(t('Primary Selection'));
-      expect(html).not.toMatch(
-        /Secondary Selection|备选时间|Selección secundaria/,
-      );
-      expect(html).toContain('suggestions-card');
-      expect(html).toContain('people-card');
-      expect(html).not.toContain('best-badge');
-      expect(html).not.toContain('attendance-dots');
-      expect(html).toContain(t('Edit {name}', { name: 'A' }));
-      expect(html).toContain(t('Edit {name}', { name: 'B' }));
-      expect(html).toMatch(
-        /<button[^>]*class="person"[^>]*aria-pressed="true"/,
-      );
-      expect(html).not.toContain('Add Response');
-      expect(html).toContain(t('Delete {name}', { name: 'A' }));
-      expect(html).toContain(t('Delete {name}', { name: 'B' }));
-      expect(html).not.toContain('(you)');
-    }
-  });
+  it(
+    'shows only everyone-available cards and makes every member ' + 'selectable in all languages',
+    () => {
+      for (const language of [
+        'en',
+        'zh',
+      ] as const) {
+        langService.setLanguage(language);
+        const html = renderToStaticMarkup(
+          <EventResults
+            onDeleteResponse={
+              /* Return a failed deletion result without changing this rendering fixture. */
+              async () => false
+            }
+            event={event}
+            editingId="B"
+            onEditResponse={
+              /* Leave the responder unchanged during this static rendering check. */
+              () => {}
+            }
+            highlighted={false}
+            suggestions={commonGround(event.windows, responses)}
+            onToggleHighlight={
+              /* Leave highlight state unchanged while checking result markup. */
+              () => {}
+            }
+          />,
+        );
+        expect(html).toContain(langService.t('When Everyone Is Free'));
+        expect(html).toContain(langService.t('Responders'));
+        expect(html).not.toContain(langService.t('Primary Selection'));
+        expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
+        expect(html).toContain('suggestions-card');
+        expect(html).toContain('people-card');
+        expect(html).not.toContain('best-badge');
+        expect(html).not.toContain('attendance-dots');
+        expect(html).toContain(langService.t('Edit {name}', { name: 'A' }));
+        expect(html).toContain(langService.t('Edit {name}', { name: 'B' }));
+        expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
+        expect(html).not.toContain('Add Response');
+        expect(html).toContain(langService.t('Delete {name}', { name: 'A' }));
+        expect(html).toContain(langService.t('Delete {name}', { name: 'B' }));
+        expect(html).not.toContain('(you)');
+      }
+    },
+  );
   /**
    * Offers one toggle for all disjoint periods and no individual date
    * cards.
@@ -361,9 +349,7 @@ describe('shared result and editing UI', () => {
     expect(html).not.toContain('suggestion-select');
     expect(html).toContain('Cancel Highlight');
     expect(html).toContain('3 shared time periods');
-    expect(html.indexOf('people-card')).toBeLessThan(
-      html.indexOf('suggestions-card'),
-    );
+    expect(html.indexOf('people-card')).toBeLessThan(html.indexOf('suggestions-card'));
     expect(html).toMatch(/highlight-shared-times" aria-pressed="true"/);
     let depth = 0;
     for (const tag of html.match(/<\/?button\b[^>]*>/g) ?? []) {

@@ -4,8 +4,9 @@ import {
   ChevronRight,
   Undo2,
 } from 'lucide-react';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import GridDisplayOptions from './GridDisplayOptions';
+import './availability-grid-tools.css';
 
 /** Current date-page boundaries and the action that changes the page index. */
 type GridPaging = {
@@ -53,7 +54,7 @@ export default function AvailabilityGridTools({
           <div
             className="segmented small availability-view-switch"
             role="group"
-            aria-label={t('Availability View')}
+            aria-label={langService.t('Availability View')}
           >
             <button
               type="button"
@@ -63,7 +64,7 @@ export default function AvailabilityGridTools({
                 () => onViewChange?.('personal')
               }
             >
-              {t('Your Availability')}
+              {langService.t('Your Availability')}
             </button>
             <button
               type="button"
@@ -73,7 +74,7 @@ export default function AvailabilityGridTools({
                 () => onViewChange?.('group')
               }
             >
-              {t('Group Availability')}
+              {langService.t('Group Availability')}
             </button>
           </div>
         </div>
@@ -81,7 +82,7 @@ export default function AvailabilityGridTools({
           <button
             type="button"
             className="icon-button"
-            aria-label={t('Undo selection')}
+            aria-label={langService.t('Undo selection')}
             disabled={!editing || !undos}
             onClick={onUndo}
           >
@@ -89,45 +90,43 @@ export default function AvailabilityGridTools({
           </button>
           <GridDisplayOptions zoom={zoom} onZoomChange={onZoomChange} />
         </div>
-      </div>
-      {paging.totalDays > paging.daysPerPage && (
-        <div className="grid-pager">
-          <div>
-            <button
-              className="icon-button"
-              type="button"
-              aria-label={t('Previous days')}
-              disabled={paging.page === 0}
-              onClick={
-                /* Show the previous group of dates without moving before the first page. */
-                () => paging.onPageChange(Math.max(0, paging.page - 1))
-              }
-            >
-              <ChevronLeft size={17} />
-            </button>
-            <button
-              className="icon-button"
-              type="button"
-              aria-label={t('Next days')}
-              disabled={
-                paging.firstColumn + paging.daysPerPage >= paging.totalDays
-              }
-              onClick={
-                /* Show the next group of calendar dates. */
-                () => paging.onPageChange(paging.page + 1)
-              }
-            >
-              <ChevronRight size={17} />
-            </button>
+        {paging.totalDays > paging.daysPerPage && (
+          <div className="grid-pager">
+            <div>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={langService.t('Previous days')}
+                disabled={paging.page === 0}
+                onClick={
+                  /* Show the previous group of dates without moving before the first page. */
+                  () => paging.onPageChange(Math.max(0, paging.page - 1))
+                }
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={langService.t('Next days')}
+                disabled={paging.firstColumn + paging.daysPerPage >= paging.totalDays}
+                onClick={
+                  /* Show the next group of calendar dates. */
+                  () => paging.onPageChange(paging.page + 1)
+                }
+              >
+                <ChevronRight size={17} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {group && (
-        <div className="group-legend" aria-label={t('People Available')}>
+        <div className="group-legend" aria-label={langService.t('People Available')}>
           <span>0</span>
           <span className="group-legend-scale" aria-hidden="true" />
           <span>
-            {responderCount} {t('Available')}
+            {responderCount} {langService.t('Available')}
           </span>
         </div>
       )}

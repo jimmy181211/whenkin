@@ -1,7 +1,4 @@
-import {
-  getLocale,
-  t,
-} from '../i18n';
+import { langService } from '../i18n/language';
 import { Temporal } from '@js-temporal/polyfill';
 import type {
   MeetingEvent,
@@ -37,7 +34,7 @@ export function deviceTimezone() {
  * @returns Localized hour/minute text, including the locale's AM/PM convention.
  */
 export function formatTime(value: string | number, zone: string) {
-  return new Intl.DateTimeFormat(getLocale(), {
+  return new Intl.DateTimeFormat(langService.getLocale(), {
     timeZone: zone,
     hour: 'numeric',
     minute: '2-digit',
@@ -50,19 +47,14 @@ export function formatTime(value: string | number, zone: string) {
  * @param weekly - Read the encoded weekday in UTC, without shifting it again.
  * @returns A localized weekday/date label, or weekday alone for a weekly schedule.
  */
-export function formatDay(
-  value: string | number,
-  zone: string,
-  long = false,
-  weekly = false,
-) {
+export function formatDay(value: string | number, zone: string, long = false, weekly = false) {
   if (weekly) {
-    return new Intl.DateTimeFormat(getLocale(), {
+    return new Intl.DateTimeFormat(langService.getLocale(), {
       timeZone: 'UTC',
       weekday: long ? 'long' : 'short',
     }).format(new Date(value));
   }
-  return new Intl.DateTimeFormat(getLocale(), {
+  return new Intl.DateTimeFormat(langService.getLocale(), {
     timeZone: zone,
     weekday: long ? 'long' : 'short',
     month: long ? 'long' : 'short',
@@ -75,10 +67,8 @@ export function formatDay(
  * @returns A translated city label where available, otherwise readable id text.
  */
 export function zoneLabel(zone: string) {
-  return t(
-    zone === 'UTC'
-      ? 'UTC'
-      : zone.split('/').slice(1).join(' / ').replaceAll('_', ' ') || zone,
+  return langService.t(
+    zone === 'UTC' ? 'UTC' : zone.split('/').slice(1).join(' / ').replaceAll('_', ' ') || zone,
   );
 }
 
@@ -88,7 +78,7 @@ export function zoneLabel(zone: string) {
  */
 export function zoneOffset(zone: string, at = Date.now()) {
   return (
-    new Intl.DateTimeFormat(getLocale(), {
+    new Intl.DateTimeFormat(langService.getLocale(), {
       timeZone: zone,
       timeZoneName: 'shortOffset',
     })
@@ -109,10 +99,7 @@ export function displayRange(range: TimeRange, zone: string, weekly = false) {
   return `${formatDay(range.start, zone, false, weekly)} · ${formatTime(
     range.start,
     zone,
-  )}–${same ? '' : formatDay(range.end, zone, false, weekly) + ' '}${formatTime(
-    range.end,
-    zone,
-  )}`;
+  )}–${same ? '' : formatDay(range.end, zone, false, weekly) + ' '}${formatTime(range.end, zone)}`;
 }
 
 /** Display rows span 30 minutes for both new and legacy events. */
@@ -165,8 +152,7 @@ export function gridModel(
   let firstHour = Infinity;
   let lastHour = -Infinity;
   for (const stamp of allSlots(event.windows, slotDuration(event))) {
-    const t =
-      Temporal.Instant.fromEpochMilliseconds(stamp).toZonedDateTimeISO(zone);
+    const t = Temporal.Instant.fromEpochMilliseconds(stamp).toZonedDateTimeISO(zone);
     // Resolve local calendar fields once; zoned getters each repeat that work.
     const local = t.toPlainDateTime();
     const date = local.toPlainDate().toString();
@@ -214,15 +200,12 @@ export function gridModel(
  * @param offset - Minute offset within a half-hour row, for shifted display zones.
  * @returns Ordered clock rows; inverted bounds produce an empty array.
  */
-function gridRows(
-  firstHour: number,
-  lastHour: number,
-  repeated: Set<number>,
-  offset: number,
-) {
-  const rows: { key: string;
+function gridRows(firstHour: number, lastHour: number, repeated: Set<number>, offset: number) {
+  const rows: {
+    key: string;
     minute: number;
-    occurrence: number }[] = [];
+    occurrence: number;
+  }[] = [];
   for (let h = firstHour; h <= lastHour; h++) {
     for (let n = 0; n < (repeated.has(h) ? 2 : 1); n++) {
       for (let m = offset; m < 60; m += GRID_ROW_MINUTES) {

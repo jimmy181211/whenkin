@@ -1,3 +1,4 @@
+import { CONTENT_SECURITY_POLICY } from '../../App/backend/shared/security';
 import { env } from 'cloudflare:workers';
 import { httpServerHandler } from 'cloudflare:node';
 import { neon } from '@neondatabase/serverless';
@@ -40,22 +41,14 @@ async function appDocument(request: Request): Promise<Response> {
     '/',
     '/index.html',
   ]) {
-    const document = await env.ASSETS.fetch(
-      new Request(new URL(path, request.url), request),
-    );
-    if (
-      document.ok &&
-      document.headers.get('Content-Type')?.includes('text/html')
-    ) {
+    const document = await env.ASSETS.fetch(new Request(new URL(path, request.url), request));
+    if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) {
       const headers = new Headers(document.headers);
       headers.delete('Content-Length');
       headers.delete('Content-Encoding');
       headers.delete('ETag');
       return new Response(
-        documentWithManifest(
-          await document.text(),
-          new URL(request.url).pathname,
-        ),
+        documentWithManifest(await document.text(), new URL(request.url).pathname),
         {
           status: document.status,
           headers,
@@ -75,11 +68,7 @@ export default {
    * assets.
    * @returns The API, page, or asset response, retaining not-found and unavailable statuses.
    */
-  async fetch(
-    request: Request,
-    bindings: unknown,
-    context: unknown,
-  ): Promise<Response> {
+  async fetch(request: Request, bindings: unknown, context: unknown): Promise<Response> {
     const url = new URL(request.url);
     if (
       url.pathname === '/api' ||
@@ -89,26 +78,13 @@ export default {
       const headers = new Headers(request.headers);
       headers.set('Host', url.host);
       headers.set('X-Forwarded-Proto', url.protocol.slice(0, -1));
-      headers.set(
-        'X-Forwarded-For',
-        request.headers.get('CF-Connecting-IP') || 'unknown',
-      );
-      return nodeHandler.fetch(
-        new Request(request, { headers }),
-        bindings,
-        context,
-      );
+      headers.set('X-Forwarded-For', request.headers.get('CF-Connecting-IP') || 'unknown');
+      return nodeHandler.fetch(new Request(request, { headers }), bindings, context);
     }
     // Keep /e/:id in the browser while serving the complete React document.
     const appPage = pageRoute(url.pathname).kind !== 'not-found';
-    let response = appPage
-      ? await appDocument(request)
-      : await env.ASSETS.fetch(request);
-    if (
-      !appPage &&
-      response.status === 404 &&
-      !url.pathname.startsWith('/assets/')
-    ) {
+    let response = appPage ? await appDocument(request) : await env.ASSETS.fetch(request);
+    if (!appPage && response.status === 404 && !url.pathname.startsWith('/assets/')) {
       const document = await appDocument(request);
       response = new Response(document.body, {
         status: document.ok ? 404 : document.status,
@@ -119,14 +95,8 @@ export default {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'no-referrer');
     response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set(
-      'Permissions-Policy',
-      'camera=(), microphone=(), geolocation=()',
-    );
-    response.headers.set(
-      'Content-Security-Policy',
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-    );
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
     response.headers.set(
       'Cache-Control',
       response.ok && url.pathname.startsWith('/assets/')

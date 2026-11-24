@@ -1,0 +1,26 @@
+/* Reset native geometry while retaining the shared popup border, color and shadow. */
+dialog.modal-surface {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: calc(100% - 48px);
+  max-width: calc(100% - 48px);
+  max-height: calc(100dvh - 48px);
+}
+.modal-surface::backdrop {
+  background: #0b292a66;
+}
+.modal-surface.share-modal {
+  max-width: 450px;
+  max-height: 90vh;
+}
+.modal-surface.shortcut-dialog {
+  max-width: 460px;
+}
+@media (max-width: 699px) {
+  dialog.modal-surface.shortcut-dialog {
+    width: calc(100% - 36px);
+    max-width: 460px;
+    max-height: calc(100dvh - 36px);
+  }
+}

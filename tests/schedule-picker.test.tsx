@@ -8,13 +8,13 @@ import {
 } from 'vitest';
 import SchedulePicker from '../App/frontend/components/SchedulePicker';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import { setLanguage } from '../App/frontend/i18n/index';
+import { langService } from '../App/frontend/i18n/language';
 import type { MeetingEvent } from '../App/shared/types';
 
 afterEach(
   /* Restore English and browser globals after schedule-picker tests. */
   () => {
-    setLanguage('en');
+    langService.setLanguage('en');
     vi.unstubAllGlobals();
   },
 );
@@ -64,7 +64,7 @@ describe('date and weekday scheduling modes', () => {
         '星期日',
       ],
     ] as const) {
-      setLanguage(language);
+      langService.setLanguage(language);
       const html = renderToStaticMarkup(
         <SchedulePicker
           mode="weekdays"
@@ -90,7 +90,8 @@ describe('date and weekday scheduling modes', () => {
       );
       expect(html).toContain(`aria-label="${monday}" aria-pressed="true"`);
       expect(html).toContain(`aria-label="${sunday}" aria-pressed="true"`);
-      expect((html.match(/class="weekday-indicator"/g) || []).length).toBe(7);
+      expect((html.match(/class="weekday-indicator"/g) || []).length).toBe(2);
+      expect(html).not.toContain('>+</span>');
       expect(html).not.toContain('calendar-grid');
       expect(html).not.toContain('2027-01-15');
     }
@@ -131,11 +132,7 @@ describe('date and weekday scheduling modes', () => {
     expect(html).toContain('Los Angeles');
     expect(html).toContain('Your Availability</button>');
     expect(html).toContain('Group Availability</button>');
-    expect(html).not.toMatch(
-      /range-adjust|> Mark<\/button>|> Clear<\/button>|> Scroll<\/button>/,
-    );
-    expect(html.replace(/<[^>]*>/g, '')).not.toMatch(
-      /Fine.Tune|Jan 3|2000|Start on a blank time/,
-    );
+    expect(html).not.toMatch(/range-adjust|> Mark<\/button>|> Clear<\/button>|> Scroll<\/button>/);
+    expect(html.replace(/<[^>]*>/g, '')).not.toMatch(/Fine.Tune|Jan 3|2000|Start on a blank time/);
   });
 });

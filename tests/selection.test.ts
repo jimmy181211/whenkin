@@ -64,27 +64,31 @@ describe('drag action follows its starting cell', () => {
    * Clears a partially marked block and recomputes a shrinking drag from
    * its original selection.
    */
-  it('clears a partially marked block and recomputes a shrinking drag from its original selection', () => {
-    const base = new Set([
-      1,
-      5,
-    ]);
-    const clear = clearsSelection([
-      1,
-      2,
-    ], base);
-    expect(clear).toBe(true);
-    expect([...paintSelection(base, [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-    ], clear)]).toEqual([]);
-    expect([...paintSelection(base, [
-      1,
-      2,
-    ], clear)]).toEqual([5]);
-  });
+  it(
+    'clears a partially marked block and recomputes a shrinking drag ' +
+      'from its original selection',
+    () => {
+      const base = new Set([
+        1,
+        5,
+      ]);
+      const clear = clearsSelection([
+        1,
+        2,
+      ], base);
+      expect(clear).toBe(true);
+      expect([...paintSelection(base, [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+      ], clear)]).toEqual([]);
+      expect([...paintSelection(base, [
+        1,
+        2,
+      ], clear)]).toEqual([5]);
+    },
+  );
 });

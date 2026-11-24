@@ -50,9 +50,7 @@ const app = testClient(
 /** Apply the old schema, seed a real quarter-hour reply, then upgrade it. */
 beforeAll(async () => {
   const directory = new URL('../App/backend/db/migrations/', import.meta.url);
-  const files = (await readdir(directory))
-    .filter((name) => name.endsWith('.sql'))
-    .sort();
+  const files = (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort();
   for (const file of files.filter((name) => !name.startsWith('010_'))) {
     await pg.exec(await readFile(new URL(file, directory), 'utf8'));
   }
@@ -60,32 +58,25 @@ beforeAll(async () => {
     "INSERT INTO events(id,title,organizer_name,timezone) VALUES($1,'Legacy','','UTC')",
     [legacyEventId],
   );
+  await pg.query('INSERT INTO event_windows(event_id,starts_at,ends_at) VALUES($1,$2,$3)', [
+    legacyEventId,
+    legacyRange.start,
+    '2030-01-15T10:15Z',
+  ]);
   await pg.query(
-    'INSERT INTO event_windows(event_id,starts_at,ends_at) VALUES($1,$2,$3)',
-    [
-      legacyEventId,
-      legacyRange.start,
-      '2030-01-15T10:15Z',
-    ],
-  );
-  await pg.query(
-    "INSERT INTO responses(id,event_id,name,timezone,edit_hash) VALUES($1,$2,'Legacy person','UTC','')",
+    `INSERT INTO responses(id , event_id , name , timezone , edit_hash) VALUES($1 , $2 ,
+  'Legacy person' , 'UTC' , '' )`,
     [
       legacyResponseId,
       legacyEventId,
     ],
   );
-  await pg.query(
-    'INSERT INTO availability(response_id,starts_at,ends_at) VALUES($1,$2,$3)',
-    [
-      legacyResponseId,
-      legacyRange.start,
-      legacyRange.end,
-    ],
-  );
-  await pg.exec(
-    await readFile(new URL('010_event_slot_minutes.sql', directory), 'utf8'),
-  );
+  await pg.query('INSERT INTO availability(response_id,starts_at,ends_at) VALUES($1,$2,$3)', [
+    legacyResponseId,
+    legacyRange.start,
+    legacyRange.end,
+  ]);
+  await pg.exec(await readFile(new URL('010_event_slot_minutes.sql', directory), 'utf8'));
 }, 30000);
 
 /** Release the isolated database after HTTP and migration checks. */
@@ -118,38 +109,29 @@ async function create(extra = {}) {
 }
 
 /** A migration must not round, lengthen, or drop any previously saved range. */
-it('preserves legacy windows and quarter-hour replies through upgrade, display, and save', async () => {
-  const event = (await (
-    await request('/events/' + legacyEventId)
-  ).json()) as MeetingEvent;
-  expect(event.slot_minutes).toBe(15);
-  expect(new Date(event.windows[0].start).toISOString()).toBe(
-    legacyRange.start,
-  );
-  expect(new Date(event.windows[0].end).toISOString()).toBe(
-    '2030-01-15T10:15:00.000Z',
-  );
-  const ranges = event.responses[0].ranges;
-  expect(
-    slotsToRanges(allSlots(ranges, slotDuration(event)), slotDuration(event)),
-  ).toEqual([legacyRange]);
-  expect(gridModel(event, 'UTC').days[0][1]).toHaveLength(4);
-  const response = await request(
-    `/events/${event.id}/responses/${legacyResponseId}`,
-    'PUT',
-    {
+it(
+  'preserves legacy windows and quarter-hour replies through upgrade, ' + 'display, and save',
+  async () => {
+    const event = (await (await request('/events/' + legacyEventId)).json()) as MeetingEvent;
+    expect(event.slot_minutes).toBe(15);
+    expect(new Date(event.windows[0].start).toISOString()).toBe(legacyRange.start);
+    expect(new Date(event.windows[0].end).toISOString()).toBe('2030-01-15T10:15:00.000Z');
+    const ranges = event.responses[0].ranges;
+    expect(slotsToRanges(allSlots(ranges, slotDuration(event)), slotDuration(event))).toEqual([
+      legacyRange,
+    ]);
+    expect(gridModel(event, 'UTC').days[0][1]).toHaveLength(4);
+    const response = await request(`/events/${event.id}/responses/${legacyResponseId}`, 'PUT', {
       name: 'Legacy person',
       timezone: 'UTC',
       revision: event.responses[0].revision,
       ranges,
-    },
-  );
-  expect(response.status).toBe(200);
-  const saved = (await (
-    await request('/events/' + event.id)
-  ).json()) as MeetingEvent;
-  expect(saved.responses[0].ranges).toEqual(ranges);
-});
+    });
+    expect(response.status).toBe(200);
+    const saved = (await (await request('/events/' + event.id)).json()) as MeetingEvent;
+    expect(saved.responses[0].ranges).toEqual(ranges);
+  },
+);
 
 /** The server, not a client field, selects the granularity of newly created events. */
 it('creates only half-hour events and rejects quarter-hour clock choices', async () => {
@@ -214,8 +196,10 @@ it('enforces half-hour boundaries on both response creation and editing', async 
     ranges: complete,
   });
   expect(response.status).toBe(201);
-  const saved = (await response.json()) as { id: string;
-    revision: number };
+  const saved = (await response.json()) as {
+    id: string;
+    revision: number;
+  };
   expect(
     (
       await request(base + '/' + saved.id, 'PUT', {
@@ -225,9 +209,7 @@ it('enforces half-hour boundaries on both response creation and editing', async 
       })
     ).status,
   ).toBe(400);
-  const snapshot = (await (
-    await request('/events/' + event.id)
-  ).json()) as MeetingEvent;
+  const snapshot = (await (await request('/events/' + event.id)).json()) as MeetingEvent;
   expect(snapshot.responses).toHaveLength(1);
   expect(new Date(snapshot.responses[0].ranges[0].end).toISOString()).toBe(
     '2030-01-15T09:30:00.000Z',
@@ -235,12 +217,8 @@ it('enforces half-hour boundaries on both response creation and editing', async 
   const duration = slotDuration(snapshot);
   const stamps = allSlots(snapshot.responses[0].ranges, duration);
   expect(stamps).toHaveLength(1);
-  expect(groupAvailability(snapshot.responses, duration).get(stamps[0])).toBe(
-    1,
-  );
-  expect(
-    inspectAvailability(snapshot.responses, stamps, duration).available,
-  ).toHaveLength(1);
+  expect(groupAvailability(snapshot.responses, duration).get(stamps[0])).toBe(1);
+  expect(inspectAvailability(snapshot.responses, stamps, duration).available).toHaveLength(1);
 });
 
 /** Thirty-minute blocks remain whole and reversible when the viewer's zone is offset by :45. */
@@ -285,12 +263,7 @@ it('keeps new weekly half-hour selections intact across quarter-hour-offset zone
 /** End-of-day midnight remains available, but quarter-hour choices disappear. */
 it('renders only half-hour choices in the new-event time picker', () => {
   const html = renderToStaticMarkup(
-    <TimeRangePicker
-      start="09:00"
-      end="18:00"
-      onStartChange={() => {}}
-      onEndChange={() => {}}
-    />,
+    <TimeRangePicker start="09:00" end="18:00" onStartChange={() => {}} onEndChange={() => {}} />,
   );
   expect(html.match(/<option /g)).toHaveLength(96);
   expect(html).toContain('value="24:00"');
@@ -311,9 +284,7 @@ it('renders whole new-event blocks with matching group counts and range labels',
     ],
   });
   expect(response.status).toBe(201);
-  const saved = (await (
-    await request('/events/' + event.id)
-  ).json()) as MeetingEvent;
+  const saved = (await (await request('/events/' + event.id)).json()) as MeetingEvent;
   vi.stubGlobal('window', { innerWidth: 390 });
   try {
     const html = renderToStaticMarkup(

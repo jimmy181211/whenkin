@@ -5,11 +5,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useLanguage } from './LanguageSelector';
+import { useLanguage } from '../i18n/language';
 import {
-  browserTourStorage,
-  finishTour,
-  shouldOfferTour,
+  tourService,
   tourCopy,
   tourSteps,
 } from '../utils/event-tour';
@@ -49,7 +47,7 @@ export default function EventTour({
 
   /** Offer the welcome card when this browser has not dismissed the guide. */
   useEffect(() => {
-    if (shouldOfferTour(browserTourStorage())) {
+    if (tourService.shouldOffer(tourService.browserStorage())) {
       setStep(-1);
     }
   }, []);
@@ -64,7 +62,7 @@ export default function EventTour({
     }
     motion.current = false;
     setMoving(false);
-    finishTour(outcome, browserTourStorage());
+    tourService.finish(outcome, tourService.browserStorage());
     setStep(null);
     setPosition(null);
   }
@@ -80,9 +78,7 @@ export default function EventTour({
       return;
     }
     lastFocus.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     /** Handle Escape and wrap Tab navigation between guide controls. */
     const keyboard = (event: KeyboardEvent) => {
@@ -94,9 +90,7 @@ export default function EventTour({
       if (event.key !== 'Tab') {
         return;
       }
-      const controls = panel.current?.querySelectorAll<HTMLButtonElement>(
-        'button:not(:disabled)',
-      );
+      const controls = panel.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
       if (!controls?.length) {
         return;
       }
@@ -104,15 +98,13 @@ export default function EventTour({
       const last = controls[controls.length - 1];
       if (
         event.shiftKey &&
-        (document.activeElement === first ||
-          !panel.current?.contains(document.activeElement))
+        (document.activeElement === first || !panel.current?.contains(document.activeElement))
       ) {
         event.preventDefault();
         last.focus();
       } else if (
         !event.shiftKey &&
-        (document.activeElement === last ||
-          !panel.current?.contains(document.activeElement))
+        (document.activeElement === last || !panel.current?.contains(document.activeElement))
       ) {
         event.preventDefault();
         first.focus();
@@ -123,10 +115,9 @@ export default function EventTour({
     // Remove guide keyboard handling and restore the prior focus target.
     return () => {
       document.removeEventListener('keydown', keyboard, true);
-      (lastFocus.current?.isConnected
-        ? lastFocus.current
-        : trigger.current
-      )?.focus({ preventScroll: true });
+      (lastFocus.current?.isConnected ? lastFocus.current : trigger.current)?.focus({
+        preventScroll: true,
+      });
       // A collapsed header menu needs its visible trigger as the return target.
       onRestoreFocus?.();
     };

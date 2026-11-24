@@ -1,5 +1,5 @@
 /** Applies checked SQL migrations on one locked database connection. */
-import { createDatabase } from '../db/connection.js';
+import { PostgresDatabase } from '../db/connection.js';
 import {
   readFile,
   readdir,
@@ -12,8 +12,7 @@ import { sqlStatements } from './sql-statements.js';
  * Hash migration contents to detect edits to previously applied SQL.
  * @returns The content's SHA-256 digest as hexadecimal text.
  */
-const digest = (contents) =>
-  createHash('sha256').update(contents).digest('hex');
+const digest = (contents) => createHash('sha256').update(contents).digest('hex');
 
 /**
  * Apply unapplied SQL files in filename order and check previously saved checksums.
@@ -29,7 +28,8 @@ export async function migrate(
   await client.query('SELECT pg_advisory_lock(742051839)');
   try {
     await client.query(
-      'CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',
+      `CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY , checksum text NOT
+  NULL , applied_at timestamptz NOT NULL DEFAULT now())`,
     );
     for (const name of (await readdir(directory))
       .filter(
@@ -42,10 +42,7 @@ export async function migrate(
       const canonical = contents.replaceAll('\r\n', '\n');
       const checksum = digest(canonical);
       const existing = (
-        await client.query(
-          'SELECT checksum FROM schema_migrations WHERE name=$1',
-          [name],
-        )
+        await client.query('SELECT checksum FROM schema_migrations WHERE name=$1', [name])
       ).rows;
       if (existing.length) {
         // Accept the same historical SQL checked out with either OS's line endings.
@@ -64,13 +61,10 @@ export async function migrate(
         for (const statement of sqlStatements(contents)) {
           await client.query(statement);
         }
-        await client.query(
-          'INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)',
-          [
-            name,
-            checksum,
-          ],
-        );
+        await client.query('INSERT INTO schema_migrations(name,checksum) VALUES($1,$2)', [
+          name,
+          checksum,
+        ]);
         await client.query('COMMIT');
         log('Applied: ' + name);
       } catch (error) {
@@ -83,14 +77,11 @@ export async function migrate(
   }
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   let database;
   let client;
   try {
-    database = createDatabase();
+    database = new PostgresDatabase();
     client = await database.connect();
     await migrate(client);
   } catch {

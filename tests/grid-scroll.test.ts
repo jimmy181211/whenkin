@@ -9,7 +9,8 @@ import { scrollGrid } from '../App/frontend/utils/grid-scroll';
 /**
  * Build a scroller fixture whose vertical offset is bounded like a real
  * element.
- * @returns An element-like fixture whose assigned vertical scroll position is clamped from 0 to 1000.
+ * @returns An element-like fixture whose assigned vertical scroll position is clamped from
+ * 0 to 1000.
  */
 function scroller(top = 0) {
   let current = top;

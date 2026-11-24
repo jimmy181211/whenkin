@@ -1,7 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import Steps from '../components/Steps';
-import PageLink from '../components/PageLink';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 
 /**
  * Usage-guide page component for the scheduling workflow.
@@ -10,15 +9,15 @@ import { t } from '../i18n/index';
 export default function HowItWorksPage() {
   return (
     <main className="guide-page">
-      <PageLink className="text-button" href="/">
-        ← {t('Back to Home')}
-      </PageLink>
+      <a className="text-button" href="/">
+        ← {langService.t('Back to Home')}
+      </a>
       <section className="guide-card">
-        <h1>{t('How It Works')}</h1>
+        <h1>{langService.t('How It Works')}</h1>
         <Steps />
-        <PageLink className="button primary" href="/">
-          {t('Create an Event')} <ArrowRight size={17} />
-        </PageLink>
+        <a className="button primary" href="/">
+          {langService.t('Create an Event')} <ArrowRight size={17} />
+        </a>
       </section>
     </main>
   );
