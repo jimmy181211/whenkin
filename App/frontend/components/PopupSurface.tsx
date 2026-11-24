@@ -22,13 +22,7 @@ const PopupSurface = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
     className = '',
     ...props
   }, ref) {
-    return (
-      <div
-        {...props}
-        ref={ref}
-        className={`popup-surface ${className}`.trim()}
-      />
-    );
+    return <div {...props} ref={ref} className={`popup-surface ${className}`.trim()} />;
   },
 );
 

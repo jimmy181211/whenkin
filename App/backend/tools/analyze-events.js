@@ -7,7 +7,7 @@ import {
 } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createDatabase } from '../db/connection.js';
+import { PostgresDatabase } from '../db/connection.js';
 
 // Metrics whose null/undefined values are counted in the report's missing-data summary.
 const fields = [
@@ -33,9 +33,7 @@ const median = (values) => {
     (a, b) => a - b,
   );
   const n = v.length;
-  return n
-    ? (v[Math.floor((n - 1) / 2)] + v[Math.ceil((n - 1) / 2)]) / 2
-    : null;
+  return n ? (v[Math.floor((n - 1) / 2)] + v[Math.ceil((n - 1) / 2)]) / 2 : null;
 };
 
 /**
@@ -56,8 +54,7 @@ export function analyzeSnapshot(snapshot) {
   }
   // Title keywords explain existing topic tags; they do not establish anyone's identity.
   const rules = {
-    'college-student-related':
-      /(大学|高校|校园|学生|college|university|campus|student|UCSD|CSSA)/i,
+    'college-student-related': /(大学|高校|校园|学生|college|university|campus|student|UCSD|CSSA)/i,
     meeting: /(会议|开会|例会|meeting|sync|standup)/i,
     study: /(学习|复习|自习|study|exam|作业|homework|课程)/i,
     social: /(聚餐|吃饭|晚餐|午餐|dinner|lunch|food|meal|party|聚会|团建)/i,
@@ -72,10 +69,7 @@ export function analyzeSnapshot(snapshot) {
       topic_evidence: (e.topic_tags || []).map(
         /** Explain a topic tag with the matching title text, or request review. */
         (tag) =>
-          tag +
-          ': ' +
-          (String(e.event_title || '').match(rules[tag])?.[0] ||
-            'review required'),
+          tag + ': ' + (String(e.event_title || '').match(rules[tag])?.[0] || 'review required'),
       ),
       review_flags: [],
     }),
@@ -124,10 +118,7 @@ export function analyzeSnapshot(snapshot) {
     // Interquartile range measures spread; values outside 1.5 times it are flagged only.
     const iqr = q3 - q1;
     for (const e of events) {
-      if (
-        finite(e[key]) &&
-        (e[key] < q1 - 1.5 * iqr || e[key] > q3 + 1.5 * iqr)
-      ) {
+      if (finite(e[key]) && (e[key] < q1 - 1.5 * iqr || e[key] > q3 + 1.5 * iqr)) {
         e.review_flags.push(key + ': outside 1.5×IQR');
       }
     }
@@ -235,10 +226,7 @@ export async function writeAnalysis(snapshot, output) {
     throw Error('Snapshot row counts do not reconcile.');
   }
   await mkdir(output, { recursive: true });
-  await writeFile(
-    resolve(output, 'summary.json'),
-    JSON.stringify(result, null, 2),
-  );
+  await writeFile(resolve(output, 'summary.json'), JSON.stringify(result, null, 2));
   const columns = [
     'event_code',
     'event_title',
@@ -303,36 +291,29 @@ export async function writeAnalysis(snapshot, output) {
   return result.summary;
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   let database;
   try {
     const args = process.argv.slice(2);
     const input = args[args.indexOf('--input') + 1];
     const output = resolve(
-      args.includes('--output')
-        ? args[args.indexOf('--output') + 1]
-        : 'outputs/analytics',
+      args.includes('--output') ? args[args.indexOf('--output') + 1] : 'outputs/analytics',
     );
     let snapshot;
     if (args.includes('--input')) {
       snapshot = JSON.parse(await readFile(resolve(input), 'utf8'));
     } else {
-      database = createDatabase();
+      database = new PostgresDatabase();
       const rows = await database.query(
-        await readFile(
-          new URL('./analytics-extract.sql', import.meta.url),
-          'utf8',
-        ),
+        await readFile(new URL('./analytics-extract.sql', import.meta.url), 'utf8'),
       );
       snapshot = rows[0].snapshot;
     }
     console.log(JSON.stringify(await writeAnalysis(snapshot, output), null, 2));
   } catch {
     console.error(
-      'Analysis failed. Check the input file or database configuration. No credentials were printed.',
+      'Analysis failed. Check the input file or database configuration. ' +
+        'No credentials were printed.',
     );
     process.exitCode = 1;
   } finally {

@@ -15,7 +15,7 @@ import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import TimeRangePicker from '../components/TimeRangePicker';
 import Toast from '../components/Toast';
 import { useNotice } from '../utils/use-notice';
@@ -47,9 +47,7 @@ async function connectionStatus(): Promise<'ready' | 'setup' | 'unreachable'> {
  * @returns The event form, connection feedback, and required-field reminders.
  */
 export default function CreateEventPage() {
-  const [scheduleMode, setScheduleMode] = useState<'dates' | 'weekdays'>(
-    'dates',
-  );
+  const [scheduleMode, setScheduleMode] = useState<'dates' | 'weekdays'>('dates');
   // Weekday mode uses Monday=1 through Sunday=7; date mode uses YYYY-MM-DD strings.
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [zone, setZone] = useState(deviceTimezone);
@@ -69,9 +67,9 @@ export default function CreateEventPage() {
   const [end, setEnd] = useState('18:00');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [connection, setConnection] = useState<
-    'checking' | 'ready' | 'setup' | 'unreachable'
-  >('checking');
+  const [connection, setConnection] = useState<'checking' | 'ready' | 'setup' | 'unreachable'>(
+    'checking',
+  );
 
   /** Show the checking state while retrying API/database readiness. */
   const checkConnection = async () => {
@@ -132,10 +130,7 @@ export default function CreateEventPage() {
     e.preventDefault();
     setError('');
     if (!title.trim()) {
-      void notifyRequired(
-        'Enter an event name before creating your event.',
-        titleInput.current,
-      );
+      void notifyRequired('Enter an event name before creating your event.', titleInput.current);
       return;
     }
     if (connection !== 'ready') {
@@ -151,28 +146,24 @@ export default function CreateEventPage() {
     }
     setBusy(true);
     try {
-      const result = await api<{
-        id: string;
-      }>('/events', {
-        method: 'POST',
-        body: JSON.stringify({
-          title,
-          description,
-          timezone: zone,
-          dates,
-          schedule_mode: scheduleMode,
-          weekdays,
-          startTime: start,
-          endTime: end,
-        }),
+      const body = JSON.stringify({
+        title,
+        description,
+        timezone: zone,
+        dates,
+        schedule_mode: scheduleMode,
+        weekdays,
+        startTime: start,
+        endTime: end,
       });
+      const payload = {
+        method: 'POST',
+        body: body,
+      };
+      const result = await api<{ id: string }>('/events', payload);
       window.location.assign(new URL(`/e/${result.id}`, location.href).href);
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : 'Could not create your event. Please try again.',
-      );
+      setError(e instanceof Error ? e.message : 'Could not create your event. Please try again.');
       setBusy(false);
     }
   }
@@ -190,12 +181,12 @@ export default function CreateEventPage() {
       <section className="create-card">
         <div className="form-heading">
           <div>
-            <h2>{t('Create Your Event')}</h2>
+            <h2>{langService.t('Create Your Event')}</h2>
           </div>
         </div>
         <form noValidate onSubmit={create}>
           <label className="field">
-            {t('Event Name')}
+            {langService.t('Event Name')}
             <input
               ref={titleInput}
               autoComplete="off"
@@ -215,7 +206,8 @@ export default function CreateEventPage() {
           {notes ? (
             <label className="field">
               <span>
-                {t('Note')} <span className="optional">{t('optional')}</span>
+                {langService.t('Note')}{' '}
+                <span className="optional">{langService.t('optional')}</span>
               </span>
               <textarea
                 maxLength={1000}
@@ -236,7 +228,7 @@ export default function CreateEventPage() {
                 () => setNotes(true)
               }
             >
-              <Plus size={14} /> {t('Add a Note')}
+              <Plus size={14} /> {langService.t('Add a Note')}
             </button>
           )}
           <div className="form-divider" />
@@ -255,26 +247,21 @@ export default function CreateEventPage() {
             onWeekdaysChange={handleWeekdaysChange}
             timezone={zone}
           />
-          <TimeRangePicker
-            start={start}
-            end={end}
-            onStartChange={setStart}
-            onEndChange={setEnd}
-          />
+          <TimeRangePicker start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
           <TimezonePicker value={zone} onChange={setZone} />
           {(connection === 'setup' || connection === 'unreachable') && (
             <div className="connection-notice" role="status">
               <Info size={17} />
               <div>
                 <strong>
-                  {t(
+                  {langService.t(
                     connection === 'setup'
                       ? 'Event creation is still being set up.'
                       : 'We can’t reach event saving right now.',
                   )}
                 </strong>
                 <p>
-                  {t(
+                  {langService.t(
                     connection === 'setup'
                       ? 'Shareable links will be available when setup is complete.'
                       : 'Your form is still here. Please retry the connection.',
@@ -289,7 +276,7 @@ export default function CreateEventPage() {
                       () => void checkConnection()
                     }
                   >
-                    <RefreshCw size={12} /> {t('Retry Connection')}
+                    <RefreshCw size={12} /> {langService.t('Retry Connection')}
                   </button>
                 </div>
               </div>
@@ -297,7 +284,7 @@ export default function CreateEventPage() {
           )}
           {error && (
             <p className="error-message" role="alert">
-              {t(error)}
+              {langService.t(error)}
             </p>
           )}
           <button
@@ -307,17 +294,15 @@ export default function CreateEventPage() {
           >
             {busy ? (
               <>
-                <LoaderCircle className="spin" size={18} />{' '}
-                {t('Creating your event…')}
+                <LoaderCircle className="spin" size={18} /> {langService.t('Creating your event…')}
               </>
             ) : connection === 'checking' ? (
               <>
-                <LoaderCircle className="spin" size={18} />{' '}
-                {t('Checking connection…')}
+                <LoaderCircle className="spin" size={18} /> {langService.t('Checking connection…')}
               </>
             ) : (
               <>
-                {t('Create Event & Get a Link')} <ArrowRight size={18} />
+                {langService.t('Create Event & Get a Link')} <ArrowRight size={18} />
               </>
             )}
           </button>

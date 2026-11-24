@@ -18,13 +18,8 @@ describe('connection failures explain the next step', () => {
    * message.
    */
   it('replaces the browser’s raw failed-to-fetch error with a useful message', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
-    );
-    await expect(api('/events', { method: 'POST' })).rejects.toThrow(
-      'We couldn’t reach Whenkin.',
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(api('/events', { method: 'POST' })).rejects.toThrow('We couldn’t reach Whenkin.');
   });
   /**
    * Rejects a static HTML fallback instead of treating it as a saved
@@ -51,10 +46,7 @@ describe('connection failures explain the next step', () => {
       vi
         .fn()
         .mockResolvedValue(
-          Response.json(
-            { error: 'Database setup is not complete.' },
-            { status: 503 },
-          ),
+          Response.json({ error: 'Database setup is not complete.' }, { status: 503 }),
         ),
     );
     await expect(api('/events', { method: 'POST' })).rejects.toThrow(
@@ -63,10 +55,7 @@ describe('connection failures explain the next step', () => {
   });
   /** Returns readiness without inventing a successful event. */
   it('returns readiness without inventing a successful event', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(Response.json({ ready: false })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ ready: false })));
     expect(await api('/health')).toEqual({ ready: false });
   });
 });

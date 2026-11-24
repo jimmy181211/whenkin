@@ -57,11 +57,9 @@ describe('shortcut instructions', () => {
    * fragments.
    */
   it('keeps the current event path while excluding edit tokens and fragments', () => {
-    expect(
-      shortcutPageURL('https://whenkin.example/e/test?token=private#response'),
-    ).toBe('https://whenkin.example/e/test');
-    expect(shortcutPageURL('https://whenkin.example/')).toBe(
-      'https://whenkin.example/',
+    expect(shortcutPageURL('https://whenkin.example/e/test?token=private#response')).toBe(
+      'https://whenkin.example/e/test',
     );
+    expect(shortcutPageURL('https://whenkin.example/')).toBe('https://whenkin.example/');
   });
 });

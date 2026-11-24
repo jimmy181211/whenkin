@@ -14,19 +14,14 @@ export function parseEventYear(value: string): number | null {
     return null;
   }
   const year = Number(value);
-  return year >= FIRST_EVENT_DATE.year && year <= LAST_EVENT_DATE.year
-    ? year
-    : null;
+  return year >= FIRST_EVENT_DATE.year && year <= LAST_EVENT_DATE.year ? year : null;
 }
 
 /**
  * Check an inclusive date range, using today's date in the event's timezone.
  * @returns True when the date is neither past nor outside the supported calendar.
  */
-export function isEventDateAllowed(
-  date: Temporal.PlainDate,
-  today: Temporal.PlainDate,
-) {
+export function isEventDateAllowed(date: Temporal.PlainDate, today: Temporal.PlainDate) {
   return (
     Temporal.PlainDate.compare(date, FIRST_EVENT_DATE) >= 0 &&
     Temporal.PlainDate.compare(date, today) >= 0 &&

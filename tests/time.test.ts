@@ -153,21 +153,15 @@ describe('time zones and real moments', () => {
     expect(localToUTC('2027-01-15', '10:00', 'America/Los_Angeles')).toBe(
       localToUTC('2027-01-15', '13:00', 'America/New_York'),
     );
-    expect(localToUTC('2027-01-15', '10:00', 'America/Los_Angeles')).toBe(
-      '2027-01-15T18:00:00Z',
-    );
+    expect(localToUTC('2027-01-15', '10:00', 'America/Los_Angeles')).toBe('2027-01-15T18:00:00Z');
   });
   /**
    * Uses the date-specific daylight saving offset and fractional-hour
    * zones.
    */
   it('uses the date-specific daylight saving offset and fractional-hour zones', () => {
-    expect(localToUTC('2027-07-15', '10:00', 'America/Los_Angeles')).toBe(
-      '2027-07-15T17:00:00Z',
-    );
-    expect(localToUTC('2027-01-15', '10:00', 'Asia/Kolkata')).toBe(
-      '2027-01-15T04:30:00Z',
-    );
+    expect(localToUTC('2027-07-15', '10:00', 'America/Los_Angeles')).toBe('2027-07-15T17:00:00Z');
+    expect(localToUTC('2027-01-15', '10:00', 'Asia/Kolkata')).toBe('2027-01-15T04:30:00Z');
   });
   /**
    * Rejects nonexistent and repeated local start times rather than
@@ -185,9 +179,7 @@ describe('time zones and real moments', () => {
   });
   /** Rolls midnight to the next date. */
   it('rolls midnight to the next date', () =>
-    expect(localToUTC('2027-01-15', '24:00', 'UTC')).toBe(
-      '2027-01-16T00:00:00Z',
-    ));
+    expect(localToUTC('2027-01-15', '24:00', 'UTC')).toBe('2027-01-16T00:00:00Z'));
   /** Changes local calendar dates without changing stored moments. */
   it('changes local calendar dates without changing stored moments', () => {
     const windows = [span('2027-01-15T22:00:00Z', '2027-01-15T23:00:00Z')];
@@ -252,14 +244,14 @@ describe('whole meetings and compact storage', () => {
   const start = Date.parse('2027-01-15T18:00Z');
   /** Merges consecutive slots into one range. */
   it('merges consecutive slots into one range', () =>
-    expect(
-      slotsToRanges([
-        start,
-        start + SLOT,
-        start + 2 * SLOT,
-        start,
-      ]),
-    ).toEqual([span('2027-01-15T18:00:00.000Z', '2027-01-15T18:45:00.000Z')]));
+    expect(slotsToRanges([
+      start,
+      start + SLOT,
+      start + 2 * SLOT,
+      start,
+    ])).toEqual([
+      span('2027-01-15T18:00:00.000Z', '2027-01-15T18:45:00.000Z'),
+    ]));
   /** Does not bridge a gap. */
   it('does not bridge a gap', () =>
     expect(
@@ -277,24 +269,15 @@ describe('whole meetings and compact storage', () => {
     const windows = [span('2027-01-15T18:00Z', '2027-01-15T19:00Z')];
     expect(
       /* Submit a range outside the fixture event to verify rejection. */
-      () =>
-        validateRanges(
-          [span('2027-01-15T17:00Z', '2027-01-15T18:00Z')],
-          windows,
-        ),
+      () => validateRanges([span('2027-01-15T17:00Z', '2027-01-15T18:00Z')], windows),
     ).toThrow();
     expect(
       /* Submit a misaligned range to verify complete-slot validation. */
-      () =>
-        validateRanges(
-          [span('2027-01-15T18:01Z', '2027-01-15T18:16Z')],
-          windows,
-        ),
+      () => validateRanges([span('2027-01-15T18:01Z', '2027-01-15T18:16Z')], windows),
     ).toThrow();
     expect(
       /* Submit timestamps without offsets to verify timezone validation. */
-      () =>
-        validateRanges([span('2027-01-15T18:00', '2027-01-15T18:15')], windows),
+      () => validateRanges([span('2027-01-15T18:00', '2027-01-15T18:15')], windows),
     ).toThrow();
   });
 });

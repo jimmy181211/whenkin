@@ -14,10 +14,7 @@ import {
   availabilityColor,
   inspectAvailability,
 } from '../App/frontend/utils/group-availability';
-import {
-  setLanguage,
-  t,
-} from '../App/frontend/i18n/index';
+import { langService } from '../App/frontend/i18n/language';
 import type { MeetingEvent } from '../App/shared/types';
 const stamp = Date.parse('2027-01-15T09:00:00Z');
 
@@ -61,7 +58,7 @@ afterEach(
   /* Restore browser globals and English after each group-grid test. */
   () => {
     vi.unstubAllGlobals();
-    setLanguage('en');
+    langService.setLanguage('en');
   },
 );
 /** Group the group availability checks. */
@@ -70,46 +67,50 @@ describe('group availability', () => {
    * Highlights all shared portions without painting an unavailable
    * half-slot or changing the personal selection.
    */
-  it('highlights all shared portions without painting an unavailable half-slot or changing the personal selection', () => {
-    vi.stubGlobal('window', { innerWidth: 390 });
-    const shared = [
-      range(15, 30),
-      range(45, 60),
-    ];
-    const html = renderToStaticMarkup(
-      <AvailabilityGrid
-        event={event}
-        zone="UTC"
-        selected={new Set([stamp])}
-        view="group"
-        highlights={shared}
-        onChange={
-          /* Fail if shared-time highlighting unexpectedly edits a saved response. */
-          () => {
-            throw Error('Highlight must not edit a response');
+  it(
+    'highlights all shared portions without painting an unavailable ' +
+      'half-slot or changing the personal selection',
+    () => {
+      vi.stubGlobal('window', { innerWidth: 390 });
+      const shared = [
+        range(15, 30),
+        range(45, 60),
+      ];
+      const html = renderToStaticMarkup(
+        <AvailabilityGrid
+          event={event}
+          zone="UTC"
+          selected={new Set([stamp])}
+          view="group"
+          highlights={shared}
+          onChange={
+            /* Fail if shared-time highlighting unexpectedly edits a saved response. */
+            () => {
+              throw Error('Highlight must not edit a response');
+            }
           }
-        }
-      />,
-    );
-    expect(html.match(/shared-highlight-slice/g)).toHaveLength(2);
-    expect(html.match(/top:50%;height:50%/g)).toHaveLength(2);
-    expect(html).not.toContain(' painted');
-    const personal = renderToStaticMarkup(
-      <AvailabilityGrid
-        event={event}
-        zone="UTC"
-        selected={new Set([stamp])}
-        view="personal"
-        highlights={shared}
-        onChange={
-          /* Keep personal selections unchanged during static grid rendering. */
-          () => {}
-        }
-      />,
-    );
-    expect(personal).not.toContain('shared-highlight-slice');
-    expect(personal).toContain('partial');
-  });
+        />,
+      );
+      expect(html.match(/shared-highlight-slice/g)).toHaveLength(2);
+      expect(html.match(/top:50%;height:50%/g)).toHaveLength(2);
+      expect(html).not.toContain(' painted');
+      const personal = renderToStaticMarkup(
+        <AvailabilityGrid
+          event={event}
+          zone="UTC"
+          selected={new Set([stamp])}
+          view="personal"
+          highlights={shared}
+          onChange={
+            /* Keep personal selections unchanged during static grid rendering. */
+            () => {}
+          }
+        />,
+      );
+      expect(personal).not.toContain('shared-highlight-slice');
+      expect(personal).toContain('partial');
+    },
+  );
   /**
    * Lists full-block availability separately from partial and empty
    * responses.
@@ -155,9 +156,7 @@ describe('group availability', () => {
         false,
       ],
     ]);
-    expect(
-      inspectAvailability(event.responses, [stamp + 2700000]).available,
-    ).toEqual([]);
+    expect(inspectAvailability(event.responses, [stamp + 2700000]).available).toEqual([]);
     expect(inspectAvailability([], [stamp])).toEqual({
       available: [],
       unavailable: [],
@@ -170,7 +169,7 @@ describe('group availability', () => {
       'en',
       'zh',
     ] as const) {
-      setLanguage(language);
+      langService.setLanguage(language);
       const html = renderToStaticMarkup(
         <SlotDetails
           event={event}
@@ -184,10 +183,10 @@ describe('group availability', () => {
           }}
         />,
       );
-      expect(html).toContain(t('Availability at This Time'));
+      expect(html).toContain(langService.t('Availability at This Time'));
       expect(html).toContain('A</span>');
       expect(html).toContain('B<small>');
-      expect(html).toContain(t('Partly available'));
+      expect(html).toContain(langService.t('Partly available'));
       expect(html).toContain('slot-presence available');
       expect(html).toContain('slot-presence unavailable');
     }
@@ -232,41 +231,44 @@ describe('group availability', () => {
    * Shows exact 15-minute group counts in the same grid across zones,
    * widths, and languages.
    */
-  it('shows exact 15-minute group counts in the same grid across zones, widths, and languages', () => {
-    for (const width of [
-      390,
-      1280,
-    ]) {
-      for (const language of [
-        'en',
-        'zh',
-      ] as const) {
-        vi.stubGlobal('window', { innerWidth: width });
-        setLanguage(language);
-        const html = renderToStaticMarkup(
-          <AvailabilityGrid
-            event={event}
-            zone="America/New_York"
-            selected={new Set()}
-            view="group"
-            canEdit={false}
-            onChange={
-              /* Fail if a group-view interaction reaches the editing callback. */
-              () => {
-                throw Error('Group editing is forbidden');
+  it(
+    'shows exact 15-minute group counts in the same grid across zones, ' + 'widths, and languages',
+    () => {
+      for (const width of [
+        390,
+        1280,
+      ]) {
+        for (const language of [
+          'en',
+          'zh',
+        ] as const) {
+          vi.stubGlobal('window', { innerWidth: width });
+          langService.setLanguage(language);
+          const html = renderToStaticMarkup(
+            <AvailabilityGrid
+              event={event}
+              zone="America/New_York"
+              selected={new Set()}
+              view="group"
+              canEdit={false}
+              onChange={
+                /* Fail if a group-view interaction reaches the editing callback. */
+                () => {
+                  throw Error('Group editing is forbidden');
+                }
               }
-            }
-          />,
-        );
-        expect(html).toContain('group-mode');
-        expect(html).toContain('group-legend');
-        expect(html).toContain('var(--primary) 50%');
-        expect(html).toContain('var(--primary) 100%');
-        expect(html).toContain(t('Group Availability'));
-        expect(html).not.toContain('class="time-cell hour-start painted');
+            />,
+          );
+          expect(html).toContain('group-mode');
+          expect(html).toContain('group-legend');
+          expect(html).toContain('var(--primary) 50%');
+          expect(html).toContain('var(--primary) 100%');
+          expect(html).toContain(langService.t('Group Availability'));
+          expect(html).not.toContain('class="time-cell hour-start painted');
+        }
       }
-    }
-  });
+    },
+  );
 });
 /** Group the shared link and name notice checks. */
 describe('shared link and name notice', () => {
@@ -276,7 +278,7 @@ describe('shared link and name notice', () => {
       'en',
       'zh',
     ] as const) {
-      setLanguage(language);
+      langService.setLanguage(language);
       const html = renderToStaticMarkup(
         <Toast
           anchor={null}
@@ -290,7 +292,7 @@ describe('shared link and name notice', () => {
       expect(html).not.toContain('<dialog');
       expect(html).toContain('role="status"');
       expect(html).toContain('aria-live="polite"');
-      expect(html).toContain(t('Enter your name before editing availability.'));
+      expect(html).toContain(langService.t('Enter your name before editing availability.'));
     }
   });
 });

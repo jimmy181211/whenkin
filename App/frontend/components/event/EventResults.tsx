@@ -5,7 +5,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { zoneLabel } from '../../utils/time';
-import { t } from '../../i18n/index';
+import { langService } from '../../i18n/language';
 import type {
   Candidate,
   MeetingEvent,
@@ -51,14 +51,10 @@ export default function EventResults({
   } | null>(null);
   return (
     <aside className="results-sidebar">
-      <section
-        className="people-card"
-        data-tour-responders
-        aria-busy={switching}
-      >
+      <section className="people-card" data-tour-responders aria-busy={switching}>
         <div className="sidebar-title">
           <h3>
-            {t('Responders')} <span>{event.responses.length}</span>
+            {langService.t('Responders')} <span>{event.responses.length}</span>
           </h3>
         </div>
         {event.responses.map(
@@ -70,7 +66,7 @@ export default function EventResults({
               <button
                 type="button"
                 className="person"
-                aria-label={t('Edit {name}', { name: r.name })}
+                aria-label={langService.t('Edit {name}', { name: r.name })}
                 aria-pressed={r.id === editingId}
                 disabled={switching}
                 onClick={
@@ -78,9 +74,7 @@ export default function EventResults({
                   () => onEditResponse(r.id)
                 }
               >
-                <span className={`avatar avatar-${i % 3}`}>
-                  {r.name.slice(0, 1).toUpperCase()}
-                </span>
+                <span className={`avatar avatar-${i % 3}`}>{r.name.slice(0, 1).toUpperCase()}</span>
                 <span>
                   <strong>{r.name}</strong>
                   <small>{zoneLabel(r.timezone)}</small>
@@ -91,8 +85,8 @@ export default function EventResults({
                 type="button"
                 id={'delete-response-' + r.id}
                 className="icon-button delete-response"
-                aria-label={t('Delete {name}', { name: r.name })}
-                title={t('Delete {name}', { name: r.name })}
+                aria-label={langService.t('Delete {name}', { name: r.name })}
+                title={langService.t('Delete {name}', { name: r.name })}
                 disabled={switching}
                 onClick={
                   /* Open a deletion confirmation anchored to this responder's trash button. */
@@ -111,7 +105,7 @@ export default function EventResults({
       </section>
       <section className="suggestions-card" data-tour-shared-times>
         <div className="sidebar-title">
-          <h2>{t('When Everyone Is Free')}</h2>
+          <h2>{langService.t('When Everyone Is Free')}</h2>
         </div>
         {suggestions.length > 0 || highlighted ? (
           <>
@@ -121,14 +115,10 @@ export default function EventResults({
               aria-pressed={highlighted}
               onClick={onToggleHighlight}
             >
-              {t(
-                highlighted
-                  ? 'Cancel Highlight'
-                  : 'Highlight Everyone’s Free Times',
-              )}
+              {langService.t(highlighted ? 'Cancel Highlight' : 'Highlight Everyone’s Free Times')}
             </button>
             <p className="shared-time-summary" role="status">
-              {t(
+              {langService.t(
                 suggestions.length === 1
                   ? '{count} shared time period'
                   : '{count} shared time periods',
@@ -138,7 +128,7 @@ export default function EventResults({
           </>
         ) : (
           <p className="shared-empty" role="status">
-            {t('No shared free time yet.')}
+            {langService.t('No shared free time yet.')}
           </p>
         )}
       </section>

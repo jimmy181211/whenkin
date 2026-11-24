@@ -4,7 +4,7 @@ import {
 } from 'react';
 import AnchoredPanel from './AnchoredPanel';
 import SlotDetails, { type SlotInspection } from './SlotDetails';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import type { MeetingEvent } from '../../shared/types';
 
 /**
@@ -78,7 +78,7 @@ export default function AvailabilityPopover({
   return (
     <AnchoredPanel
       anchor={inspection.anchor}
-      label={t('Availability at This Time')}
+      label={langService.t('Availability at This Time')}
       onClose={onClose}
       className="availability-popover"
     >

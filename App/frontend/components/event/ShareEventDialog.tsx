@@ -5,7 +5,7 @@ import {
   Link2,
   X,
 } from 'lucide-react';
-import { t } from '../../i18n/index';
+import { langService } from '../../i18n/language';
 import PopupSurface from '../PopupSurface';
 
 /** Shareable URL, copy feedback, and actions supplied by the event page. */
@@ -37,7 +37,7 @@ export default function ShareEventDialog({
         className="share-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={t('Share Event')}
+        aria-label={langService.t('Share Event')}
         onClick={
           /* Keep clicks on sharing controls from closing the dialog backdrop. */
           (e) => e.stopPropagation()
@@ -53,7 +53,7 @@ export default function ShareEventDialog({
       >
         <button
           className="icon-button modal-close"
-          aria-label={t('Close sharing')}
+          aria-label={langService.t('Close sharing')}
           onClick={onClose}
         >
           <X size={20} />
@@ -62,7 +62,7 @@ export default function ShareEventDialog({
           <div className="heading-icon" aria-hidden="true">
             <Link2 size={23} />
           </div>
-          <label htmlFor={id}>{t('Event Link')}</label>
+          <label htmlFor={id}>{langService.t('Event Link')}</label>
         </div>
         <input
           id={id}
@@ -85,12 +85,12 @@ export default function ShareEventDialog({
           {copied === 'event' ? (
             <>
               <Check size={17} />
-              {t('Link Copied')}
+              {langService.t('Link Copied')}
             </>
           ) : (
             <>
               <Copy size={17} />
-              {t('Copy Event Link')}
+              {langService.t('Copy Event Link')}
             </>
           )}
         </button>

@@ -6,10 +6,11 @@ import {
   useState,
 } from 'react';
 import { loadEvent } from '../api/load-event';
+import { ApiError } from '../api/client';
 import {
-  api,
-  ApiError,
-} from '../api/client';
+  saveEventResponse,
+  removeEventResponse,
+} from '../api/responses';
 import {
   allSlots,
   deviceTimezone,
@@ -45,7 +46,7 @@ export function useEventResponse(id: string) {
   // Included in the grid's React key to reset gestures when a reply is loaded.
   const [responseSession, setResponseSession] = useState(0);
   const [name, setName] = useState('');
-  // Each number is the start of one selected 15-minute slot, in milliseconds.
+  // Each number is a selected slot start in milliseconds; the event sets its duration.
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   // Highlights the missing name when an availability edit was blocked.
@@ -58,14 +59,10 @@ export function useEventResponse(id: string) {
   } = useNotice();
   const nameInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
-  const [unavailableReason, setUnavailableReason] = useState<
-    'expired' | 'missing' | null
-  >(null);
+  const [unavailableReason, setUnavailableReason] = useState<'expired' | 'missing' | null>(null);
   const unavailable = unavailableReason !== null;
   // "dirty" means local edits still need saving; "error" waits for a retry.
-  const [saveState, setSaveState] = useState<
-    'saved' | 'dirty' | 'saving' | 'error'
-  >('saved');
+  const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
   const [view, setView] = useState<'personal' | 'group'>('personal');
   // Group time block whose responder details are open; null hides the details panel.
   const [inspection, setInspection] = useState<SlotInspection | null>(null);
@@ -202,10 +199,7 @@ export function useEventResponse(id: string) {
   /** Reveal the name field before showing the editing reminder. */
   function requestEditing() {
     setEditNotice(true);
-    void notifyRequired(
-      'Enter your name before editing availability.',
-      nameInput.current,
-    );
+    void notifyRequired('Enter your name before editing availability.', nameInput.current);
   }
 
   /**
@@ -237,6 +231,14 @@ export function useEventResponse(id: string) {
       ...latestDraft.current,
       ...change,
     };
+  }
+
+  /** Update the name, clear its reminder, and queue the changed draft for autosave. */
+  function changeName(value: string) {
+    setName(value);
+    setEditNotice(false);
+    dismissNotice();
+    updateDraft({ name: value });
   }
 
   /**
@@ -273,18 +275,14 @@ export function useEventResponse(id: string) {
     if (
       !eventRef.current ||
       unavailable ||
-      (deletingResponse.current !== null &&
-        deletingResponse.current === editingIdRef.current)
+      (deletingResponse.current !== null && deletingResponse.current === editingIdRef.current)
     ) {
       return false;
     }
     const value = latestDraft.current;
     if (!value.name.trim()) {
       setEditNotice(true);
-      void notifyRequired(
-        'Enter your name before editing availability.',
-        nameInput.current,
-      );
+      void notifyRequired('Enter your name before editing availability.', nameInput.current);
       return false;
     }
     savingRef.current = true;
@@ -304,14 +302,7 @@ export function useEventResponse(id: string) {
         revision: responseRevisionRef.current,
         schedule_revision: eventRef.current.schedule_revision,
       };
-      const result = await api<{
-        id: string;
-        revision: number;
-      }>(`/events/${id}/responses${responseId ? '/' + responseId : ''}`, {
-        method: responseId ? 'PUT' : 'POST',
-        keepalive: true,
-        body: JSON.stringify(payload),
-      });
+      const result = await saveEventResponse(id, responseId, payload);
       if (!responseId) {
         editingIdRef.current = result.id;
         responseZoneRef.current = value.zone;
@@ -391,13 +382,8 @@ export function useEventResponse(id: string) {
     setSwitching(true);
     try {
       // Reselecting the same person is the explicit way to resolve a stale revision.
-      const reloadConflict =
-        conflictRef.current && responseId === editingIdRef.current;
-      if (
-        !reloadConflict &&
-        (dirtyRef.current || savingTask.current) &&
-        !(await save())
-      ) {
+      const reloadConflict = conflictRef.current && responseId === editingIdRef.current;
+      if (!reloadConflict && (dirtyRef.current || savingTask.current) && !(await save())) {
         return;
       }
       const result = await load();
@@ -409,9 +395,7 @@ export function useEventResponse(id: string) {
         (response) => response.id === responseId,
       );
       if (!person) {
-        throw new Error(
-          'This response could not be found. Refresh the group and try again.',
-        );
+        throw new Error('This response could not be found. Refresh the group and try again.');
       }
       applyEvent(result);
       const next = {
@@ -444,15 +428,10 @@ export function useEventResponse(id: string) {
         behavior: 'smooth',
       });
     } catch (error) {
-      if (
-        error instanceof ApiError &&
-        (error.status === 410 || error.status === 404)
-      ) {
+      if (error instanceof ApiError && (error.status === 410 || error.status === 404)) {
         expire(error.status === 404 ? 'missing' : 'expired');
       } else {
-        setError(
-          error instanceof Error ? error.message : 'Could not load this event.',
-        );
+        setError(error instanceof Error ? error.message : 'Could not load this event.');
       }
     } finally {
       switchingRef.current = false;
@@ -463,13 +442,7 @@ export function useEventResponse(id: string) {
   // Save after one second without edits. Cleanup cancels the previous timer
   // when another edit arrives, so dragging does not send a request per cell.
   useEffect(() => {
-    if (
-      saveState !== 'dirty' ||
-      !name.trim() ||
-      isSaving ||
-      unavailable ||
-      switching
-    ) {
+    if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable || switching) {
       return;
     }
     const timer = setTimeout(
@@ -519,6 +492,26 @@ export function useEventResponse(id: string) {
     );
   }
 
+  /** Remove the confirmed reply locally; a later refresh restores computed shared periods. */
+  function applyRemovedResponse(responseId: string, fresh?: MeetingEvent) {
+    clearDeletedDraft(responseId);
+    const previous = eventRef.current!;
+    const responses = previous.responses.filter(
+      /** Remove the deleted reply from the local event results. */
+      (person) => person.id !== responseId,
+    );
+    applyEvent(
+      fresh ?? {
+        ...previous,
+        responses,
+        response_count: responses.length,
+        candidates: [],
+      },
+    );
+    setHighlightShared(false);
+    setError('');
+  }
+
   /**
    * Wait for a running write when deleting the open reply, but do not save its
    * pending draft. Finish the current draft first when deleting a different reply.
@@ -550,49 +543,18 @@ export function useEventResponse(id: string) {
         return false;
       }
       // An awaited save may have advanced the reply beyond the revision in the popup.
-      const revision =
-        own && pending ? responseRevisionRef.current : response.revision;
-      let fresh: MeetingEvent | undefined;
-      try {
-        await api('/events/' + id + '/responses/' + response.id, {
-          method: 'DELETE',
-          keepalive: true,
-          body: JSON.stringify({
-            revision,
-            schedule_revision: eventRef.current!.schedule_revision,
-          }),
-        });
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 404) {
-          throw error;
-        }
-        fresh = await load();
-        if (
-          fresh.responses.some(
-            /* Check whether a reply reported as missing still exists in fresh server data. */
-            (person) => person.id === response.id,
-          )
-        ) {
-          throw error;
-        }
-      }
-      removed = true;
-      clearDeletedDraft(response.id);
-      const previous = eventRef.current!;
-      const responses = previous.responses.filter(
-        /** Remove the deleted reply from the local event results. */
-        (person) => person.id !== response.id,
-      );
-      applyEvent(
-        fresh ?? {
-          ...previous,
-          responses,
-          response_count: responses.length,
-          candidates: [],
+      const revision = own && pending ? responseRevisionRef.current : response.revision;
+      const fresh = await removeEventResponse(
+        id,
+        {
+          id: response.id,
+          revision,
         },
+        eventRef.current!.schedule_revision,
+        load,
       );
-      setHighlightShared(false);
-      setError('');
+      removed = true;
+      applyRemovedResponse(response.id, fresh);
       if (!fresh) {
         applyEvent(await load());
       }
@@ -646,11 +608,9 @@ export function useEventResponse(id: string) {
     view,
     inspection,
     highlightShared,
-    conflictRef,
-    setName,
-    setEditNotice,
+    canRetrySave: saveState === 'error' && !conflictRef.current,
+    changeName,
     dismissNotice,
-    updateDraft,
     changeZone,
     updateSelection,
     requestEditing,

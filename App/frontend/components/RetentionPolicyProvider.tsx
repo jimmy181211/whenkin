@@ -28,11 +28,7 @@ export function useRetentionPolicy() {
  * requests cannot win.
  * @returns The supplied children inside the retention-policy context.
  */
-export default function RetentionPolicyProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RetentionPolicyProvider({ children }: { children: ReactNode }) {
   const [policy, setPolicy] = useState<Readonly<RetentionPolicy> | null>(null);
   /**
    * Load the shared expiry policy and refresh it when the user returns to the
@@ -83,9 +79,5 @@ export default function RetentionPolicyProvider({
       window.removeEventListener('focus', refresh);
     };
   }, []);
-  return (
-    <RetentionContext.Provider value={policy}>
-      {children}
-    </RetentionContext.Provider>
-  );
+  return <RetentionContext.Provider value={policy}>{children}</RetentionContext.Provider>;
 }

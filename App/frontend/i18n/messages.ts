@@ -12,8 +12,7 @@ export const messages: Record<string, string> = {
   'Event links are valid for {duration}.': '活动链接有效期为 {duration}。',
   'the configured retention period': '当前配置的保留期限',
   'Link expiry follows the retention policy.': '链接有效期以保留策略为准。',
-  'Expired events and their responses may be removed.':
-    '过期活动及其回复可能已被清理。',
+  'Expired events and their responses may be removed.': '过期活动及其回复可能已被清理。',
   'Highlight Everyone’s Free Times': '高亮全部共同空闲时间',
   'Cancel Highlight': '取消高亮',
   '{count} shared time period': '共 {count} 个共同空闲时段',
@@ -24,14 +23,10 @@ export const messages: Record<string, string> = {
   Cancel: '取消',
   Delete: '删除',
   'Deleting…': '正在删除…',
-  'Please reload this response before deleting it.':
-    '请重新加载此回复后再删除。',
-  'This response changed. Review it before deleting.':
-    '这份回复已更改，请重新查看后再删除。',
-  'Could not delete this response. Please try again.':
-    '无法删除此回复，请重试。',
-  'Response deleted. Results will refresh shortly.':
-    '回复已删除，结果稍后会自动更新。',
+  'Please reload this response before deleting it.': '请重新加载此回复后再删除。',
+  'This response changed. Review it before deleting.': '这份回复已更改，请重新查看后再删除。',
+  'Could not delete this response. Please try again.': '无法删除此回复，请重试。',
+  'Response deleted. Results will refresh shortly.': '回复已删除，结果稍后会自动更新。',
   'Who Is Available?': '谁有空？',
   'Hover over or tap a block in Group Availability to see who is free.':
     '在群组空闲时间中悬停或点击一个时间块，查看谁有空。',
@@ -54,8 +49,7 @@ export const messages: Record<string, string> = {
   'Group Availability': '群组空闲时间',
   'Availability View': '空闲时间视图',
   'People Available': '空闲人数',
-  'Could not save. Please keep this page open and try again.':
-    '无法保存，请保持此页面打开并重试。',
+  'Could not save. Please keep this page open and try again.': '无法保存，请保持此页面打开并重试。',
   'Event Link': '活动链接',
   'Primary Selection': '首选时间',
   Everyone: '所有人',
@@ -66,21 +60,16 @@ export const messages: Record<string, string> = {
   'This event has expired or could not be found.': '活动已过期或无法找到。',
   'Check the link with your organizer, or create a new event.':
     '请向组织者确认链接，或新建一个活动。',
-  'For details about data retention, see our policies.':
-    '有关数据保留的详情，请查看以下政策。',
-  'This event could not be found. It may have expired.':
-    '找不到此活动，可能已过期。',
+  'For details about data retention, see our policies.': '有关数据保留的详情，请查看以下政策。',
+  'This event could not be found. It may have expired.': '找不到此活动，可能已过期。',
 
   Month: '月份',
   Year: '年份',
   'No matching options.': '没有匹配项。',
   'Choose a valid month.': '请选择有效月份。',
-  'Choose a year from {first} to {last}.':
-    '请输入 {first} 至 {last} 之间的年份。',
-  'Enter your name before editing availability.':
-    '请先输入姓名，再编辑空闲时间。',
-  'Enter an event name before creating your event.':
-    '请先输入活动名称，再创建活动。',
+  'Choose a year from {first} to {last}.': '请输入 {first} 至 {last} 之间的年份。',
+  'Enter your name before editing availability.': '请先输入姓名，再编辑空闲时间。',
+  'Enter an event name before creating your event.': '请先输入活动名称，再创建活动。',
   'Event Name': '活动名称',
   'Calendar mode': '日历模式',
   'Specific Dates': '具体日期',
@@ -121,10 +110,8 @@ export const messages: Record<string, string> = {
   '{count} hours': '{count} 小时',
   'Event creation is still being set up.': '活动创建功能正在配置中。',
   'We can’t reach event saving right now.': '暂时无法连接活动保存服务。',
-  'Shareable links will be available when setup is complete.':
-    '配置完成后即可创建并分享活动链接。',
-  'Your form is still here. Please retry the connection.':
-    '你填写的内容还在。请重试连接。',
+  'Shareable links will be available when setup is complete.': '配置完成后即可创建并分享活动链接。',
+  'Your form is still here. Please retry the connection.': '你填写的内容还在。请重试连接。',
   'Retry Connection': '重试连接',
   'Creating your event…': '正在创建活动……',
   'Checking connection…': '正在检查连接……',
@@ -139,8 +126,7 @@ export const messages: Record<string, string> = {
 
   'No Shared Times Yet': '暂时没有共同时间',
   'The Possibilities Start With You.': '从你的空闲时间开始。',
-  'Add more availability to find a time that works.':
-    '多选一些空闲时间，帮助找到合适的时段。',
+  'Add more availability to find a time that works.': '多选一些空闲时间，帮助找到合适的时段。',
 
   'Everyone available': '所有人都有空',
   '{count} of {total} available': '{total} 人中有 {count} 人有空',
@@ -178,8 +164,7 @@ export const messages: Record<string, string> = {
   'Search a city or time zone': '搜索城市或时区',
   'Close time zones': '关闭时区选择',
   'Use Device Time Zone': '使用设备时区',
-  'No time zones found. Try a nearby major city.':
-    '未找到时区。请试试附近的大城市。',
+  'No time zones found. Try a nearby major city.': '未找到时区。请试试附近的大城市。',
   'Los Angeles': '洛杉矶',
   'New York': '纽约',
   Chicago: '芝加哥',
@@ -196,17 +181,13 @@ export const messages: Record<string, string> = {
     '此地址尚未启用活动保存。请在配置完成后重试。',
   'Something went wrong. Please try again.': '出了点问题，请重试。',
   'This event or response could not be found.': '找不到此活动或回复。',
-  'Please enter an event name (100 characters or fewer).':
-    '请输入活动名称（不超过 100 个字符）。',
-  'Please enter your name (60 characters or fewer).':
-    '请输入姓名（不超过 60 个字符）。',
+  'Please enter an event name (100 characters or fewer).': '请输入活动名称（不超过 100 个字符）。',
+  'Please enter your name (60 characters or fewer).': '请输入姓名（不超过 60 个字符）。',
   'Please enter a description (1000 characters or fewer).':
     '请输入活动说明（不超过 1000 个字符）。',
   'Please include your event information.': '请填写活动信息。',
-  'This request is too large. Please choose fewer dates.':
-    '提交内容过多。请减少所选日期。',
-  'The information could not be read. Please try again.':
-    '无法读取提交的信息，请重试。',
+  'This request is too large. Please choose fewer dates.': '提交内容过多。请减少所选日期。',
+  'The information could not be read. Please try again.': '无法读取提交的信息，请重试。',
   'Please choose a valid time zone.': '请选择有效的时区。',
 
   'Choose between 1 and 31 different dates.': '请选择 1 至 31 个不同的日期。',
@@ -215,37 +196,32 @@ export const messages: Record<string, string> = {
   'Please choose valid dates.': '请选择有效的日期。',
   'Choose dates from today through December 31, 9999.':
     '请选择今天至 9999 年 12 月 31 日之间的日期。',
-  'Choose times within the supported year range.':
-    '请选择在支持年份范围内的时间。',
+  'Choose times within the supported year range.': '请选择在支持年份范围内的时间。',
 
-  'A chosen time is invalid or repeats during a daylight saving change. Choose a different start or end time.':
+  ['A chosen time is invalid or repeats during a daylight saving ' +
+  'change. Choose a different start or end time.']:
     '所选时间在夏令时切换时无效或重复。请选择其他开始或结束时间。',
   'Please choose valid availability.': '请选择有效的空闲时间。',
   'Availability needs a date, time, and time-zone offset.':
     '空闲时间需要包含日期、时间和时区偏移。',
   'Please select complete 15-minute intervals.': '请选择完整的 15 分钟时段。',
   'Please select complete 30-minute intervals.': '请选择完整的 30 分钟时段。',
-  'Too many overlapping selections. Please reload and try again.':
-    '重叠选择过多。请刷新后重试。',
+  'Too many overlapping selections. Please reload and try again.': '重叠选择过多。请刷新后重试。',
   'Some selected times are outside this event. Reload the event and try again.':
     '部分所选时段超出了活动范围。请刷新活动后重试。',
   'Whenkin is not connected to its database yet. Please try again once setup is complete.':
     'Whenkin 尚未连接数据库。请在配置完成后重试。',
-  'Please make changes from the Whenkin website.':
-    '请通过 Whenkin 网站进行修改。',
+  'Please make changes from the Whenkin website.': '请通过 Whenkin 网站进行修改。',
   'Too many changes at once. Please wait a minute and try again.':
     '操作过于频繁。请稍等一分钟后重试。',
   'This event could not be found. Check the link with its organizer.':
     '找不到此活动。请向组织者确认链接。',
-  'Please reload this response and choose a valid time zone.':
-    '请刷新回复并选择有效的时区。',
+  'Please reload this response and choose a valid time zone.': '请刷新回复并选择有效的时区。',
 
-  'Choose a meeting time within the event dates.':
-    '请选择活动日期范围内的时间。',
+  'Choose a meeting time within the event dates.': '请选择活动日期范围内的时间。',
 
   'This action could not be found.': '找不到此操作。',
-  'Your change could not be saved. Please try again in a moment.':
-    '无法保存更改。请稍后重试。',
+  'Your change could not be saved. Please try again in a moment.': '无法保存更改。请稍后重试。',
 
   'Partly available': '部分时段有空',
   'We compare availability. The organizer shares the chosen time.':

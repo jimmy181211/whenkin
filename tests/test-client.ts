@@ -46,11 +46,7 @@ export function testClient(app: Express) {
      * Forward a test request to the fixture server after startup is complete.
      * @returns The fetch response after the server is ready; startup and transport failures reject.
      */
-    async request(
-      input: string,
-      init: RequestInit = {},
-      env: { clientIp?: string } = {},
-    ) {
+    async request(input: string, init: RequestInit = {}, env: { clientIp?: string } = {}) {
       await ready;
       const requested = new URL(input);
       const address = server.address() as AddressInfo;
@@ -58,14 +54,11 @@ export function testClient(app: Express) {
       if (env.clientIp) {
         headers.set('X-Forwarded-For', env.clientIp);
       }
-      return fetch(
-        `http://127.0.0.1:${address.port}${requested.pathname}${requested.search}`,
-        {
-          ...init,
-          headers,
-          signal: AbortSignal.timeout(10000),
-        },
-      );
+      return fetch(`http://127.0.0.1:${address.port}${requested.pathname}${requested.search}`, {
+        ...init,
+        headers,
+        signal: AbortSignal.timeout(10000),
+      });
     },
   };
 }

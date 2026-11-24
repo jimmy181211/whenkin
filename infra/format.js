@@ -16,12 +16,13 @@ const parserConfig = {
   files: ['**/*.{js,ts,tsx}'],
   languageOptions: { parser: tseslint.parser },
 };
-const blocks = new ESLint({
+const layout = new ESLint({
   overrideConfigFile: true,
   fix: true,
   overrideConfig: [
     {
       ...parserConfig,
+      plugins: { '@stylistic': stylistic },
       rules: {
         curly: [
           'error',
@@ -31,18 +32,20 @@ const blocks = new ESLint({
           'error',
           'never',
         ],
-      },
-    },
-  ],
-});
-const layout = new ESLint({
-  overrideConfigFile: true,
-  fix: true,
-  overrideConfig: [
-    {
-      ...parserConfig,
-      plugins: { '@stylistic': stylistic },
-      rules: {
+        '@stylistic/member-delimiter-style': [
+          'error',
+          {
+            multiline: {
+              delimiter: 'semi',
+              requireLast: true,
+            },
+            singleline: {
+              delimiter: 'semi',
+              requireLast: false,
+            },
+            multilineDetection: 'brackets',
+          },
+        ],
         '@stylistic/indent': [
           'error',
           2,
@@ -105,91 +108,95 @@ const layout = new ESLint({
 });
 
 /**
+ * Recognize declarations that should have blank lines around them.
+ * @returns Whether this statement declares a function or a useCallback-backed handler.
+ */
+const definesFunction = (statement, syntax) =>
+  ts.isFunctionDeclaration(statement) ||
+  (ts.isVariableStatement(statement) &&
+    statement.declarationList.declarations.some(
+      /* Check whether a variable initializes a function or useCallback handler. */
+      (declaration) => {
+        const value = declaration.initializer;
+        return (
+          value &&
+          (ts.isArrowFunction(value) ||
+            ts.isFunctionExpression(value) ||
+            (ts.isCallExpression(value) && value.expression.getText(syntax) === 'useCallback'))
+        );
+      },
+    ));
+
+/** Put multi-item declarations and lists on separate lines without changing tokens. */
+function planListSpacing(node, syntax, source, add) {
+  let names = null;
+  if (ts.isTypeLiteralNode(node)) {
+    names = node.members;
+  } else if (
+    ts.isNamedImports(node) ||
+    ts.isNamedExports(node) ||
+    ts.isObjectBindingPattern(node) ||
+    ts.isArrayLiteralExpression(node)
+  ) {
+    names = node.elements;
+  }
+  if (names?.length > 1) {
+    for (const name of names) {
+      const position = name.getStart(syntax);
+      const lineStart = source.lastIndexOf('\n', position - 1) + 1;
+      if (source.slice(lineStart, position).trim()) {
+        add(position, '\n');
+      }
+    }
+  }
+  if ((ts.isArrayLiteralExpression(node) || ts.isTypeLiteralNode(node)) && names.length > 1) {
+    const end = node.end - 1;
+    const lineStart = source.lastIndexOf('\n', end - 1) + 1;
+    if (source.slice(lineStart, end).trim()) {
+      add(end, '\n');
+    }
+  }
+}
+
+/** Separate function declarations from their neighboring statements. */
+function planFunctionSpacing(node, syntax, source, add) {
+  if (node.statements) {
+    node.statements.forEach(
+      /* Separate neighboring function declarations from surrounding statements. */
+      (statement, index) => {
+        if (
+          index &&
+          (definesFunction(statement, syntax) ||
+            definesFunction(node.statements[index - 1], syntax))
+        ) {
+          const start = statement.getFullStart();
+          if (!/^\s*\n\s*\n/.test(source.slice(start, statement.getStart(syntax)))) {
+            add(start, '\n');
+          }
+        }
+      },
+    );
+  }
+}
+
+/**
  * Add only whitespace around functions and between imported/destructured names.
  * @returns Source text with the planned layout insertions applied.
  */
 function expandLayout(source, file) {
-  const syntax = ts.createSourceFile(
-    file,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-  );
+  const syntax = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   const additions = new Map();
 
   /** Record a whitespace insertion at its original source offset. */
   const add = (offset, text) => additions.set(offset, text);
 
   /**
-   * Recognize declarations that should have blank lines around them.
-   * @returns Whether this statement declares a function or a useCallback-backed handler.
-   */
-  const definesFunction = (statement) =>
-    ts.isFunctionDeclaration(statement) ||
-    (ts.isVariableStatement(statement) &&
-      statement.declarationList.declarations.some(
-        /* Check whether a variable initializes a function or useCallback handler. */
-        (declaration) => {
-          const value = declaration.initializer;
-          return (
-            value &&
-            (ts.isArrowFunction(value) ||
-              ts.isFunctionExpression(value) ||
-              (ts.isCallExpression(value) &&
-                value.expression.getText(syntax) === 'useCallback'))
-          );
-        },
-      ));
-
-  /**
    * Walk syntax nodes and plan whitespace changes without changing
    * expressions.
    */
   const visit = (node) => {
-    const names =
-      ts.isNamedImports(node) ||
-      ts.isNamedExports(node) ||
-      ts.isObjectBindingPattern(node) ||
-      ts.isArrayLiteralExpression(node)
-        ? node.elements
-        : null;
-    if (names?.length > 1) {
-      for (const name of names) {
-        const position = name.getStart(syntax);
-        const lineStart = source.lastIndexOf('\n', position - 1) + 1;
-        if (source.slice(lineStart, position).trim()) {
-          add(position, '\n');
-        }
-      }
-    }
-    if (ts.isArrayLiteralExpression(node) && names.length > 1) {
-      const end = node.end - 1;
-      const lineStart = source.lastIndexOf('\n', end - 1) + 1;
-      if (source.slice(lineStart, end).trim()) {
-        add(end, '\n');
-      }
-    }
-    if (node.statements) {
-      node.statements.forEach(
-        /* Separate neighboring function declarations from surrounding statements. */
-        (statement, index) => {
-          if (
-            index &&
-            (definesFunction(statement) ||
-              definesFunction(node.statements[index - 1]))
-          ) {
-            const start = statement.getFullStart();
-            if (
-              !/^\s*\n\s*\n/.test(
-                source.slice(start, statement.getStart(syntax)),
-              )
-            ) {
-              add(start, '\n');
-            }
-          }
-        },
-      );
-    }
+    planListSpacing(node, syntax, source, add);
+    planFunctionSpacing(node, syntax, source, add);
     ts.forEachChild(node, visit);
   };
 
@@ -204,15 +211,11 @@ function expandLayout(source, file) {
 }
 
 /**
- * Apply block expansion before printing, then the project's multiline-list layout.
+ * Print source once, then apply the project's block and multiline-list rules together.
  * @returns Formatted source text, or rejects when the formatter reports a blocking error.
  */
 async function formatSource(source, file) {
   const isCode = /\.(js|ts|tsx)$/.test(file);
-  if (isCode) {
-    const [result] = await blocks.lintText(source, { filePath: file });
-    source = result.output ?? source;
-  }
   const pretty = await prettier.format(source, {
     ...config,
     filepath: file,
@@ -260,8 +263,8 @@ const files = [
    * compiler metadata.
    */
   (file) =>
-    (/^(App|infra|tests)\//.test(file) || !file.includes('/')) &&
-    /\.(js|ts|tsx|css|json)$/.test(file) &&
+    (/^(App|infra|tests|docs)\//.test(file) || !file.includes('/')) &&
+    /\.(js|ts|tsx|css|json|md)$/.test(file) &&
     !file.endsWith('tsbuildinfo'),
 );
 const changed = [];
@@ -288,9 +291,5 @@ if (checkOnly && changed.length) {
   console.error('Run pnpm format for:\n' + changed.join('\n'));
   process.exitCode = 1;
 } else {
-  console.log(
-    checkOnly
-      ? 'Source formatting passed.'
-      : 'Formatted ' + changed.length + ' files.',
-  );
+  console.log(checkOnly ? 'Source formatting passed.' : 'Formatted ' + changed.length + ' files.');
 }

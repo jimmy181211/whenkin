@@ -3,16 +3,14 @@ import { useEffect } from 'react';
 import { pageRoute } from '../shared/routes';
 import { ArrowRight } from 'lucide-react';
 import SiteLayout from './components/SiteLayout';
-import PageLink from './components/PageLink';
 import LegalPage from './pages/LegalPage';
-import { useLanguage } from './components/LanguageSelector';
 import CreateEventPage from './pages/CreateEventPage';
 import EventPage from './pages/EventPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import {
-  getLocale,
-  t,
-} from './i18n/index';
+  langService,
+  useLanguage,
+} from './i18n/language';
 import { legalDocuments } from './content/legal';
 
 /**
@@ -26,17 +24,16 @@ export default function App() {
   const path = typeof window === 'undefined' ? '/' : window.location.pathname;
   const route = pageRoute(path);
   const eventId = route.kind === 'event' ? route.id : null;
-  const legalKind =
-    route.kind === 'terms' || route.kind === 'privacy' ? route.kind : null;
+  const legalKind = route.kind === 'terms' || route.kind === 'privacy' ? route.kind : null;
   /**
    * Update the document language and title when the selected language or
    * legal page changes.
    */
   useEffect(() => {
-    document.documentElement.lang = getLocale();
+    document.documentElement.lang = langService.getLocale();
     document.title = legalKind
       ? `${legalDocuments[language][legalKind].title} — Whenkin`
-      : `Whenkin — ${t('Find Your Shared Time.')}`;
+      : `Whenkin — ${langService.t('Find Your Shared Time.')}`;
   }, [
     language,
     legalKind,
@@ -57,10 +54,10 @@ export default function App() {
         <LegalPage kind={legalKind} />
       ) : (
         <main className="error-page">
-          <h1>{t('That Page Is a Little Off-Grid.')}</h1>
-          <PageLink className="button primary" href="/">
-            {t('Create an Event')} <ArrowRight size={17} />
-          </PageLink>
+          <h1>{langService.t('That Page Is a Little Off-Grid.')}</h1>
+          <a className="button primary" href="/">
+            {langService.t('Create an Event')} <ArrowRight size={17} />
+          </a>
         </main>
       )}
     </SiteLayout>

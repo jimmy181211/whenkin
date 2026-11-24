@@ -13,7 +13,7 @@ import {
   matchingOptions,
   type EditableOption,
 } from '../utils/editable-options';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import './editable-select.css';
 
 /**
@@ -143,12 +143,8 @@ export default function EditableSelect({
     // Scroll the options only; do not move the surrounding page.
     if (option.offsetTop < list.scrollTop) {
       list.scrollTop = option.offsetTop;
-    } else if (
-      option.offsetTop + option.offsetHeight >
-      list.scrollTop + list.clientHeight
-    ) {
-      list.scrollTop =
-        option.offsetTop + option.offsetHeight - list.clientHeight;
+    } else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
     }
   }, [
     active,
@@ -164,9 +160,7 @@ export default function EditableSelect({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={id}
-        aria-activedescendant={
-          open && choices[active] ? `${id}-${active}` : undefined
-        }
+        aria-activedescendant={open && choices[active] ? `${id}-${active}` : undefined}
         autoComplete="off"
         spellCheck={false}
         inputMode={numeric ? 'numeric' : 'text'}
@@ -202,10 +196,7 @@ export default function EditableSelect({
                 (index) =>
                   Math.max(
                     0,
-                    Math.min(
-                      choices.length - 1,
-                      index + (event.key === 'ArrowDown' ? 1 : -1),
-                    ),
+                    Math.min(choices.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1)),
                   ),
               );
             } else if (event.key === 'Enter') {
@@ -287,7 +278,7 @@ export default function EditableSelect({
             ),
           )}
           {!choices.length && (
-            <p className="editable-select-empty">{t('No matching options.')}</p>
+            <p className="editable-select-empty">{langService.t('No matching options.')}</p>
           )}
         </PopupSurface>
       )}

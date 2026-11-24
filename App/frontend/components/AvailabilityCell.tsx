@@ -1,5 +1,5 @@
 /** Renders one time block, including selection, shared highlights, and inspection. */
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   slotDuration,
   formatDay,
@@ -51,7 +51,7 @@ type Props = {
 };
 
 /**
- * Calendar block component for personal selections and group availability. A
+ * Calendar block component for personal selections and group availability.
  * New events select a whole 30-minute slot. Legacy events retain their two
  * quarter-hour parts, including partial selection and availability counts.
  * @returns An interactive time block with selection, heatmap, and highlight
@@ -128,20 +128,31 @@ export default function AvailabilityCell({
   // A block may contain different counts, so its label can show a range (e.g. 1–2).
   const minimum = Math.min(...cellCounts);
   const maximum = Math.max(...cellCounts);
-  const groupLabel = t('{count} of {total} available', {
+  const groupLabel = langService.t('{count} of {total} available', {
     count: minimum === maximum ? minimum : `${minimum}–${maximum}`,
     total: event.responses.length,
   });
-  // Screen-reader description of the date, range, timezone, and availability state.
-  const label = `${formatDay(
-    cell.stamp,
-    clockZone,
-    false,
-    weekly,
-  )}, ${formatTime(cell.stamp, clockZone)}–${formatTime(
-    blockEnd,
-    clockZone,
-  )}, ${weekly ? zoneLabel(zone) : 'UTC' + cell.offset}, ${group ? groupLabel : t(partial ? 'Partly available' : active ? 'Available' : 'not selected')}`;
+  const dateLabel = formatDay(cell.stamp, clockZone, false, weekly);
+  const timeLabel = formatTime(cell.stamp, clockZone) + '–' + formatTime(blockEnd, clockZone);
+  const timezoneLabel = weekly ? zoneLabel(zone) : 'UTC' + cell.offset;
+  let availabilityLabel = groupLabel;
+  if (!group) {
+    if (partial) {
+      availabilityLabel = langService.t('Partly available');
+    } else {
+      availabilityLabel = langService.t(active ? 'Available' : 'not selected');
+    }
+  }
+  // Screen readers receive the same date, time, zone, and state as before.
+  const label = dateLabel + ', ' + timeLabel + ', ' + timezoneLabel + ', ' + availabilityLabel;
+  const cellClasses = [
+    'time-cell',
+    rowMinute % 60 === 0 ? 'hour-start' : '',
+    !group && active ? 'painted' : '',
+    !group && partial ? 'partial' : '',
+    highlighted ? 'highlighted' : '',
+    inspected ? 'inspected' : '',
+  ].join(' ');
 
   /**
    * Open availability details for every slot in this block.
@@ -185,15 +196,13 @@ export default function AvailabilityCell({
       data-col={columnIndex}
       aria-label={label}
       aria-pressed={group ? undefined : partial ? 'mixed' : active}
-      className={`time-cell ${rowMinute % 60 === 0 ? 'hour-start' : ''} ${!group && active ? 'painted' : ''} ${!group && partial ? 'partial' : ''} ${highlighted ? 'highlighted' : ''} ${inspected ? 'inspected' : ''}`}
+      className={cellClasses}
       style={
         group
           ? { background }
           : partial
             ? ({
-              '--selection-half': selected.has(canonicalStamp(cell.stamp))
-                ? 'bottom'
-                : 'top',
+              '--selection-half': selected.has(canonicalStamp(cell.stamp)) ? 'bottom' : 'top',
             } as React.CSSProperties)
             : undefined
       }
@@ -263,16 +272,14 @@ export default function AvailabilityCell({
               aria-hidden="true"
               className="shared-highlight-slice"
               style={{
-                top: fullyHighlighted
-                  ? '0%'
-                  : (index * 100) / cells.length + '%',
+                top: fullyHighlighted ? '0%' : (index * 100) / cells.length + '%',
                 height: fullyHighlighted ? '100%' : 100 / cells.length + '%',
               }}
             />
           ) : null,
       )}
       {!group && partial ? (
-        <span className="sr-only">{t('Partly available')}</span>
+        <span className="sr-only">{langService.t('Partly available')}</span>
       ) : null}
     </button>
   );

@@ -1,8 +1,9 @@
+import { CONTENT_SECURITY_POLICY } from './shared/security.js';
 /** Registers Express middleware and the shared application API routes. */
 import express from 'express';
 import type { Database } from './db/types.js';
 import { Problem } from './shared/validation.js';
-import { createWriteLimiter } from './shared/write-limit.js';
+import { WriteLimiter } from './shared/write-limit.js';
 import { errorHandler } from './shared/errors.js';
 import health from './api/health.js';
 import createEvent from './api/create-event.js';
@@ -33,46 +34,29 @@ export function createApp(database: Database, options: AppOptions = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', options.trustProxy ?? false);
-  const limiter = createWriteLimiter();
-  const publicOrigin = options.publicOrigin
-    ? new URL(options.publicOrigin).origin
-    : undefined;
+  const limiter = new WriteLimiter();
+  const publicOrigin = options.publicOrigin ? new URL(options.publicOrigin).origin : undefined;
   app.use(
     /* Set response protections and check the origin and rate of write requests. */
     async (req, res, next) => {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Referrer-Policy', 'no-referrer');
       res.setHeader('X-Frame-Options', 'DENY');
-      res.setHeader(
-        'Permissions-Policy',
-        'camera=(), microphone=(), geolocation=()',
-      );
-      res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-      );
+      res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+      res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
       if (!req.path.startsWith('/assets/')) {
         res.setHeader('Cache-Control', 'no-store');
       }
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         const origin = req.get('Origin');
-        if (
-          origin &&
-          origin !== (publicOrigin || req.protocol + '://' + req.get('host'))
-        ) {
-          throw new Problem(
-            403,
-            'Please make changes from the Whenkin website.',
-          );
+        if (origin && origin !== (publicOrigin || req.protocol + '://' + req.get('host'))) {
+          throw new Problem(403, 'Please make changes from the Whenkin website.');
         }
         if (
           options.rateLimit !== false &&
           !(await limiter.limit({ key: req.ip || 'unknown' })).success
         ) {
-          throw new Problem(
-            429,
-            'Too many changes at once. Please wait a minute and try again.',
-          );
+          throw new Problem(429, 'Too many changes at once. Please wait a minute and try again.');
         }
       }
       next();
@@ -90,8 +74,7 @@ export function createApp(database: Database, options: AppOptions = {}) {
   app.get(
     '/site.webmanifest',
     /* Return installation metadata for the requested local page. */
-    (req, res) =>
-      res.type('application/manifest+json').json(webManifest(req.query.page)),
+    (req, res) => res.type('application/manifest+json').json(webManifest(req.query.page)),
   );
   app.get('/api/health', health(database));
   app.get('/api/retention', getRetention(database));
@@ -103,8 +86,7 @@ export function createApp(database: Database, options: AppOptions = {}) {
   app.all(
     /^\/api(?:\/|$)/,
     /* Return a JSON 404 for an unrecognized API action. */
-    (_req, res) =>
-      res.status(404).json({ error: 'This action could not be found.' }),
+    (_req, res) => res.status(404).json({ error: 'This action could not be found.' }),
   );
   app.use(errorHandler);
   return app;

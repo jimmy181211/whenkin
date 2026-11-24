@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 
 /**
  * Name value, input reference, and validation state for the reply-name
@@ -30,14 +30,14 @@ export default function ParticipantName({
   return (
     <div className="participant-line">
       <div className="participant-name">
-        <label htmlFor="participant-name">{t('Your Name')}</label>
+        <label htmlFor="participant-name">{langService.t('Your Name')}</label>
         <div className="participant-name-field">
           <input
             id="participant-name"
             disabled={disabled}
             ref={inputRef}
             maxLength={60}
-            placeholder={t('Enter your name')}
+            placeholder={langService.t('Enter your name')}
             value={name}
             aria-invalid={showNotice}
             onChange={

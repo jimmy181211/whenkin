@@ -4,20 +4,16 @@ import { fileURLToPath } from 'node:url';
 // Run both development tools without requiring globally installed Node packages.
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const children = [
-  spawn(
-    process.execPath,
-    [
-      '--import',
-      'tsx',
-      '--watch',
-      'App/backend/server.ts',
-    ],
-    {
-      cwd: root,
-      env: process.env,
-      stdio: 'inherit',
-    },
-  ),
+  spawn(process.execPath, [
+    '--import',
+    'tsx',
+    '--watch',
+    'App/backend/server.ts',
+  ], {
+    cwd: root,
+    env: process.env,
+    stdio: 'inherit',
+  }),
   spawn(process.execPath, ['node_modules/vite/bin/vite.js'], {
     cwd: root,
     env: process.env,

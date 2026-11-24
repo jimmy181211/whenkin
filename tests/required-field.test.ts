@@ -19,7 +19,8 @@ const frames = new Map<number, FrameRequestCallback>();
 /**
  * Create a controllable browser viewport for required-field animation
  * tests.
- * @returns A controllable viewport with a mutable scroll position and observable browser operations.
+ * @returns A controllable viewport with a mutable scroll position and observable browser
+ * operations.
  */
 function makeViewport() {
   const state = { y: 800 };
@@ -134,22 +135,25 @@ describe('shared required-field reveal', () => {
    * Animates through intermediate positions for 650ms before focusing
    * without another jump.
    */
-  it('animates through intermediate positions for 650ms before focusing without another jump', async () => {
-    const input = field();
-    const controller = new AbortController();
-    const ready = revealRequiredField(input, controller.signal);
-    advance(10);
-    expect(viewport.scrollY).toBeGreaterThan(0);
-    expect(viewport.scrollY).toBeLessThan(800);
-    expect(input.focus).not.toHaveBeenCalled();
-    advance(22);
-    expect(clock).toBeLessThan(REQUIRED_FIELD_SCROLL_MS);
-    expect(input.focus).not.toHaveBeenCalled();
-    advance(1);
-    expect(await ready).toBe(true);
-    expect(viewport.scrollY).toBe(0);
-    expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });
-  });
+  it(
+    'animates through intermediate positions for 650ms before focusing ' + 'without another jump',
+    async () => {
+      const input = field();
+      const controller = new AbortController();
+      const ready = revealRequiredField(input, controller.signal);
+      advance(10);
+      expect(viewport.scrollY).toBeGreaterThan(0);
+      expect(viewport.scrollY).toBeLessThan(800);
+      expect(input.focus).not.toHaveBeenCalled();
+      advance(22);
+      expect(clock).toBeLessThan(REQUIRED_FIELD_SCROLL_MS);
+      expect(input.focus).not.toHaveBeenCalled();
+      advance(1);
+      expect(await ready).toBe(true);
+      expect(viewport.scrollY).toBe(0);
+      expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });
+    },
+  );
   /** Keeps short desktop scrolls just as gradual as longer mobile scrolls. */
   it('keeps short desktop scrolls just as gradual as longer mobile scrolls', async () => {
     viewport.scrollTo({ top: 60 });
@@ -189,9 +193,7 @@ describe('shared required-field reveal', () => {
   it('respects reduced motion while keeping focus from scrolling again', async () => {
     viewport.matchMedia.mockReturnValue({ matches: true });
     const input = field();
-    expect(await revealRequiredField(input, new AbortController().signal)).toBe(
-      true,
-    );
+    expect(await revealRequiredField(input, new AbortController().signal)).toBe(true);
     expect(viewport.scrollY).toBe(0);
     expect(frames.size).toBe(0);
     expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });

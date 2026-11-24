@@ -63,12 +63,7 @@ export default function EventTourView({
       {active &&
         createPortal(
           <div className="event-tour-layer" data-moving={moving}>
-            <svg
-              className="event-tour-shade"
-              aria-hidden="true"
-              width="100%"
-              height="100%"
-            >
+            <svg className="event-tour-shade" aria-hidden="true" width="100%" height="100%">
               <defs>
                 <mask id={id}>
                   <rect width="100%" height="100%" fill="white" />
@@ -133,9 +128,7 @@ export default function EventTourView({
                       .replace('{total}', String(tourSteps.length))}
                   </p>
                 )}
-                <h2 id={`${id}-title`}>
-                  {welcome ? copy.welcome : content?.[0]}
-                </h2>
+                <h2 id={`${id}-title`}>{welcome ? copy.welcome : content?.[0]}</h2>
                 <p id={`${id}-body`}>{welcome ? copy.intro : content?.[1]}</p>
                 {!welcome && !moving && position?.height === 0 && (
                   <p className="event-tour-unavailable">{copy.unavailable}</p>
@@ -173,11 +166,7 @@ export default function EventTourView({
                       onNext
                     }
                   >
-                    {welcome
-                      ? copy.start
-                      : step === tourSteps.length - 1
-                        ? copy.done
-                        : copy.next}
+                    {welcome ? copy.start : step === tourSteps.length - 1 ? copy.done : copy.next}
                   </button>
                 </div>
               </div>

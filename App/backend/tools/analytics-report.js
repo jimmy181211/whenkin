@@ -1,3 +1,5 @@
+import { ANALYTICS_CHART_SCRIPT } from './analytics-chart-script.js';
+
 /** Builds the local HTML report from the existing analysis results. */
 /**
  * Escape text before placing it in the report's HTML.
@@ -74,95 +76,352 @@ export function renderAnalysisReport(result, columns) {
       '创建者身份、实际所在地和首次回复时间均未记录，保持 NULL；现有 organizer_name 仅表示填写过一个标签，不能识别创建者；updated_at 不能代替首次回复时间。',
     ],
   ];
-  const html = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Whenkin 使用分析</title><style>
-  *{box-sizing:border-box}body{font:15px/1.65 system-ui;background:#f4f7f1;color:#183e35;margin:0}main{max-width:1200px;margin:auto;padding:34px 24px}h1{font-size:32px;margin:0}h2{font-size:20px;margin:0 0 12px}.meta,p{color:#52695f}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.card,section{background:white;border:1px solid #dbe5d6;border-radius:14px;padding:22px;margin-bottom:18px}.card{margin:0}.card strong{font-size:27px;display:block}.plots{display:grid;grid-template-columns:1fr 1fr;gap:18px}.plots section{min-width:0}svg{display:block;width:100%;height:auto}circle{fill:#1e7869;opacity:.7;cursor:help}circle.flag{fill:#be6337}path.null{stroke:#6c7782;stroke-width:1.8;cursor:help}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e4e9df;white-space:nowrap}th{position:sticky;top:0;background:#eef4e9}tr.flagged{background:#fff8ed}.table{max-height:560px;overflow:auto}code{background:#f1f4ed;padding:2px 5px}small{color:#65786e}dl dt{font-weight:650;margin-top:12px}dl dd{margin:3px 0 0;color:#52695f}.bars{max-width:850px}.bar{display:grid;grid-template-columns:minmax(130px,1fr) 3fr 55px;gap:12px;align-items:center;margin:6px 0}.bar i{display:block;height:13px;background:#288674;border-radius:3px}button{border:1px solid #bfd1bf;padding:7px 12px;border-radius:8px;background:#eef5e9;color:#183e35}#tip{position:fixed;display:none;max-width:280px;padding:12px;background:#153e34;color:white;border-radius:9px;pointer-events:none;font-size:12px;z-index:20}@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}.plots{display:block}main{padding:22px 12px}}
-  </style><main><h1>Whenkin 使用分析</h1><p class="meta">只读统计（含活动标题） · 快照 ${escape(
-    new Intl.DateTimeFormat('zh-CN', {
-      timeZone: 'America/Los_Angeles',
-      dateStyle: 'full',
-      timeStyle: 'short',
-    }).format(new Date(result.extracted_at)),
-  )}（洛杉矶） · Whenkin 生产库只读快照</p><p>全部记录保留。橙色点仅表示需要复核的统计离群值；灰色 × 表示 NULL，放在独立的缺失值区域，不当作 0。重叠点仅作少量像素错位以便查看，数值没有改变。此报告仅保存在本机。</p>
-  <div class="cards">${cards
-    .map(
-      /** Render an escaped summary card for each label and value. */
-      ([label, value]) =>
-        '<div class="card">' +
-        escape(label) +
-        '<strong>' +
-        escape(value) +
-        '</strong></div>',
-    )
-    .join('')}</div>
-  <section><h2>活动主题比较</h2><p>标签来自标题中的词语，仅描述活动主题，不认定回复者身份。一个活动可有多个标签；未分类记录仍然保留。匹配词可在下方数据表核查。</p><label>活动标签 <select id="topic-filter" aria-label="活动标签"><option value="all">全部活动</option></select></label><p id="topic-counts"></p></section>
-  <div class="plots"><section><h2>回复人数与共同空闲时长</h2><div id="plot-common"></div></section><section><h2>提前安排天数与回复人数</h2><div id="plot-lead"></div></section><section><h2>创建小时与回复人数</h2><div id="plot-created"></div></section><section><h2>首次回复耗时：当前未记录</h2><div id="plot-first"></div></section></div>
-  <section><h2>大家通常什么时候更有空？</h2><p>颜色表示被标记为空闲的比例：空闲分钟数 ÷ 可选分钟数。每格均可查看活动数、回复数和分母。灰色代表没有提供该时段，不能当作无人有空。</p><label>时间口径 <select id="time-frame" aria-label="时间口径"><option value="responder_local">回复者所选时区</option><option value="event_local">活动时区</option></select></label> <label>活动模式 <select id="schedule-filter" aria-label="活动模式"><option value="dates">具体日期</option><option value="weekdays">星期模式</option></select></label><div id="availability-heatmap"></div><p id="heatmap-note"></p><h3>所有回复者共同有空的时段</h3><p>按活动时区累计分钟数，颜色越深代表累计共同时间越长。不同活动可能有不同回复人数；单人回复也可形成交集，因此另报多人活动结果。</p><div id="shared-heatmap"></div></section>
-  <section><h2>NULL 与未记录字段</h2><p>缺失值保留在 CSV 的 NULL 单元格和散点图的 NULL 区域。没有回复的活动尚不能计算共同时间；星期模式没有可计算的提前日期。</p><div id="missing"></div></section>
-  <section><h2>时区分布</h2><p>这是填写的时区分布，不是地理位置；活动和回复分别统计，不能当作唯一用户数。</p><h3>活动</h3><div class="bars" id="event-zones"></div><h3>回复</h3><div class="bars" id="response-zones"></div></section>
-  <section><h2>共同空闲时段分布</h2><p>按星期和小时累计共同空闲分钟数，日期模式和星期模式分开。无数据的桶不表示实际用户一定没空。</p><div class="table"><table><thead><tr><th>标签</th><th>模式</th><th>星期（1=周一）</th><th>小时</th><th>总分钟数</th></tr></thead><tbody>${(
-    result.shared_time_histogram || []
-  )
-    .map(
-      /* Render each shared-time histogram bucket as a report row. */
-      (h) =>
-        '<tr><td>' +
-        escape(h.topic) +
-        '</td><td>' +
-        escape(h.schedule_mode) +
-        '</td><td>' +
-        h.weekday +
-        '</td><td>' +
-        h.hour +
-        '</td><td>' +
-        h.minutes +
-        '</td></tr>',
-    )
-    .join('')}</tbody></table></div></section>
-  <section><h2>指标为什么值得分析</h2><dl>${methods
-    .map(
-      /** Render the metric explanation list with escaped text. */
-      ([name, reason]) =>
-        '<dt>' + escape(name) + '</dt><dd>' + escape(reason) + '</dd>',
-    )
-    .join(
-      '',
-    )}</dl><p>快照覆盖当前仍存储的所有活动，可能包含试用或重复活动；不自动剔除任何记录，不代表所有历史用户。1.5×IQR 标记用于人工检查，不认定恶意或无效。</p></section>
-  <section><h2>逐活动指标（不含姓名）（全部 ${result.events.length} 条）</h2><p>编号仅在本次快照内有效，不能用来打开活动。可下载同目录的 <a href="events.csv">CSV</a> 和 <a href="summary.json">JSON</a>。</p><div class="table"><table><thead><tr>${columns
-    .map(
-      /* Render the event table's column headings. */
-      (c) => '<th>' + escape(c) + '</th>',
-    )
-    .join('')}</tr></thead><tbody>${result.events
-    .map(
-      /* Render an event row and mark records that need review. */
-      (e) =>
-        '<tr class="' +
-        (e.review_flags.length ? 'flagged' : '') +
-        '">' +
-        columns
-          .map(
-            /* Render one escaped event field, joining array values for display. */
-            (c) =>
-              '<td>' +
-              escape(Array.isArray(e[c]) ? e[c].join('; ') : e[c]) +
-              '</td>',
-          )
-          .join('') +
-        '</tr>',
-    )
-    .join('')}</tbody></table></div></section></main><div id="tip"></div>
-  <script>const data=${JSON.stringify(result).replaceAll('<', '\\u003c')};
-  const labels={response_count:'回复人数',shared_minutes:'共同空闲分钟数',lead_days:'提前安排天数',creation_hour_local:'活动时区的创建小时',first_response_hours:'首次回复小时数'};
-  const topicNames={'all':'全部活动','college-student-related':'大学生／校园相关活动','meeting':'会议','study':'学习','social':'社交聚餐','sports':'运动','career':'求职','unclassified':'未分类'};
-  const topicSelect=document.getElementById('topic-filter');Object.keys(data.summary.topic_counts).forEach(key=>{let option=document.createElement('option');option.value=key;option.textContent=(topicNames[key]||key)+'（'+data.summary.topic_counts[key]+'）';topicSelect.append(option);});
-  function filteredEvents(){let topic=topicSelect.value;return topic==='all'?data.events:data.events.filter(e=>e.topic_tags.includes(topic));}
-  const NS='http://www.w3.org/2000/svg';function el(tag,attrs,text){let n=document.createElementNS(NS,tag);Object.entries(attrs||{}).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;return n;}
-  function chart(id,xkey,ykey){let rows=filteredEvents(),w=520,h=350,left=74,right=20,top=24,bottom=78,svg=el('svg',{viewBox:'0 0 '+w+' '+h,role:'img','aria-label':labels[xkey]+' 与 '+labels[ykey]+'，保留全部 '+rows.length+' 条记录'});const numbers=k=>rows.map(r=>r[k]).filter(v=>typeof v==='number'&&Number.isFinite(v));const bounds=k=>{let v=numbers(k),min=v.length?Math.min(0,...v):0,max=v.length?Math.max(...v):1;if(max===min)max=min+1;return [min,max];};let [xmin,xmax]=bounds(xkey),[ymin,ymax]=bounds(ykey);let xp=v=>left+32+(v-xmin)/(xmax-xmin)*(w-left-right-32),yp=v=>h-bottom-22-(v-ymin)/(ymax-ymin)*(h-top-bottom-22);let nullx=left-28,nully=h-bottom+26;svg.append(el('rect',{x:left,y:top,width:w-left-right,height:h-top-bottom,fill:'#fbfcf8',stroke:'#ccd8c6'}));for(let i=0;i<=4;i++){let xv=xmin+(xmax-xmin)*i/4,yv=ymin+(ymax-ymin)*i/4;svg.append(el('text',{x:xp(xv),y:h-bottom+16,'text-anchor':'middle','font-size':10,fill:'#65746a'},Number(xv.toFixed(1))));svg.append(el('text',{x:left-5,y:yp(yv)+4,'text-anchor':'end','font-size':10,fill:'#65746a'},Number(yv.toFixed(1))));}svg.append(el('text',{x:nullx,y:h-bottom+17,'text-anchor':'middle','font-size':10,fill:'#697681'},'NULL'));svg.append(el('text',{x:left-5,y:nully+4,'text-anchor':'end','font-size':10,fill:'#697681'},'NULL'));svg.append(el('text',{x:w/2,y:h-8,'text-anchor':'middle','font-size':12,fill:'#294f43'},labels[xkey]));svg.append(el('text',{x:14,y:h/2,transform:'rotate(-90 14 '+h/2+')','text-anchor':'middle','font-size':12,fill:'#294f43'},labels[ykey]));rows.forEach((r,i)=>{let nx=r[xkey]===null||r[xkey]===undefined,ny=r[ykey]===null||r[ykey]===undefined,x=(nx?nullx:xp(r[xkey]))+((i%5)-2)*1.5,y=(ny?nully:yp(r[ykey]))+((Math.floor(i/5)%5)-2)*1.5,n=nx||ny?el('path',{d:'M'+(x-3)+','+(y-3)+'l6,6m0,-6l-6,6',class:'null'}):el('circle',{cx:x,cy:y,r:4,class:r.review_flags.length?'flag':''});let text=r.event_code+' · '+(r.event_title||'')+' · '+labels[xkey]+': '+(nx?'NULL':r[xkey])+' · '+labels[ykey]+': '+(ny?'NULL':r[ykey])+' · '+r.schedule_mode+(r.review_flags.length?' · '+r.review_flags.join('; '):'');n.append(el('title',{},text));n.addEventListener('pointermove',e=>{let t=document.getElementById('tip');t.textContent=text;t.style.display='block';t.style.left=Math.min(innerWidth-290,Math.max(10,e.clientX+12))+'px';t.style.top=Math.min(innerHeight-110,Math.max(10,e.clientY+12))+'px';});n.addEventListener('pointerleave',()=>document.getElementById('tip').style.display='none');svg.append(n);});document.getElementById(id).replaceChildren(svg);let p=document.createElement('p');p.textContent='当前标签 '+rows.length+' 条；横轴 NULL '+rows.filter(r=>r[xkey]==null).length+' 条；纵轴 NULL '+rows.filter(r=>r[ykey]==null).length+' 条。';document.getElementById(id).append(p);}
-  function heatmap(){let mode=document.getElementById('schedule-filter').value,frame=document.getElementById('time-frame').value,topic=topicSelect.value,rows=(data.availability_histogram||[]).filter(h=>h.topic===topic&&h.schedule_mode===mode&&h.time_frame===frame),svg=el('svg',{viewBox:'0 0 960 280',role:'img','aria-label':'星期与小时空闲比例热力图'}),days=['周一','周二','周三','周四','周五','周六','周日'];for(let h=0;h<24;h++)svg.append(el('text',{x:68+h*36,y:25,'text-anchor':'middle','font-size':12,fill:'#53665a'},h));for(let d=1;d<=7;d++){svg.append(el('text',{x:45,y:48+(d-1)*29,'text-anchor':'end','font-size':12,fill:'#53665a'},days[d-1]));for(let h=0;h<24;h++){let row=rows.find(r=>r.weekday===d&&r.hour===h),rate=row&&row.offered_minutes>0?row.available_minutes/row.offered_minutes:null,rect=el('rect',{x:52+h*36,y:32+(d-1)*29,width:33,height:25,rx:3,fill:rate===null?'#e4e8e1':'hsl(157 38% '+(94-rate*64)+'%)'});let text=days[d-1]+' '+h+':00 · '+(rate===null?'NULL：没有可选时段':(100*rate).toFixed(1)+'% · 空闲 '+row.available_minutes+' / 可选 '+row.offered_minutes+' 分钟 · '+row.events+' 活动，'+row.responses+' 条回复');rect.append(el('title',{},text));rect.addEventListener('pointermove',e=>{let tip=document.getElementById('tip');tip.textContent=text;tip.style.display='block';tip.style.left=Math.min(innerWidth-290,Math.max(10,e.clientX+12))+'px';tip.style.top=Math.min(innerHeight-110,e.clientY+12)+'px';});rect.addEventListener('pointerleave',()=>document.getElementById('tip').style.display='none');svg.append(rect);}}document.getElementById('availability-heatmap').replaceChildren(svg);sharedHeatmap(mode,topic);document.getElementById('heatmap-note').textContent='当前：'+(topicNames[topic]||topic)+' · '+rows.length+' 个有数据的星期／小时桶。比例仅代表用户在活动提供的选项中标记的空闲，不代表全天真实空闲。';}
-  function sharedHeatmap(mode,topic){let rows=(data.shared_time_histogram||[]).filter(h=>h.topic===topic&&h.schedule_mode===mode),offered=(data.availability_histogram||[]).filter(h=>h.topic===topic&&h.schedule_mode===mode&&h.time_frame==='event_local'),max=Math.max(1,...rows.map(r=>r.minutes)),svg=el('svg',{viewBox:'0 0 960 270',role:'img','aria-label':'按活动主题查看全员共同空闲时段'}),days=['周一','周二','周三','周四','周五','周六','周日'];for(let h=0;h<24;h++)svg.append(el('text',{x:68+h*36,y:25,'text-anchor':'middle','font-size':12,fill:'#53665a'},h));for(let d=1;d<=7;d++){svg.append(el('text',{x:45,y:48+(d-1)*29,'text-anchor':'end','font-size':12,fill:'#53665a'},days[d-1]));for(let h=0;h<24;h++){let row=rows.find(r=>r.weekday===d&&r.hour===h),known=offered.some(r=>r.weekday===d&&r.hour===h),minutes=row?.minutes||0,rect=el('rect',{x:52+h*36,y:32+(d-1)*29,width:33,height:25,rx:3,fill:known?'hsl(157 38% '+(94-64*minutes/max)+'%)':'#e4e8e1'});rect.append(el('title',{},days[d-1]+' '+h+':00 · '+(known?minutes+' 分钟共同空闲 · '+(row?.events||0)+' 个活动':'NULL：没有可计算样本')));svg.append(rect);}}document.getElementById('shared-heatmap').replaceChildren(svg);}
-  function update(){chart('plot-common','response_count','shared_minutes');chart('plot-lead','lead_days','response_count');chart('plot-created','creation_hour_local','response_count');chart('plot-first','response_count','first_response_hours');heatmap();document.getElementById('topic-counts').textContent='当前标签 '+filteredEvents().length+' 个活动；全部 '+data.events.length+' 个活动仍保存在数据表中。';}
-  topicSelect.addEventListener('change',update);document.getElementById('time-frame').addEventListener('change',heatmap);document.getElementById('schedule-filter').addEventListener('change',heatmap);update();
-  function bars(id,rows){let box=document.getElementById(id),max=Math.max(1,...rows.map(r=>r.count));rows.forEach(r=>{let d=document.createElement('div');d.className='bar';let label=document.createElement('span');label.textContent=r.timezone||r.field;let track=document.createElement('div'),bar=document.createElement('i');bar.style.width=100*r.count/max+'%';track.append(bar);let n=document.createElement('span');n.textContent=r.count;d.append(label,track,n);box.append(d);});}bars('missing',Object.entries(data.summary.missing).map(([field,count])=>({field,count})));bars('event-zones',data.event_timezones||[]);bars('response-zones',data.response_timezones||[]);
-  </script></html>`;
+  const html = /* HTML */ `<!doctype html>
+    <html lang="zh-CN"
+      ><meta charset="utf-8" /><meta
+        name="viewport"
+        content="width=device-width,initial-scale=1"
+      /><title>Whenkin 使用分析</title
+      ><style>
+        * {
+          box-sizing: border-box;
+        }
+        body {
+          font: 15px/1.65 system-ui;
+          background: #f4f7f1;
+          color: #183e35;
+          margin: 0;
+        }
+        main {
+          max-width: 1200px;
+          margin: auto;
+          padding: 34px 24px;
+        }
+        h1 {
+          font-size: 32px;
+          margin: 0;
+        }
+        h2 {
+          font-size: 20px;
+          margin: 0 0 12px;
+        }
+        .meta,
+        p {
+          color: #52695f;
+        }
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin: 24px 0;
+        }
+        .card,
+        section {
+          background: white;
+          border: 1px solid #dbe5d6;
+          border-radius: 14px;
+          padding: 22px;
+          margin-bottom: 18px;
+        }
+        .card {
+          margin: 0;
+        }
+        .card strong {
+          font-size: 27px;
+          display: block;
+        }
+        .plots {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+        .plots section {
+          min-width: 0;
+        }
+        svg {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+        circle {
+          fill: #1e7869;
+          opacity: 0.7;
+          cursor: help;
+        }
+        circle.flag {
+          fill: #be6337;
+        }
+        path.null {
+          stroke: #6c7782;
+          stroke-width: 1.8;
+          cursor: help;
+        }
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 12px;
+        }
+        th,
+        td {
+          text-align: left;
+          padding: 9px;
+          border-bottom: 1px solid #e4e9df;
+          white-space: nowrap;
+        }
+        th {
+          position: sticky;
+          top: 0;
+          background: #eef4e9;
+        }
+        tr.flagged {
+          background: #fff8ed;
+        }
+        .table {
+          max-height: 560px;
+          overflow: auto;
+        }
+        code {
+          background: #f1f4ed;
+          padding: 2px 5px;
+        }
+        small {
+          color: #65786e;
+        }
+        dl dt {
+          font-weight: 650;
+          margin-top: 12px;
+        }
+        dl dd {
+          margin: 3px 0 0;
+          color: #52695f;
+        }
+        .bars {
+          max-width: 850px;
+        }
+        .bar {
+          display: grid;
+          grid-template-columns: minmax(130px, 1fr) 3fr 55px;
+          gap: 12px;
+          align-items: center;
+          margin: 6px 0;
+        }
+        .bar i {
+          display: block;
+          height: 13px;
+          background: #288674;
+          border-radius: 3px;
+        }
+        button {
+          border: 1px solid #bfd1bf;
+          padding: 7px 12px;
+          border-radius: 8px;
+          background: #eef5e9;
+          color: #183e35;
+        }
+        #tip {
+          position: fixed;
+          display: none;
+          max-width: 280px;
+          padding: 12px;
+          background: #153e34;
+          color: white;
+          border-radius: 9px;
+          pointer-events: none;
+          font-size: 12px;
+          z-index: 20;
+        }
+        @media (max-width: 700px) {
+          .cards {
+            grid-template-columns: 1fr 1fr;
+          }
+          .plots {
+            display: block;
+          }
+          main {
+            padding: 22px 12px;
+          }
+        }</style
+      ><main
+        ><h1>Whenkin 使用分析</h1
+        ><p class="meta"
+          >只读统计（含活动标题） · 快照
+          ${escape(
+            new Intl.DateTimeFormat('zh-CN', {
+              timeZone: 'America/Los_Angeles',
+              dateStyle: 'full',
+              timeStyle: 'short',
+            }).format(new Date(result.extracted_at)),
+          )}（洛杉矶）
+          · Whenkin 生产库只读快照</p
+        ><p
+          >全部记录保留。橙色点仅表示需要复核的统计离群值；灰色 × 表示
+          NULL，放在独立的缺失值区域，不当作
+          0。重叠点仅作少量像素错位以便查看，数值没有改变。此报告仅保存在本机。</p
+        >
+        <div class="cards"
+          >${cards
+            .map(
+              /** Render an escaped summary card for each label and value. */
+              ([label, value]) =>
+                '<div class="card">' +
+                escape(label) +
+                '<strong>' +
+                escape(value) +
+                '</strong></div>',
+            )
+            .join('')}</div
+        >
+        <section
+          ><h2>活动主题比较</h2
+          ><p
+            >标签来自标题中的词语，仅描述活动主题，不认定回复者身份。一个活动可有多个标签；未分类记录仍然保留。匹配词可在下方数据表核查。</p
+          ><label
+            >活动标签
+            <select id="topic-filter" aria-label="活动标签"
+              ><option value="all">全部活动</option></select
+            ></label
+          ><p id="topic-counts"></p
+        ></section>
+        <div class="plots"
+          ><section
+            ><h2>回复人数与共同空闲时长</h2
+            ><div id="plot-common"></div></section
+          ><section
+            ><h2>提前安排天数与回复人数</h2><div id="plot-lead"></div></section
+          ><section
+            ><h2>创建小时与回复人数</h2><div id="plot-created"></div></section
+          ><section
+            ><h2>首次回复耗时：当前未记录</h2
+            ><div id="plot-first"></div></section
+        ></div>
+        <section
+          ><h2>大家通常什么时候更有空？</h2
+          ><p
+            >颜色表示被标记为空闲的比例：空闲分钟数 ÷
+            可选分钟数。每格均可查看活动数、回复数和分母。灰色代表没有提供该时段，不能当作无人有空。</p
+          ><label
+            >时间口径
+            <select id="time-frame" aria-label="时间口径"
+              ><option value="responder_local">回复者所选时区</option
+              ><option value="event_local">活动时区</option></select
+            ></label
+          >
+          <label
+            >活动模式
+            <select id="schedule-filter" aria-label="活动模式"
+              ><option value="dates">具体日期</option
+              ><option value="weekdays">星期模式</option></select
+            ></label
+          ><div id="availability-heatmap"></div><p id="heatmap-note"></p
+          ><h3>所有回复者共同有空的时段</h3
+          ><p
+            >按活动时区累计分钟数，颜色越深代表累计共同时间越长。不同活动可能有不同回复人数；单人回复也可形成交集，因此另报多人活动结果。</p
+          ><div id="shared-heatmap"></div
+        ></section>
+        <section
+          ><h2>NULL 与未记录字段</h2
+          ><p
+            >缺失值保留在 CSV 的 NULL 单元格和散点图的 NULL
+            区域。没有回复的活动尚不能计算共同时间；星期模式没有可计算的提前日期。</p
+          ><div id="missing"></div
+        ></section>
+        <section
+          ><h2>时区分布</h2
+          ><p
+            >这是填写的时区分布，不是地理位置；活动和回复分别统计，不能当作唯一用户数。</p
+          ><h3>活动</h3><div class="bars" id="event-zones"></div><h3>回复</h3
+          ><div class="bars" id="response-zones"></div
+        ></section>
+        <section
+          ><h2>共同空闲时段分布</h2
+          ><p
+            >按星期和小时累计共同空闲分钟数，日期模式和星期模式分开。无数据的桶不表示实际用户一定没空。</p
+          ><div class="table"
+            ><table
+              ><thead
+                ><tr
+                  ><th>标签</th><th>模式</th><th>星期（1=周一）</th><th>小时</th
+                  ><th>总分钟数</th></tr
+                ></thead
+              ><tbody
+                >${(result.shared_time_histogram || [])
+                  .map(
+                    /* Render each shared-time histogram bucket as a report row. */
+                    (h) =>
+                      '<tr><td>' +
+                      escape(h.topic) +
+                      '</td><td>' +
+                      escape(h.schedule_mode) +
+                      '</td><td>' +
+                      h.weekday +
+                      '</td><td>' +
+                      h.hour +
+                      '</td><td>' +
+                      h.minutes +
+                      '</td></tr>',
+                  )
+                  .join('')}</tbody
+              ></table
+            ></div
+          ></section
+        >
+        <section
+          ><h2>指标为什么值得分析</h2
+          ><dl
+            >${methods
+              .map(
+                /** Render the metric explanation list with escaped text. */
+                ([name, reason]) => '<dt>' + escape(name) + '</dt><dd>' + escape(reason) + '</dd>',
+              )
+              .join('')}</dl
+          ><p
+            >快照覆盖当前仍存储的所有活动，可能包含试用或重复活动；不自动剔除任何记录，不代表所有历史用户。1.5×IQR
+            标记用于人工检查，不认定恶意或无效。</p
+          ></section
+        >
+        <section
+          ><h2>逐活动指标（不含姓名）（全部 ${result.events.length} 条）</h2
+          ><p
+            >编号仅在本次快照内有效，不能用来打开活动。可下载同目录的
+            <a href="events.csv">CSV</a> 和 <a href="summary.json">JSON</a>。</p
+          ><div class="table"
+            ><table
+              ><thead
+                ><tr
+                  >${columns
+                    .map(
+                      /* Render the event table's column headings. */
+                      (c) => '<th>' + escape(c) + '</th>',
+                    )
+                    .join('')}</tr
+                ></thead
+              ><tbody
+                >${result.events
+                  .map(
+                    /* Render an event row and mark records that need review. */
+                    (e) =>
+                      '<tr class="' +
+                      (e.review_flags.length ? 'flagged' : '') +
+                      '">' +
+                      columns
+                        .map(
+                          /* Render one escaped event field, joining array values for display. */
+                          (c) =>
+                            '<td>' + escape(Array.isArray(e[c]) ? e[c].join('; ') : e[c]) + '</td>',
+                        )
+                        .join('') +
+                      '</tr>',
+                  )
+                  .join('')}</tbody
+              ></table
+            ></div
+          ></section
+        ></main
+      ><div id="tip"></div>
+      <script>
+        const data = ${JSON.stringify(result).replaceAll('<', '\\u003c')};
+        ${ANALYTICS_CHART_SCRIPT};
+      </script></html
+    >`;
   return html;
 }

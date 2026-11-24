@@ -62,9 +62,7 @@ export function useEventSync({
           if (e instanceof ApiError && (e.status === 410 || e.status === 404)) {
             setUnavailableReason(e.status === 410 ? 'expired' : 'missing');
           }
-          setError(
-            e instanceof Error ? e.message : 'Could not load this event.',
-          );
+          setError(e instanceof Error ? e.message : 'Could not load this event.');
         }
       }
     })();
@@ -93,10 +91,7 @@ export function useEventSync({
       }
       // A calendar year can exceed the browser's maximum timer length.
       else {
-        timer = setTimeout(
-          checkExpiry,
-          Math.min(remaining, MAX_BROWSER_TIMEOUT_MS),
-        );
+        timer = setTimeout(checkExpiry, Math.min(remaining, MAX_BROWSER_TIMEOUT_MS));
       }
     };
 
@@ -118,10 +113,7 @@ export function useEventSync({
 
     /** Close unavailable events; transient refresh failures wait for a retry. */
     const refreshError = (error: unknown) => {
-      if (
-        error instanceof ApiError &&
-        (error.status === 410 || error.status === 404)
-      ) {
+      if (error instanceof ApiError && (error.status === 410 || error.status === 404)) {
         expire(error.status === 404 ? 'missing' : 'expired');
       }
     };

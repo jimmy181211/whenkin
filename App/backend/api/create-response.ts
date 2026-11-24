@@ -10,7 +10,11 @@ import {
 } from '../shared/validation.js';
 import { readEvent } from '../shared/event-queries.js';
 import { body } from '../shared/request.js';
-import type { RequestHandler } from 'express';
+import type {
+  RequestHandler,
+  Request,
+  Response,
+} from 'express';
 import type { Database } from '../db/types.js';
 
 /**
@@ -19,62 +23,67 @@ import type { Database } from '../db/types.js';
  * cannot save availability against an old schedule.
  * @returns An Express handler for creating a reply and its available ranges.
  */
-export default function createResponse(
-  database: Database,
-): RequestHandler<{ id: string }> {
-  /**
-   * Validate a reply and insert its ranges against the current schedule.
-   * Invalid input, expired events, and stale schedules pass to API error handling.
-   * @returns The sent 201 JSON response with the reply id and initial revision.
-   */
-  return async (req, res) => {
-    const event = await readEvent(database, req.params.id);
-    const input = await body(req);
-    const name = text(input.name, 'your name', 60);
-    if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
-      throw new Problem(400, 'Please choose a valid time zone.');
-    }
-    // The schedule version the client used when picking these times.
-    const expectedSchedule = input.schedule_revision ?? event.schedule_revision;
-    if (expectedSchedule !== event.schedule_revision) {
-      throw new Problem(
-        409,
-        'The event schedule changed. Reload before saving your changes.',
-      );
-    }
-    const ranges = validateRanges(
-      input.ranges,
-      event.windows,
-      slotDuration(event),
-    );
-    const id = crypto.randomUUID();
-    // "gate" locks/checks the event; no reply or availability is inserted if it fails.
-    const created = await database.query(
-      `WITH gate AS (
-  UPDATE events SET write_revision=write_revision+1 WHERE id=$2 AND schedule_revision=$6 AND expires_at>clock_timestamp() RETURNING id
+export default function createResponse(database: Database): RequestHandler<RouteParams> {
+  /** Pass this route's configured database into the request handler. */
+  return (req, res) => handleCreateResponse(database, req, res);
+}
+
+/** URL identifiers accepted by this endpoint. */
+type RouteParams = { id: string };
+
+/**
+ * Validate a reply and insert its ranges against the current schedule.
+ * Invalid input, expired events, and stale schedules pass to API error handling.
+ * @returns The sent 201 JSON response with the reply id and initial revision.
+ */
+async function handleCreateResponse(database: Database, req: Request<RouteParams>, res: Response) {
+  const event = await readEvent(database, req.params.id);
+  const input = await body(req);
+  const name = text(input.name, 'your name', 60);
+  if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
+    throw new Problem(400, 'Please choose a valid time zone.');
+  }
+  // The schedule version the client used when picking these times.
+  const expectedSchedule = input.schedule_revision ?? event.schedule_revision;
+  if (expectedSchedule !== event.schedule_revision) {
+    throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
+  }
+  const ranges = validateRanges(input.ranges, event.windows, slotDuration(event));
+  const id = crypto.randomUUID();
+  // "gate" locks/checks the event; no reply or availability is inserted if it fails.
+  const created = await database.query(
+    `WITH gate AS (
+  UPDATE events
+  SET write_revision = write_revision + 1
+  WHERE id = $2 AND schedule_revision = $6 AND expires_at > clock_timestamp()
+  RETURNING id
 ), response AS (
-  INSERT INTO responses(id,event_id,name,timezone,edit_hash) SELECT $1,gate.id,$3,$4,'' FROM gate RETURNING id
-), inserted AS (INSERT INTO availability(response_id,starts_at,ends_at)
-  SELECT response.id,a.start::timestamptz,a.end::timestamptz FROM response CROSS JOIN jsonb_to_recordset($5::jsonb) AS a(start text,"end" text) RETURNING id) SELECT id FROM response`,
-      [
-        id,
-        event.id,
-        name,
-        input.timezone,
-        JSON.stringify(ranges),
-        expectedSchedule,
-      ],
-    );
-    if (!created.length) {
-      await readEvent(database, event.id);
-      throw new Problem(
-        409,
-        'The event schedule changed. Reload before saving your changes.',
-      );
-    }
-    return res.status(201).json({
+  INSERT INTO responses(id, event_id, name, timezone, edit_hash)
+  SELECT $1, gate.id, $3, $4, '' FROM gate
+  RETURNING id
+), inserted AS (
+  INSERT INTO availability(response_id, starts_at, ends_at)
+  SELECT response.id, a.start::timestamptz, a.end::timestamptz
+  FROM response
+  CROSS JOIN jsonb_to_recordset($5::jsonb) AS a(start text, "end" text)
+  RETURNING id
+)
+SELECT id FROM response`,
+    [
       id,
-      revision: 1,
-    });
-  };
+      event.id,
+      name,
+      input.timezone,
+      JSON.stringify(ranges),
+      expectedSchedule,
+    ],
+  );
+  if (!created.length) {
+    await readEvent(database, event.id);
+    throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
+  }
+  return res.status(201).json({
+    id,
+    revision: 1,
+  });
 }

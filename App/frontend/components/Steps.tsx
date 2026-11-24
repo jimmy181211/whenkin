@@ -3,7 +3,7 @@ import {
   Check,
   Users,
 } from 'lucide-react';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 const steps = [
   {
     title: 'The Organizer Creates an Event',
@@ -29,7 +29,7 @@ const steps = [
 export default function Steps() {
   return (
     <div className="how-it-works">
-      <p className="eyebrow">{t('THREE SMALL STEPS')}</p>
+      <p className="eyebrow">{langService.t('THREE SMALL STEPS')}</p>
       <ol>
         {steps.map(
           /**
@@ -40,8 +40,8 @@ export default function Steps() {
             <li key={step.title}>
               <span>0{i + 1}</span>
               <div>
-                <strong>{t(step.title)}</strong>
-                <p>{t(step.short)}</p>
+                <strong>{langService.t(step.title)}</strong>
+                <p>{langService.t(step.short)}</p>
               </div>
             </li>
           ),

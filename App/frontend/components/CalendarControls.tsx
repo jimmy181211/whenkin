@@ -4,10 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import {
-  getLocale,
-  t,
-} from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   FIRST_EVENT_DATE,
   LAST_EVENT_DATE,
@@ -37,7 +34,7 @@ export default function CalendarControls({
     { length: 12 },
     /* Build localized month labels without applying a local timezone shift. */
     (_, i) =>
-      new Intl.DateTimeFormat(getLocale(), {
+      new Intl.DateTimeFormat(langService.getLocale(), {
         month: 'long',
         timeZone: 'UTC',
       }).format(new Date(Date.UTC(2000, i, 1))),
@@ -46,7 +43,7 @@ export default function CalendarControls({
     <div className="calendar-heading">
       <div className="calendar-selects">
         <EditableSelect
-          label={t('Month')}
+          label={langService.t('Month')}
           value={String(month.month)}
           options={monthNames.map(
             /* Pair each localized month label with its number and English search alias. */
@@ -65,7 +62,7 @@ export default function CalendarControls({
             /* Apply the validated month number from the editable dropdown. */
             (value) => setMonth(month.with({ month: Number(value) }))
           }
-          invalidMessage={t('Choose a valid month.')}
+          invalidMessage={langService.t('Choose a valid month.')}
         />
         <CalendarYearInput
           value={month.year}
@@ -79,7 +76,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={t('Previous month')}
+          aria-label={langService.t('Previous month')}
           disabled={month.equals(first)}
           onClick={
             /* Move the visible calendar back one month. */
@@ -91,7 +88,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={t('Next month')}
+          aria-label={langService.t('Next month')}
           disabled={month.equals(last)}
           onClick={
             /* Move the visible calendar forward one month. */

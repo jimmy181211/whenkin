@@ -101,9 +101,7 @@ export default function AnchoredPanel({
     // Focus target to restore when this panel was opened with focusOnOpen.
     const previous = document.activeElement;
     if (focusOnOpen) {
-      node
-        ?.querySelector<HTMLElement>('[data-panel-autofocus]')
-        ?.focus({ preventScroll: true });
+      node?.querySelector<HTMLElement>('[data-panel-autofocus]')?.focus({ preventScroll: true });
     }
 
     /** Close the panel when the user presses Escape. */
@@ -116,11 +114,7 @@ export default function AnchoredPanel({
 
     /** Close only when the pointer is outside both the panel and its trigger. */
     const outside = (e: PointerEvent) => {
-      if (
-        e.target instanceof Node &&
-        !node?.contains(e.target) &&
-        !anchor.contains(e.target)
-      ) {
+      if (e.target instanceof Node && !node?.contains(e.target) && !anchor.contains(e.target)) {
         close.current();
       }
     };

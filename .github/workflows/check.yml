@@ -13,6 +13,7 @@ jobs:
       - run: npm install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
+      - run: pnpm check:lines
       - run: pnpm run check
       - run: pnpm test
       - run: pnpm db:verify-retention

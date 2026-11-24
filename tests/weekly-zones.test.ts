@@ -25,42 +25,42 @@ describe('date-free weekly display conversion', () => {
    * Shows the same saved Monday 9 AM as noon in New York without changing
    * stored selections.
    */
-  it('shows the same saved Monday 9 AM as noon in New York without changing stored selections', () => {
-    const before = JSON.stringify(event);
-    const stamp = Date.parse(event.windows[0].start);
-    const ny = projectWeekly(event, 'America/New_York');
-    expect(new Date(ny.toDisplay(stamp)).toISOString()).toBe(
-      '2000-01-03T12:00:00.000Z',
-    );
-    expect(ny.toCanonical(ny.toDisplay(stamp))).toBe(stamp);
-    expect(JSON.stringify(event)).toBe(before);
-    expect(ny.range(event.windows[0])).toEqual({
-      start: '2000-01-03T12:00:00.000Z',
-      end: '2000-01-03T14:00:00.000Z',
-    });
-  });
+  it(
+    'shows the same saved Monday 9 AM as noon in New York without ' + 'changing stored selections',
+    () => {
+      const before = JSON.stringify(event);
+      const stamp = Date.parse(event.windows[0].start);
+      const ny = projectWeekly(event, 'America/New_York');
+      expect(new Date(ny.toDisplay(stamp)).toISOString()).toBe('2000-01-03T12:00:00.000Z');
+      expect(ny.toCanonical(ny.toDisplay(stamp))).toBe(stamp);
+      expect(JSON.stringify(event)).toBe(before);
+      expect(ny.range(event.windows[0])).toEqual({
+        start: '2000-01-03T12:00:00.000Z',
+        end: '2000-01-03T14:00:00.000Z',
+      });
+    },
+  );
   /**
    * Uses the disclosed creation-date offsets, including summer/winter and
    * quarter-hour zones.
    */
-  it('uses the disclosed creation-date offsets, including summer/winter and quarter-hour zones', () => {
-    const stamp = Date.parse(event.windows[0].start);
-    const summer = projectWeekly(event, 'Asia/Kathmandu');
-    const winter = projectWeekly(
-      {
-        ...event,
-        created_at: '2027-01-15T18:00:00Z',
-      },
-      'Asia/Kathmandu',
-    );
-    expect(new Date(summer.toDisplay(stamp)).toISOString()).toBe(
-      '2000-01-03T21:45:00.000Z',
-    );
-    expect(new Date(winter.toDisplay(stamp)).toISOString()).toBe(
-      '2000-01-03T22:45:00.000Z',
-    );
-    expect(summer.referenceTime).toBe(Date.parse(event.created_at));
-  });
+  it(
+    'uses the disclosed creation-date offsets, including summer/winter ' + 'and quarter-hour zones',
+    () => {
+      const stamp = Date.parse(event.windows[0].start);
+      const summer = projectWeekly(event, 'Asia/Kathmandu');
+      const winter = projectWeekly(
+        {
+          ...event,
+          created_at: '2027-01-15T18:00:00Z',
+        },
+        'Asia/Kathmandu',
+      );
+      expect(new Date(summer.toDisplay(stamp)).toISOString()).toBe('2000-01-03T21:45:00.000Z');
+      expect(new Date(winter.toDisplay(stamp)).toISOString()).toBe('2000-01-03T22:45:00.000Z');
+      expect(summer.referenceTime).toBe(Date.parse(event.created_at));
+    },
+  );
   /**
    * Wraps Sunday into Monday and preserves a round trip for every selected
    * slot.

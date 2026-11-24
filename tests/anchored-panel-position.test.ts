@@ -54,9 +54,7 @@ describe('contextual panel placement', () => {
           );
           expect(p.left).toBeGreaterThanOrEqual(12);
           expect(p.top).toBeGreaterThanOrEqual(12);
-          expect(p.left + Math.min(320, width - 24)).toBeLessThanOrEqual(
-            width - 12,
-          );
+          expect(p.left + Math.min(320, width - 24)).toBeLessThanOrEqual(width - 12);
           expect(p.top + 300).toBeLessThanOrEqual(832);
         }
       }

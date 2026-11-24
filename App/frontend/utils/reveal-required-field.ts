@@ -2,16 +2,15 @@
  * Form controls that can be scrolled into view and focused for a
  * required-field reminder.
  */
-export type RequiredField =
-  | HTMLInputElement
-  | HTMLTextAreaElement
-  | HTMLSelectElement;
+export type RequiredField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 export const REQUIRED_FIELD_SCROLL_MS = 650;
 
 /** A planned scroll's original offset, destination, and movement callback. */
-type ScrollTarget = { from: number;
+type ScrollTarget = {
+  from: number;
   to: number;
-  move: (top: number) => void };
+  move: (top: number) => void;
+};
 
 /**
  * Plan inner-container moves first, then the page move needed to center the field.
@@ -28,12 +27,7 @@ function scrollTargets(field: RequiredField) {
    * distance.
    * @returns The signed movement in pixels used to predict the field's next position.
    */
-  const add = (
-    from: number,
-    desired: number,
-    maximum: number,
-    move: ScrollTarget['move'],
-  ) => {
+  const add = (from: number, desired: number, maximum: number, move: ScrollTarget['move']) => {
     const to = Math.max(0, Math.min(desired, Math.max(0, maximum)));
     if (Math.abs(to - from) > 0.5) {
       targets.push({
@@ -59,9 +53,7 @@ function scrollTargets(field: RequiredField) {
     }
     const container = parent;
     const center =
-      container.getBoundingClientRect().top +
-      container.clientTop +
-      container.clientHeight / 2;
+      container.getBoundingClientRect().top + container.clientTop + container.clientHeight / 2;
     fieldTop -= add(
       container.scrollTop,
       container.scrollTop + fieldTop + rect.height / 2 - center,
@@ -75,8 +67,7 @@ function scrollTargets(field: RequiredField) {
     );
   }
   const viewport = window.visualViewport;
-  const center =
-    (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight) / 2;
+  const center = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight) / 2;
   add(
     window.scrollY,
     window.scrollY + fieldTop + rect.height / 2 - center,
@@ -89,6 +80,85 @@ function scrollTargets(field: RequiredField) {
       }),
   );
   return targets;
+}
+
+/**
+ * Apply one eased animation step to the planned containers.
+ * @returns Clamped progress from zero to one; one means the destinations were reached.
+ */
+function advanceScroll(targets: ScrollTarget[], elapsed: number) {
+  const progress = Math.max(0, Math.min(1, elapsed / REQUIRED_FIELD_SCROLL_MS));
+  const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+  for (const target of targets) {
+    target.move(target.from + (target.to - target.from) * eased);
+  }
+  return progress;
+}
+
+/** Run the scroll lifecycle and release listeners before reporting arrival or cancellation. */
+function startScrollAnimation(
+  field: RequiredField,
+  signal: AbortSignal,
+  targets: ScrollTarget[],
+  resolve: (arrived: boolean) => void,
+) {
+  // Animation-frame handle used to cancel the next scheduled scroll step.
+  let frame = 0;
+  let pointerListener = false;
+  const started = performance.now();
+  const interruptions = [
+    'wheel',
+    'touchmove',
+    'keydown',
+    'resize',
+  ] as const;
+
+  /**
+   * Remove reveal listeners and resolve whether the animation reached its
+   * field.
+   */
+  const finish = (result: boolean) => {
+    cancelAnimationFrame(frame);
+    signal.removeEventListener('abort', abort);
+    for (const type of interruptions) {
+      window.removeEventListener(type, abort);
+    }
+    window.removeEventListener('pointerdown', abort, true);
+    resolve(result);
+  };
+
+  /** Cancel the reveal without showing its reminder. */
+  const abort = () => finish(false);
+
+  /**
+   * Advance the scroll animation unless the field was filled or the user
+   * interrupted.
+   */
+  const animate = (time: number) => {
+    if (signal.aborted || !field.isConnected || field.value.trim()) {
+      return finish(false);
+    }
+    // Start listening after the pointer event which requested this reveal.
+    if (!pointerListener) {
+      window.addEventListener('pointerdown', abort, {
+        capture: true,
+        passive: true,
+      });
+      pointerListener = true;
+    }
+    const progress = advanceScroll(targets, time - started);
+    if (progress === 1) {
+      finish(true);
+    } else {
+      frame = requestAnimationFrame(animate);
+    }
+  };
+
+  signal.addEventListener('abort', abort, { once: true });
+  for (const type of interruptions) {
+    window.addEventListener(type, abort, { passive: true });
+  }
+  frame = requestAnimationFrame(animate);
 }
 
 /**
@@ -105,9 +175,7 @@ export async function revealRequiredField(
     return false;
   }
   const targets = scrollTargets(field);
-  const reducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reducedMotion) {
     for (const target of targets) {
       target.move(target.to);
@@ -117,77 +185,8 @@ export async function revealRequiredField(
     reducedMotion ||
     !targets.length ||
     (await new Promise<boolean>(
-      /* Run the cancelable scroll animation and resolve whether the required field was reached. */
-      (resolve) => {
-        // Animation-frame handle used to cancel the next scheduled scroll step.
-        let frame = 0;
-        let pointerListener = false;
-        const started = performance.now();
-        const interruptions = [
-          'wheel',
-          'touchmove',
-          'keydown',
-          'resize',
-        ] as const;
-
-        /**
-         * Remove reveal listeners and resolve whether the animation reached its
-         * field.
-         */
-        const finish = (result: boolean) => {
-          cancelAnimationFrame(frame);
-          signal.removeEventListener('abort', abort);
-          for (const type of interruptions) {
-            window.removeEventListener(type, abort);
-          }
-          window.removeEventListener('pointerdown', abort, true);
-          resolve(result);
-        };
-
-        /** Cancel the reveal without showing its reminder. */
-        const abort = () => finish(false);
-
-        /**
-         * Advance the scroll animation unless the field was filled or the user
-         * interrupted.
-         */
-        const animate = (time: number) => {
-          if (signal.aborted || !field.isConnected || field.value.trim()) {
-            return finish(false);
-          }
-          // Start listening after the pointer event which requested this reveal.
-          if (!pointerListener) {
-            window.addEventListener('pointerdown', abort, {
-              capture: true,
-              passive: true,
-            });
-            pointerListener = true;
-          }
-          const progress = Math.max(
-            0,
-            Math.min(1, (time - started) / REQUIRED_FIELD_SCROLL_MS),
-          );
-          // Ease in and out while keeping the same duration for short and long moves.
-          const eased =
-            progress < 0.5
-              ? 4 * progress ** 3
-              : 1 - (-2 * progress + 2) ** 3 / 2;
-          for (const target of targets) {
-            target.move(target.from + (target.to - target.from) * eased);
-          }
-          if (progress === 1) {
-            finish(true);
-          } else {
-            frame = requestAnimationFrame(animate);
-          }
-        };
-
-        signal.addEventListener('abort', abort, { once: true });
-        for (const type of interruptions) {
-          window.addEventListener(type, abort, { passive: true });
-        }
-        frame = requestAnimationFrame(animate);
-      },
+      /** Start one animation; its owner resolves after arrival or interruption. */
+      (resolve) => startScrollAnimation(field, signal, targets, resolve),
     ));
   if (!arrived || signal.aborted || !field.isConnected || field.value.trim()) {
     return false;

@@ -80,10 +80,7 @@ assert.equal(saved.status, 200);
 event = (await request(path)).body;
 assert.equal(event.candidates.length, 1);
 assert.equal(event.candidates[0].available.length, 2);
-assert.equal(
-  (await request(path + '/responses/' + bob.body.id, 'PUT', update)).status,
-  409,
-);
+assert.equal((await request(path + '/responses/' + bob.body.id, 'PUT', update)).status, 409);
 assert.equal(
   (
     await request(path + '/responses/' + bob.body.id, 'DELETE', {
@@ -107,5 +104,7 @@ assert.equal(page.status, 200);
 assert.match(await page.text(), /id="root"/);
 assert.equal((await fetch(new URL('/api/missing', base))).status, 404);
 console.log(
-  'PASS: PostgreSQL readiness, event creation/read, response create/update/delete, shared times, stale-write protection, direct page links.',
+  'PASS: PostgreSQL readiness, event creation/read, response ' +
+    'create/update/delete, shared times, stale-write protection, direct ' +
+    'page links.',
 );

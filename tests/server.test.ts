@@ -23,8 +23,7 @@ import { testClient } from './test-client';
  * Wrap the real API app with the reusable localhost test client.
  * @returns An HTTP client for the API configured with this fixture database and options.
  */
-const createApp = (db: Database, options: AppOptions = {}) =>
-  testClient(apiApp(db, options));
+const createApp = (db: Database, options: AppOptions = {}) => testClient(apiApp(db, options));
 
 import { createWebApp as webApp } from '../App/backend/web';
 
@@ -32,10 +31,8 @@ import { createWebApp as webApp } from '../App/backend/web';
  * Wrap the static-file-serving app with the same localhost test client.
  * @returns An HTTP client for API routes and files in the fixture static directory.
  */
-const createWebApp = (
-  db: Database,
-  options: AppOptions & { staticRoot: string },
-) => testClient(webApp(db, options));
+const createWebApp = (db: Database, options: AppOptions & { staticRoot: string }) =>
+  testClient(webApp(db, options));
 
 import { pageRoute } from '../App/shared/routes';
 import type { Database } from '../App/backend/db/types';
@@ -57,10 +54,7 @@ beforeAll(
       join(root, 'index.html'),
       '<!doctype html><link rel="manifest" href="/site.webmanifest"><div id="root">Whenkin</div>',
     );
-    await writeFile(
-      join(root, 'assets', 'app-hash.js'),
-      'console.log("Whenkin")',
-    );
+    await writeFile(join(root, 'assets', 'app-hash.js'), 'console.log("Whenkin")');
   },
 );
 afterAll(
@@ -103,9 +97,7 @@ describe('Node server and browser routes', () => {
     const asset = await app.request('http://localhost/assets/app-hash.js');
     expect(asset.status).toBe(200);
     expect(asset.headers.get('Cache-Control')).toContain('immutable');
-    expect(
-      (await app.request('http://localhost/assets/missing.js')).status,
-    ).toBe(404);
+    expect((await app.request('http://localhost/assets/missing.js')).status).toBe(404);
     const missing = await app.request('http://localhost/api/missing');
     expect(missing.status).toBe(404);
     expect(missing.headers.get('Content-Type')).toContain('application/json');
@@ -126,19 +118,13 @@ describe('Node server and browser routes', () => {
       { staticRoot: root },
     );
     const path = '/e/855e5518-3b5a-49cb-b906-69bbd7bac603';
-    const document = await (
-      await app.request('http://localhost' + path)
-    ).text();
-    expect(document).toContain(
-      '/site.webmanifest?page=' + encodeURIComponent(path),
-    );
+    const document = await (await app.request('http://localhost' + path)).text();
+    expect(document).toContain('/site.webmanifest?page=' + encodeURIComponent(path));
     const response = await app.request(
       'http://localhost/site.webmanifest?page=' + encodeURIComponent(path),
     );
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toContain(
-      'application/manifest+json',
-    );
+    expect(response.headers.get('Content-Type')).toContain('application/manifest+json');
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(await response.json()).toMatchObject({
       id: path,
@@ -154,7 +140,8 @@ describe('Node server and browser routes', () => {
 
     /**
      * Send a creation request with the origin being checked.
-     * @returns The creation request response for the supplied origin, including validation error statuses.
+     * @returns The creation request response for the supplied origin, including validation
+     * error statuses.
      */
     const request = (origin: string) =>
       app.request('http://app:3000/api/events', {
@@ -220,9 +207,9 @@ describe('Node server and browser routes', () => {
         throw new Error('private-database-details');
       },
     });
-    expect(
-      await (await app.request('http://localhost/api/health')).json(),
-    ).toEqual({ ready: false });
+    expect(await (await app.request('http://localhost/api/health')).json()).toEqual({
+      ready: false,
+    });
     const response = await app.request(
       'http://localhost/api/events/855e5518-3b5a-49cb-b906-69bbd7bac603',
     );

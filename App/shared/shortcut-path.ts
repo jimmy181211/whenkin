@@ -25,8 +25,5 @@ export function shortcutPath(value: unknown): string {
  */
 export function shortcutManifestHref(path: string): string {
   const page = shortcutPath(path);
-  return (
-    '/site.webmanifest' +
-    (page === '/' ? '' : '?page=' + encodeURIComponent(page))
-  );
+  return '/site.webmanifest' + (page === '/' ? '' : '?page=' + encodeURIComponent(page));
 }

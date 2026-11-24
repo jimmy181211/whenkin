@@ -14,15 +14,10 @@ export default function getRetention(database: Database): RequestHandler {
    */
   return async (_req, res) => {
     try {
-      const rows = await database.query(
-        'SELECT * FROM public.get_event_retention_policy()',
-      );
+      const rows = await database.query('SELECT * FROM public.get_event_retention_policy()');
       return res.json(parseRetentionPolicy(rows[0]));
     } catch {
-      throw new Problem(
-        503,
-        'The retention policy is temporarily unavailable.',
-      );
+      throw new Problem(503, 'The retention policy is temporarily unavailable.');
     }
   };
 }

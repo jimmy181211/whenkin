@@ -10,8 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { BRAND } from '../brand';
-import { t } from '../i18n/index';
-import PageLink from './PageLink';
+import { langService } from '../i18n/language';
 import LanguageSelector from './LanguageSelector';
 import {
   HeaderActionSlot,
@@ -24,11 +23,7 @@ import './site-header.css';
  * the guide, new-event link, and language selector collapse only on event pages.
  * @returns The brand and navigation, with an optional mobile disclosure.
  */
-export default function SiteHeader({
-  showNewEvent,
-}: {
-  showNewEvent: boolean;
-}) {
+export default function SiteHeader({ showNewEvent }: { showNewEvent: boolean }) {
   const { menu } = useHeaderActions();
   const id = useId();
 
@@ -53,11 +48,11 @@ export default function SiteHeader({
 
   return (
     <header className="site-header" data-event={showNewEvent}>
-      <PageLink className="brand" href="/" aria-label={t('Whenkin home')}>
+      <a className="brand" href="/" aria-label={langService.t('Whenkin home')}>
         <img src="/favicon.svg" alt="" width={40} height={40} />
         <span>{BRAND.name.toLowerCase()}</span>
-      </PageLink>
-      <nav className="header-navigation" aria-label={t('Main navigation')}>
+      </a>
+      <nav className="header-navigation" aria-label={langService.t('Main navigation')}>
         {showNewEvent && <HeaderActionSlot name="share" />}
         <div className="header-secondary" ref={menu.container}>
           {showNewEvent && (
@@ -65,7 +60,7 @@ export default function SiteHeader({
               type="button"
               className="icon-button header-menu-toggle"
               ref={menu.trigger}
-              aria-label={t('Menu')}
+              aria-label={langService.t('Menu')}
               aria-expanded={menu.open}
               aria-controls={id}
               onClick={menu.toggle}
@@ -77,20 +72,20 @@ export default function SiteHeader({
             {showNewEvent ? (
               <>
                 <HeaderActionSlot name="guide" />
-                <PageLink className="header-control" href="/">
-                  <Plus size={16} /> {t('New Event')}
-                </PageLink>
+                <a className="header-control" href="/">
+                  <Plus size={16} /> {langService.t('New Event')}
+                </a>
               </>
             ) : (
-              <PageLink
+              <a
                 className="header-help"
                 href="/how-it-works"
-                aria-label={t('How It Works')}
-                title={t('How It Works')}
+                aria-label={langService.t('How It Works')}
+                title={langService.t('How It Works')}
               >
                 <CircleHelp size={18} aria-hidden="true" />
-                <span>{t('How It Works')}</span>
-              </PageLink>
+                <span>{langService.t('How It Works')}</span>
+              </a>
             )}
             <LanguageSelector />
           </div>

@@ -1,40 +1,50 @@
 # Deployment and handoff
 
-This version targets the organization's existing EC2 server using Docker Compose. The domain can be `whenkin.ucsd-cssa.com`; moving to EC2 does not require changing that public name. Configure DNS only after a staging deployment and data verification.
+This version targets the organization's existing EC2 server using Docker Compose. The domain can be
+`whenkin.ucsd-cssa.com`; moving to EC2 does not require changing that public name. Configure DNS
+only after a staging deployment and data verification.
 
 ## Existing EC2 server
 
-Before deployment, inventory its current containers, reverse proxy, ports, available RAM/disk, PostgreSQL services, and backup schedule. Use a dedicated checkout directory and Compose project. Do not replace an existing reverse proxy or restart unrelated applications.
+Before deployment, inventory its current containers, reverse proxy, ports, available RAM/disk,
+PostgreSQL services, and backup schedule. Use a dedicated checkout directory and Compose project. Do
+not replace an existing reverse proxy or restart unrelated applications.
 
-The base Compose file exposes the application and database only on loopback. On a server with an existing ingress, point the chosen hostname at `127.0.0.1:3000`, or select another `APP_PORT` if 3000 is occupied. Set `PUBLIC_ORIGIN=https://whenkin.ucsd-cssa.com`.
+The base Compose file exposes the application and database only on loopback. On a server with an
+existing ingress, point the chosen hostname at `127.0.0.1:3000`, or select another `APP_PORT` if
+3000 is occupied. Set `PUBLIC_ORIGIN=https://whenkin.ucsd-cssa.com`.
 
-Only enable `TRUST_PROXY=true` when the backend is reachable through a trusted proxy that overwrites forwarded headers. The optional Caddy setup does this. A server's existing ingress must be checked separately.
+Only enable `TRUST_PROXY=true` when the backend is reachable through a trusted proxy that overwrites
+forwarded headers. The optional Caddy setup does this. A server's existing ingress must be checked
+separately.
 
-For a fresh server without an existing HTTPS proxy, set a strong `DB_PASSWORD` and `DOMAIN` in an ignored `.env` file, then use:
+For a fresh server without an existing HTTPS proxy, set a strong `DB_PASSWORD` and `DOMAIN` in an
+ignored `.env` file, then use:
 
 ```sh
 docker compose -f compose.yaml -f compose.production.yaml up --build -d
 ```
 
-The optional Caddy service listens on 80/443 and manages HTTPS for the configured domain. Do not start it if another service already owns those ports. Use the base configuration with that existing ingress instead.
+The optional Caddy service listens on 80/443 and manages HTTPS for the configured domain. Do not
+start it if another service already owns those ports. Use the base configuration with that existing
+ingress instead.
 
 ## Updating
 
-The half-hour event release requires migration `010_event_slot_minutes.sql` and
-its matching API/frontend code. Existing events receive `slot_minutes=15`; their
-windows, replies, availability, and expiry timestamps are unchanged. New events
-use `slot_minutes=30`. Coordinate creation during the schema/API switchover,
-since the older API still accepts quarter-hour creation times. Do not round
-existing ranges or edit old migrations.
+The half-hour event release requires migration `010_event_slot_minutes.sql` and its matching
+API/frontend code. Existing events receive `slot_minutes=15`; their windows, replies, availability,
+and expiry timestamps are unchanged. New events use `slot_minutes=30`. Coordinate creation during
+the schema/API switchover, since the older API still accepts quarter-hour creation times. Do not
+round existing ranges or edit old migrations.
 
-Use a brief creation pause, or a compatible rolling sequence: apply migration
-010 and set the column default back to 15 in the same transaction, deploy the
-new API (which explicitly inserts 30), then restore the default to 30 after old
-API instances have been replaced. This keeps any old-version inserts marked as
-legacy events. If rolling back to the old API, first restore the default to 15;
+Use a brief creation pause, or a compatible rolling sequence: apply migration 010 and set the column
+default back to 15 in the same transaction, deploy the new API (which explicitly inserts 30), then
+restore the default to 30 after old API instances have been replaced. This keeps any old-version
+inserts marked as legacy events. If rolling back to the old API, first restore the default to 15;
 keep the new column and existing event values.
 
-From the dedicated checkout, first back up the database. Fetch and check out the reviewed release commit, then run:
+From the dedicated checkout, first back up the database. Fetch and check out the reviewed release
+commit, then run:
 
 ```sh
 docker compose build
@@ -42,48 +52,65 @@ docker compose run --rm migrate
 docker compose up -d app
 ```
 
-The migration runner checks unchanged SQL history and applies only pending migrations. Check `docker compose ps`, the application health check, and logs. Verify creation and shared responses on a staging database before promoting a release.
+The migration runner checks unchanged SQL history and applies only pending migrations. Check
+`docker compose ps`, the application health check, and logs. Verify creation and shared responses on
+a staging database before promoting a release.
 
-The same steps can be automated through the organization's existing deployment system. This repository's GitHub workflow checks the application and Docker stack; it does not SSH into an unconfigured production server. Production credentials are not required for those checks.
+The same steps can be automated through the organization's existing deployment system. This
+repository's GitHub workflow checks the application and Docker stack; it does not SSH into an
+unconfigured production server. Production credentials are not required for those checks.
 
 ## Database migration
 
-The directory refactor preserves all eight existing migrations. Copying source code does not copy production data. Moving the database is a separate operation:
+The directory refactor preserves all eight existing migrations. Copying source code does not copy
+production data. Moving the database is a separate operation:
 
-1. Take a PostgreSQL-compatible backup of the current database and verify its restore in an isolated database.
+1. Take a PostgreSQL-compatible backup of the current database and verify its restore in an isolated
+   database.
 2. Check PostgreSQL versions, roles, required functions and migration checksums.
-3. Use a temporary write freeze or a documented synchronization method for the final transfer, so edits are not lost during cutover.
-4. Compare event, window, response and availability row counts, selected event contents and expiry behavior.
-5. Switch the public application only after these checks pass; retain the old deployment for rollback.
+3. Use a temporary write freeze or a documented synchronization method for the final transfer, so
+   edits are not lost during cutover.
+4. Compare event, window, response and availability row counts, selected event contents and expiry
+   behavior.
+5. Switch the public application only after these checks pass; retain the old deployment for
+   rollback.
 
-The Node PostgreSQL driver also supports a hosted PostgreSQL connection URL. Keeping the existing database initially can separate application deployment from database migration.
+The Node PostgreSQL driver also supports a hosted PostgreSQL connection URL. Keeping the existing
+database initially can separate application deployment from database migration.
 
 ## Backups and restore
 
-Store backups outside the EC2 instance as well as any local working copy. A Docker volume protects against ordinary container replacement; it does not protect against instance or disk loss.
+Store backups outside the EC2 instance as well as any local working copy. A Docker volume protects
+against ordinary container replacement; it does not protect against instance or disk loss.
 
-Avoid shell redirection for binary PostgreSQL dumps in Windows PowerShell. For the Compose database, create the dump inside the container and copy it out:
+Avoid shell redirection for binary PostgreSQL dumps in Windows PowerShell. For the Compose database,
+create the dump inside the container and copy it out:
 
 ```sh
 docker compose exec -T db pg_dump -U whenkin -d whenkin -Fc -f /tmp/whenkin.dump
 docker compose cp db:/tmp/whenkin.dump ./whenkin.dump
 ```
 
-Move the dump to the organization's private backup location. Restore a copy into a separate database regularly and test it. Never commit a dump or report containing real event data.
+Move the dump to the organization's private backup location. Restore a copy into a separate database
+regularly and test it. Never commit a dump or report containing real event data.
 
 A restore example for a NEW, isolated verification database:
 
 ```sh
 docker compose exec -T db createdb -U whenkin whenkin_restore_check
 docker compose cp ./whenkin.dump db:/tmp/whenkin_restore_check.dump
-docker compose exec -T db pg_restore -U whenkin -d whenkin_restore_check --no-owner /tmp/whenkin_restore_check.dump
+docker compose exec -T db pg_restore \
+  -U whenkin -d whenkin_restore_check --no-owner \
+  /tmp/whenkin_restore_check.dump
 ```
 
 Do not run a restore over the live database as an ordinary update step.
 
 ## Rollback and succession
 
-Keep a known working image/release and a tested database backup. For this refactor, the schema is unchanged. For future schema changes, check backward compatibility before rolling application code back; restoring a backup can discard edits made since that backup.
+Keep a known working image/release and a tested database backup. For this refactor, the schema is
+unchanged. For future schema changes, check backward compatibility before rolling application code
+back; restoring a backup can discard edits made since that backup.
 
 The next maintainer needs organization-controlled access to:
 
@@ -93,6 +120,10 @@ The next maintainer needs organization-controlled access to:
 - The database configuration and private backups, including restore instructions.
 - Billing, alerts and the responsible administrator's contact.
 
-Grant individual access through the organization's normal process. No personal shared root key or personal hosting account is required by the application.
+Grant individual access through the organization's normal process. No personal shared root key or
+personal hosting account is required by the application.
 
-The retained current-host build can be checked with `pnpm build:sites` and `pnpm test:sites`; see [setup](setup.md#current-hosting-during-the-transition). Removing this adapter, the Site identity, root `.dev.vars` support or the hosted database transport belongs after the EC2 cutover, not before it.
+The retained current-host build can be checked with `pnpm build:sites` and `pnpm test:sites`; see
+[setup](setup.md#current-hosting-during-the-transition). Removing this adapter, the Site identity,
+root `.dev.vars` support or the hosted database transport belongs after the EC2 cutover, not before
+it.

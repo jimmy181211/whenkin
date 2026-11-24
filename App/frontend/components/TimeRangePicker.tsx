@@ -1,8 +1,5 @@
 /** Selects local start/end clock values without converting them to instants. */
-import {
-  getLocale,
-  t,
-} from '../i18n/index';
+import { langService } from '../i18n/language';
 import { NEW_EVENT_SLOT_MINUTES } from '../../shared/time';
 
 // Half-hour choices include next-day midnight, which is only offered as an end.
@@ -22,9 +19,9 @@ const times = Array.from(
  */
 function labelTime(value: string) {
   if (value === '24:00') {
-    return t('Midnight (next day)');
+    return langService.t('Midnight (next day)');
   }
-  return new Intl.DateTimeFormat(getLocale(), {
+  return new Intl.DateTimeFormat(langService.getLocale(), {
     timeZone: 'UTC',
     hour: 'numeric',
     minute: '2-digit',
@@ -53,7 +50,7 @@ export default function TimeRangePicker({
   return (
     <div className="fields-row two-fields">
       <label className="field">
-        {t('From')}
+        {langService.t('From')}
         <select
           value={start}
           onChange={
@@ -75,7 +72,7 @@ export default function TimeRangePicker({
         </select>
       </label>
       <label className="field">
-        {t('Until')}
+        {langService.t('Until')}
         <select
           value={end}
           onChange={

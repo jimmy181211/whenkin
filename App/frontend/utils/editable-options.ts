@@ -46,8 +46,7 @@ export function matchingOptions(options: EditableOption[], query: string) {
     .sort(
       /** Place label-prefix matches ahead of value or alias matches. */
       (a, b) =>
-        Number(normalize(b.label).startsWith(input)) -
-        Number(normalize(a.label).startsWith(input)),
+        Number(normalize(b.label).startsWith(input)) - Number(normalize(a.label).startsWith(input)),
     );
 }
 

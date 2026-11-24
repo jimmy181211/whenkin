@@ -4,17 +4,12 @@ import type {
   PointerEventHandler,
   RefObject,
 } from 'react';
-import {
-  getLocale,
-  t,
-} from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   type GridCell,
   type gridModel,
 } from '../utils/time';
-import AvailabilityCell, {
-  type AvailabilityCellContext,
-} from './AvailabilityCell';
+import AvailabilityCell, { type AvailabilityCellContext } from './AvailabilityCell';
 
 /** Prepared rows and slot mappings; interaction state stays in AvailabilityGrid. */
 type AvailabilityGridBodyProps = {
@@ -78,7 +73,7 @@ export default function AvailabilityGridBody({
         onLostPointerCapture={finishSelection}
       >
         <div className="time-corner">
-          {weekly ? t('Week') : zoneOffsetShort(zone, event.windows[0].start)}
+          {weekly ? langService.t('Week') : zoneOffsetShort(zone, event.windows[0].start)}
         </div>
         {visibleDays.map(
           /**
@@ -89,7 +84,7 @@ export default function AvailabilityGridBody({
             <div className="day-heading" key={date}>
               {weekly ? (
                 <strong>
-                  {new Intl.DateTimeFormat(getLocale(), {
+                  {new Intl.DateTimeFormat(langService.getLocale(), {
                     weekday: 'short',
                     timeZone: clockZone,
                   }).format(cells[0].stamp)}
@@ -97,13 +92,13 @@ export default function AvailabilityGridBody({
               ) : (
                 <>
                   <span>
-                    {new Intl.DateTimeFormat(getLocale(), {
+                    {new Intl.DateTimeFormat(langService.getLocale(), {
                       weekday: 'short',
                       timeZone: clockZone,
                     }).format(cells[0].stamp)}
                   </span>
                   <strong>
-                    {new Intl.DateTimeFormat(getLocale(), {
+                    {new Intl.DateTimeFormat(langService.getLocale(), {
                       month: 'short',
                       day: 'numeric',
                       timeZone: clockZone,
@@ -121,13 +116,11 @@ export default function AvailabilityGridBody({
            */
           (row, r) => (
             <GridRow key={row.key}>
-              <div
-                className={`time-label ${row.minute % 60 < 30 ? 'hour-label' : ''}`}
-              >
+              <div className={`time-label ${row.minute % 60 < 30 ? 'hour-label' : ''}`}>
                 {row.minute % 60 < 30 ? (
                   <>
                     {clockLabel(row.minute)}
-                    {row.occurrence > 0 && <small>{t('again')}</small>}
+                    {row.occurrence > 0 && <small>{langService.t('again')}</small>}
                   </>
                 ) : zoom > 1 ? (
                   <small>:{String(row.minute % 60).padStart(2, '0')}</small>
@@ -173,13 +166,11 @@ function GridRow({ children }: { children: React.ReactNode }) {
  * @returns A localized hour, or hour/minute label when the row is not on the hour.
  */
 function clockLabel(minute: number) {
-  return new Intl.DateTimeFormat(getLocale(), {
+  return new Intl.DateTimeFormat(langService.getLocale(), {
     timeZone: 'UTC',
     hour: 'numeric',
     minute: minute % 60 ? '2-digit' : undefined,
-  }).format(
-    new Date(Date.UTC(2000, 0, 1, Math.floor(minute / 60), minute % 60)),
-  );
+  }).format(new Date(Date.UTC(2000, 0, 1, Math.floor(minute / 60), minute % 60)));
 }
 
 /**
@@ -189,7 +180,7 @@ function clockLabel(minute: number) {
  */
 function zoneOffsetShort(zone: string, at: string) {
   return (
-    new Intl.DateTimeFormat(getLocale(), {
+    new Intl.DateTimeFormat(langService.getLocale(), {
       timeZone: zone,
       timeZoneName: 'short',
     })

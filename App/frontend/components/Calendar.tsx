@@ -1,5 +1,5 @@
 /** Selects event dates using the existing month and year controls. */
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import { useState } from 'react';
 import { Temporal } from '@js-temporal/polyfill';
 import {
@@ -47,18 +47,12 @@ export default function Calendar({
   const month = clampCalendarMonth(visibleMonth);
 
   /** Keep month navigation inside the calendar's supported date range. */
-  const setMonth = (next: Temporal.PlainDate) =>
-    setVisibleMonth(clampCalendarMonth(next));
+  const setMonth = (next: Temporal.PlainDate) => setVisibleMonth(clampCalendarMonth(next));
 
   return (
-    <div className="calendar" role="group" aria-label={t('Event dates')}>
+    <div className="calendar" role="group" aria-label={langService.t('Event dates')}>
       <CalendarControls month={month} setMonth={setMonth} />
-      <CalendarDates
-        month={month}
-        today={today}
-        value={value}
-        onChange={onChange}
-      />
+      <CalendarDates month={month} today={today} value={value} onChange={onChange} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   useEffect,
   useId,
@@ -35,18 +35,16 @@ const popular = [
 ];
 const aliases: Record<string, string> = {
   'America/Los_Angeles':
-    'Pacific Time PST PDT San Francisco San Diego Seattle Vancouver 洛杉矶 太平洋时间 旧金山 西雅图 温哥华 洛杉磯 Los Ángeles hora del Pacífico',
+    'Pacific Time PST PDT San Francisco San Diego Seattle Vancouver 洛杉矶 ' +
+    '太平洋时间 旧金山 西雅图 温哥华 洛杉磯 Los Ángeles hora del Pacífico',
   'America/New_York':
     'Eastern Time EST EDT Boston Washington Miami 纽约 紐約 东部时间 東部時間 Nueva York hora del Este',
-  'America/Chicago':
-    'Central Time CST CDT Dallas Houston 芝加哥 中部时间 hora central',
+  'America/Chicago': 'Central Time CST CDT Dallas Houston 芝加哥 中部时间 hora central',
   'America/Denver': 'Mountain Time MST MDT 丹佛 山地时间 hora de la montaña',
   'Asia/Shanghai':
     'China Beijing Shenzhen Hong Kong Chinese 上海 北京 深圳 香港 中国 中國 hora de China Pekín',
-  'Asia/Kolkata':
-    'India Mumbai New Delhi Indian 印度 加尔各答 孟买 Calcuta Nueva Delhi',
-  'Europe/London':
-    'United Kingdom British UK GMT BST 伦敦 倫敦 英国 英國 Londres Reino Unido',
+  'Asia/Kolkata': 'India Mumbai New Delhi Indian 印度 加尔各答 孟买 Calcuta Nueva Delhi',
+  'Europe/London': 'United Kingdom British UK GMT BST 伦敦 倫敦 英国 英國 Londres Reino Unido',
   'Europe/Paris': 'Paris París 法国 法國 巴黎',
   'Asia/Tokyo': 'Tokyo Tokio 日本 东京 東京',
   'Australia/Sydney': 'Sydney Sídney Australia 悉尼 澳大利亚',
@@ -98,13 +96,11 @@ export default function TimezonePicker({
     // Remove outside-click handling when the timezone picker unmounts.
     return () => document.removeEventListener('mousedown', close);
   }, []);
-  const zones = [
-    ...new Set([
-      value,
-      ...popular,
-      ...Intl.supportedValuesOf('timeZone'),
-    ]),
-  ];
+  const zones = [...new Set([
+    value,
+    ...popular,
+    ...Intl.supportedValuesOf('timeZone'),
+  ])];
 
   /**
    * Ignore accents, case, and underscores during timezone search.
@@ -122,9 +118,9 @@ export default function TimezonePicker({
       .filter(
         /* Match the timezone id, city label, and aliases against the search text. */
         (z) =>
-          normalize(
-            z + ' ' + zoneLabel(z) + ' ' + (aliases[z] || ''),
-          ).includes(normalize(query.trim())),
+          normalize(z + ' ' + zoneLabel(z) + ' ' + (aliases[z] || '')).includes(
+            normalize(query.trim()),
+          ),
       )
       .slice(0, 70)
     : [...new Set([
@@ -156,7 +152,11 @@ export default function TimezonePicker({
       <button
         ref={trigger}
         className="zone-trigger"
-        aria-label={`${t('Choose your time zone')}: ${zoneLabel(value)} ${zoneOffset(value, at)}`}
+        aria-label={[
+          `${langService.t('Choose your time zone')}:`,
+          zoneLabel(value),
+          zoneOffset(value, at),
+        ].join(' ')}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={
@@ -168,8 +168,7 @@ export default function TimezonePicker({
         <Globe2 size={17} />
         <span>
           <strong>
-            {zoneLabel(value)}{' '}
-            <span className="zone-offset">{zoneOffset(value, at)}</span>
+            {zoneLabel(value)} <span className="zone-offset">{zoneOffset(value, at)}</span>
           </strong>
         </span>
         <ChevronDown size={16} />
@@ -179,7 +178,7 @@ export default function TimezonePicker({
           id={menuId}
           className="zone-menu"
           role="dialog"
-          aria-label={t('Choose your time zone')}
+          aria-label={langService.t('Choose your time zone')}
         >
           <div className="zone-search">
             <Search size={17} />
@@ -190,8 +189,8 @@ export default function TimezonePicker({
               autoComplete="off"
               spellCheck={false}
               type="search"
-              aria-label={t('Search time zones')}
-              placeholder={t('Search a city or time zone')}
+              aria-label={langService.t('Search time zones')}
+              placeholder={langService.t('Search a city or time zone')}
               value={query}
               onChange={
                 /* Update the timezone search text. */
@@ -202,9 +201,7 @@ export default function TimezonePicker({
                 (e) => {
                   if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    root.current
-                      ?.querySelector<HTMLButtonElement>('.zone-option')
-                      ?.focus();
+                    root.current?.querySelector<HTMLButtonElement>('.zone-option')?.focus();
                   }
                   if (e.key === 'Enter' && shown.length === 1) {
                     e.preventDefault();
@@ -216,7 +213,7 @@ export default function TimezonePicker({
             <button
               type="button"
               className="icon-button"
-              aria-label={t('Close time zones')}
+              aria-label={langService.t('Close time zones')}
               onClick={
                 /* Close the timezone menu and restore focus to its trigger. */
                 () => {
@@ -236,7 +233,7 @@ export default function TimezonePicker({
               () => choose(detectedZone)
             }
           >
-            <LocateFixed size={16} /> {t('Use Device Time Zone')}{' '}
+            <LocateFixed size={16} /> {langService.t('Use Device Time Zone')}{' '}
             <small>{zoneLabel(detectedZone)}</small>
           </button>
           <div className="zone-options">
@@ -248,9 +245,7 @@ export default function TimezonePicker({
               (z) => (
                 <button
                   type="button"
-                  className={
-                    value === z ? 'zone-option selected' : 'zone-option'
-                  }
+                  className={value === z ? 'zone-option selected' : 'zone-option'}
                   key={z}
                   onClick={
                     /* Commit the timezone chosen from the results. */
@@ -267,7 +262,7 @@ export default function TimezonePicker({
             )}
             {!shown.length && (
               <p className="empty">
-                {t('No time zones found. Try a nearby major city.')}
+                {langService.t('No time zones found. Try a nearby major city.')}
               </p>
             )}
           </div>

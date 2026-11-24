@@ -20,16 +20,13 @@ function setup() {
    * @returns The dispatched browser-prompt fixture, ready for choice and consumption assertions.
    */
   const offer = (outcome: 'accepted' | 'dismissed' = 'accepted') => {
-    const event = Object.assign(
-      new Event('beforeinstallprompt', { cancelable: true }),
-      {
-        prompt: vi.fn<() => Promise<unknown>>(
-          /* Complete the simulated native prompt without additional side effects. */
-          async () => undefined,
-        ),
-        userChoice: Promise.resolve({ outcome }),
-      },
-    );
+    const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: vi.fn<() => Promise<unknown>>(
+        /* Complete the simulated native prompt without additional side effects. */
+        async () => undefined,
+      ),
+      userChoice: Promise.resolve({ outcome }),
+    });
     target.dispatchEvent(event);
     return event;
   };

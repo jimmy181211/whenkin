@@ -26,7 +26,8 @@
     "db:analyze": "node --env-file-if-exists=.env App/backend/tools/analyze-events.js",
     "db:verify-retention": "node App/backend/tools/verify-retention.js",
     "format": "node infra/format.js",
-    "format:check": "node infra/format.js --check"
+    "format:check": "node infra/format.js --check",
+    "check:lines": "node infra/check-line-length.js"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",

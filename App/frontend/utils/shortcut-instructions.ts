@@ -15,14 +15,8 @@ export type ShortcutDevice = (typeof shortcutDevices)[number];
  * iPads.
  * @returns The matching instruction category, falling back to Chrome for unknown agents.
  */
-export function detectShortcutDevice(
-  userAgent: string,
-  maxTouchPoints = 0,
-): ShortcutDevice {
-  if (
-    /iPhone|iPad|iPod/i.test(userAgent) ||
-    (/Macintosh/i.test(userAgent) && maxTouchPoints > 1)
-  ) {
+export function detectShortcutDevice(userAgent: string, maxTouchPoints = 0): ShortcutDevice {
+  if (/iPhone|iPad|iPod/i.test(userAgent) || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1)) {
     return 'ios';
   }
   if (/Android/i.test(userAgent)) {
@@ -31,10 +25,7 @@ export function detectShortcutDevice(
   if (/Edg\//i.test(userAgent)) {
     return 'edge';
   }
-  if (
-    /Chrome\//i.test(userAgent) &&
-    !/Edg|OPR|SamsungBrowser/i.test(userAgent)
-  ) {
+  if (/Chrome\//i.test(userAgent) && !/Edg|OPR|SamsungBrowser/i.test(userAgent)) {
     return 'chrome';
   }
   if (/Macintosh|Mac OS X/i.test(userAgent)) {
@@ -60,8 +51,7 @@ export const shortcutCopy = {
     title: 'Add a Shortcut',
     footer: 'Footer links',
     close: 'Close shortcut instructions',
-    intro:
-      'Follow these steps to add this page. It may open in its own window.',
+    intro: 'Follow these steps to add this page. It may open in its own window.',
     device: 'Your device / browser',
     link: 'Current page link',
     copy: 'Copy link',

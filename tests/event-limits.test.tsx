@@ -8,15 +8,12 @@ import {
 import { readFile } from 'node:fs/promises';
 import { sqlStatements } from '../App/backend/tools/sql-statements.js';
 import EventLimits from '../App/frontend/components/EventLimits';
-import {
-  setLanguage,
-  t,
-} from '../App/frontend/i18n/index';
+import { langService } from '../App/frontend/i18n/language';
 import { retentionDuration } from '../App/frontend/utils/retention-label';
 
 afterEach(
   /* Restore English after event-expiry wording tests. */
-  () => setLanguage('en'),
+  () => langService.setLanguage('en'),
 );
 /** Group the event expiry notice checks. */
 describe('event expiry notice', () => {
@@ -26,7 +23,7 @@ describe('event expiry notice', () => {
       'en',
       'zh',
     ] as const) {
-      setLanguage(language);
+      langService.setLanguage(language);
       const html = renderToStaticMarkup(
         <EventLimits
           policy={{
@@ -36,7 +33,7 @@ describe('event expiry notice', () => {
         />,
       );
       expect(html).toContain(
-        t('Links expire in {duration}', {
+        langService.t('Links expire in {duration}', {
           duration: retentionDuration({
             value: 12,
             unit: 'month',
@@ -55,8 +52,7 @@ describe('SQL migration statements', () => {
    * comments.
    */
   it('preserves function bodies, escaped quotes, dollar tags, and nested comments', () => {
-    const statements =
-      sqlStatements(`-- a comment;\nSELECT 'it''s; quoted', "a;name";
+    const statements = sqlStatements(`-- a comment;\nSELECT 'it''s; quoted', "a;name";
       /* outer; /* nested; */ */ CREATE FUNCTION example() RETURNS text LANGUAGE plpgsql AS $body$
       BEGIN RETURN 'a;b'; END; $body$;
       SELECT $$another;value$$; -- end`);
@@ -80,10 +76,7 @@ describe('SQL migration statements', () => {
    */
   it('keeps the capacity trigger and cleanup function intact in the migration', async () => {
     const migration = await readFile(
-      new URL(
-        '../App/backend/db/migrations/006_event_lifetime.sql',
-        import.meta.url,
-      ),
+      new URL('../App/backend/db/migrations/006_event_lifetime.sql', import.meta.url),
       'utf8',
     );
     const statements = sqlStatements(migration);

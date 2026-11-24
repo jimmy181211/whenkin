@@ -3,13 +3,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useLanguage } from './LanguageSelector';
 import SiteHeader from './SiteHeader';
 import { HeaderActionsProvider } from './HeaderActions';
-import PageLink from './PageLink';
 import ShortcutDialog from './ShortcutDialog';
 import { BRAND } from '../brand';
-import { t } from '../i18n/index';
+import {
+  langService,
+  useLanguage,
+} from '../i18n/language';
 import { LEGAL } from '../content/legal';
 import { shortcutCopy } from '../utils/shortcut-instructions';
 import { browserInstall } from '../utils/browser-install';
@@ -39,10 +40,7 @@ export default function SiteLayout({
       <HeaderActionsProvider>
         <SiteHeader showNewEvent={showNewEvent} />
         {children}
-        <Footer
-          showEventExpiry={showEventExpiry}
-          showTagline={showFooterTagline}
-        />
+        <Footer showEventExpiry={showEventExpiry} showTagline={showFooterTagline} />
       </HeaderActionsProvider>
     </RetentionPolicyProvider>
   );
@@ -87,7 +85,7 @@ function Footer({
         {showEventExpiry ? (
           <EventLimits className="footer-expiry" />
         ) : showTagline ? (
-          <span className="footer-tagline">{t(BRAND.tagline)}</span>
+          <span className="footer-tagline">{langService.t(BRAND.tagline)}</span>
         ) : null}
         <nav aria-label={copy.footer}>
           <button
@@ -106,8 +104,8 @@ function Footer({
             {copy.title}
           </button>
           <span className="footer-policy-links">
-            <PageLink href="/terms">{t('Terms of Use')}</PageLink>
-            <PageLink href="/privacy">{t('Privacy Policy')}</PageLink>
+            <a href="/terms">{langService.t('Terms of Use')}</a>
+            <a href="/privacy">{langService.t('Privacy Policy')}</a>
           </span>
         </nav>
         <span className="footer-copyright">

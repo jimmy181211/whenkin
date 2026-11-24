@@ -1,6 +1,6 @@
 /** Renders a selectable month grid using the calendar's controlled selection. */
 import { Temporal } from '@js-temporal/polyfill';
-import { getLocale } from '../i18n/index';
+import { langService } from '../i18n/language';
 import { isEventDateAllowed } from '../../shared/date-limits';
 
 /** Visible dates and selected-date values; all selection updates go to the parent. */
@@ -35,7 +35,7 @@ export default function CalendarDates({
         { length: 7 },
         /* Build Sunday-first weekday headings in the selected language. */
         (_, i) =>
-          new Intl.DateTimeFormat(getLocale(), {
+          new Intl.DateTimeFormat(langService.getLocale(), {
             weekday: 'narrow',
             timeZone: 'UTC',
           }).format(new Date(Date.UTC(2023, 0, 1 + i))),
@@ -58,6 +58,11 @@ export default function CalendarDates({
           const key = d.toString();
           const selected = value.includes(key);
           const disabled = !isEventDateAllowed(d, today);
+          const dateClasses = [
+            'calendar-day',
+            d.month !== month.month ? 'other-month' : '',
+            key === today.toString() ? 'today' : '',
+          ].join(' ');
           return (
             <button
               type="button"
@@ -65,7 +70,7 @@ export default function CalendarDates({
               aria-label={key}
               aria-pressed={selected}
               disabled={disabled}
-              className={`calendar-day ${d.month !== month.month ? 'other-month' : ''} ${key === today.toString() ? 'today' : ''}`}
+              className={dateClasses}
               onClick={
                 /* Toggle this date while enforcing the 31-date selection limit. */
                 () =>

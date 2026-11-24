@@ -2,7 +2,7 @@
 import type { AvailabilityCellContext } from './AvailabilityCell';
 import AvailabilityGridTools from './AvailabilityGridTools';
 import AvailabilityGridBody from './AvailabilityGridBody';
-import { t } from '../i18n/index';
+import { langService } from '../i18n/language';
 import {
   useEffect,
   useMemo,
@@ -121,8 +121,7 @@ export default function AvailabilityGrid({
    * Map weekly display slots back to the organizer's saved coordinates.
    * @returns A stored slot start in milliseconds; dated-event stamps are unchanged.
    */
-  const canonicalStamp = (stamp: number) =>
-    projection ? projection.toCanonical(stamp) : stamp;
+  const canonicalStamp = (stamp: number) => (projection ? projection.toCanonical(stamp) : stamp);
 
   /**
    * Build the displayed calendar rows and columns for the current zone.
@@ -216,8 +215,7 @@ export default function AvailabilityGrid({
    */
   useEffect(() => {
     /** Update the narrow-screen layout flag after resizing. */
-    const resize = () =>
-      setIsNarrowScreen(window.innerWidth < MOBILE_BREAKPOINT_PX);
+    const resize = () => setIsNarrowScreen(window.innerWidth < MOBILE_BREAKPOINT_PX);
 
     window.addEventListener('resize', resize);
     // Remove the screen-width listener when the grid unmounts.
@@ -236,10 +234,7 @@ export default function AvailabilityGrid({
   ]);
   const daysPerPage = isNarrowScreen ? 3 : 7;
   // Clamp the starting day when resizing changes how many columns fit on a page.
-  const firstColumn = Math.min(
-    page * daysPerPage,
-    Math.max(0, grid.days.length - daysPerPage),
-  );
+  const firstColumn = Math.min(page * daysPerPage, Math.max(0, grid.days.length - daysPerPage));
 
   /** Store a copy of the selection before an edit, keeping bounded undo history. */
   function rememberSelection() {
@@ -265,16 +260,8 @@ export default function AvailabilityGrid({
     currentGesture.endRow = row;
     currentGesture.endCol = col;
     const stamps: number[] = [];
-    for (
-      let c = Math.min(currentGesture.col, col);
-      c <= Math.max(currentGesture.col, col);
-      c++
-    ) {
-      for (
-        let r = Math.min(currentGesture.row, row);
-        r <= Math.max(currentGesture.row, row);
-        r++
-      ) {
+    for (let c = Math.min(currentGesture.col, col); c <= Math.max(currentGesture.col, col); c++) {
+      for (let r = Math.min(currentGesture.row, row); r <= Math.max(currentGesture.row, row); r++) {
         const cells = columnCellMaps[c]?.get(grid.rows[r]?.key) || [];
         for (const cell of cells) {
           stamps.push(cell.stamp);
@@ -282,11 +269,7 @@ export default function AvailabilityGrid({
       }
     }
     onChange(
-      paintSelection(
-        currentGesture.base,
-        stamps.map(canonicalStamp),
-        currentGesture.remove,
-      ),
+      paintSelection(currentGesture.base, stamps.map(canonicalStamp), currentGesture.remove),
     );
   }
 
@@ -299,9 +282,7 @@ export default function AvailabilityGrid({
     if (e.button !== 0) {
       return;
     }
-    const target = (e.target as HTMLElement).closest<HTMLElement>(
-      '[data-stamp]',
-    );
+    const target = (e.target as HTMLElement).closest<HTMLElement>('[data-stamp]');
     if (!target) {
       return;
     }
@@ -345,10 +326,7 @@ export default function AvailabilityGrid({
       .elementFromPoint(e.clientX, e.clientY)
       ?.closest<HTMLElement>('[data-stamp]');
     if (target && e.currentTarget.contains(target)) {
-      updateGestureSelection(
-        Number(target.dataset.row),
-        Number(target.dataset.col),
-      );
+      updateGestureSelection(Number(target.dataset.row), Number(target.dataset.col));
     }
   }
 
@@ -390,7 +368,7 @@ export default function AvailabilityGrid({
   return (
     <section
       className="availability-section"
-      aria-label={t(group ? 'Group Availability' : 'Your availability grid')}
+      aria-label={langService.t(group ? 'Group Availability' : 'Your availability grid')}
     >
       <AvailabilityGridTools
         view={view}

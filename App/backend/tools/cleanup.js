@@ -1,5 +1,5 @@
 /** Validates the retention policy and performs administrator-requested cleanup. */
-import { createDatabase } from '../db/connection.js';
+import { PostgresDatabase } from '../db/connection.js';
 import { pathToFileURL } from 'node:url';
 import {
   parseRetentionPolicy,
@@ -31,9 +31,7 @@ export function cleanupOptions(args) {
       months = validateRetentionMonths(Number(args[++index]));
       continue;
     }
-    throw new Error(
-      'Use --dry-run and/or --months followed by a positive whole number.',
-    );
+    throw new Error('Use --dry-run and/or --months followed by a positive whole number.');
   }
   return {
     months,
@@ -62,9 +60,7 @@ export class EventCleanup {
    * @returns A cleanup instance using the validated month count read from the database.
    */
   static async load(query) {
-    const rows = await query(
-      'SELECT * FROM public.get_event_retention_policy()',
-    );
+    const rows = await query('SELECT * FROM public.get_event_retention_policy()');
     const policy = parseRetentionPolicy(rows[0]);
     return new EventCleanup(query, policy.value);
   }
@@ -81,10 +77,7 @@ export class EventCleanup {
    */
   async setTime(time) {
     const months = validateRetentionMonths(time);
-    const rows = await this.#query(
-      'SELECT * FROM public.set_event_retention_months($1)',
-      [months],
-    );
+    const rows = await this.#query('SELECT * FROM public.set_event_retention_months($1)', [months]);
     const policy = parseRetentionPolicy(rows[0]);
     if (policy.value !== months) {
       throw new Error('Retention update did not match the requested months.');
@@ -98,7 +91,8 @@ export class EventCleanup {
    */
   async dryRun() {
     const rows = await this.#query(
-      'SELECT count(*)::integer AS eligible_events FROM public.events WHERE public.event_retention_deadline(created_at,$1)<=statement_timestamp()',
+      `SELECT count(*)::integer AS eligible_events FROM public.events WHERE
+  public.event_retention_deadline(created_at , $1)<=statement_timestamp()`,
       [this.#time],
     );
     return {
@@ -122,10 +116,7 @@ export class EventCleanup {
     // Counts event rows only. Foreign keys also remove their replies and time ranges.
     let deletedEvents = 0;
     while (true) {
-      const rows = await this.#query(
-        'SELECT * FROM public.purge_expired_events($1)',
-        [100],
-      );
+      const rows = await this.#query('SELECT * FROM public.purge_expired_events($1)', [100]);
       const count = rows[0]?.deleted_events;
       if (!Number.isInteger(count) || count < 0 || count > 100) {
         throw new Error('Invalid cleanup result.');
@@ -136,7 +127,8 @@ export class EventCleanup {
       }
     }
     const rows = await this.#query(
-      'SELECT count(*)::integer AS remaining FROM public.events WHERE public.event_retention_deadline(created_at)<=statement_timestamp()',
+      `SELECT count(*)::integer AS remaining FROM public.events WHERE
+  public.event_retention_deadline(created_at)<=statement_timestamp()`,
     );
     if (rows[0]?.remaining !== 0) {
       throw new Error('Some old events are busy. Run cleanup again.');
@@ -145,14 +137,11 @@ export class EventCleanup {
   }
 }
 
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   let database;
   try {
     const options = cleanupOptions(process.argv.slice(2));
-    database = createDatabase();
+    database = new PostgresDatabase();
 
     /**
      * Pass cleanup SQL and bound values to the database adapter.
@@ -164,12 +153,12 @@ if (
       options.months === undefined
         ? await EventCleanup.load(query)
         : new EventCleanup(query, options.months);
-    console.log(
-      JSON.stringify(await (options.dryRun ? cleanup.dryRun() : cleanup.run())),
-    );
+    console.log(JSON.stringify(await (options.dryRun ? cleanup.dryRun() : cleanup.run())));
   } catch {
     console.error(
-      'Cleanup did not finish. Check DATABASE_URL, migrations through 009, and the whole-number months parameter. No credentials were printed.',
+      'Cleanup did not finish. Check DATABASE_URL, migrations through ' +
+        '009, and the whole-number months parameter. No credentials were ' +
+        'printed.',
     );
     process.exitCode = 1;
   } finally {

@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import PopupSurface from './PopupSurface';
-import { useLanguage } from './LanguageSelector';
+import { useLanguage } from '../i18n/language';
 import {
   detectShortcutDevice,
   shortcutCopy,
@@ -35,9 +35,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
   const [device, setDevice] = useState(() =>
     detectShortcutDevice(navigator.userAgent, navigator.maxTouchPoints),
   );
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>(
-    'idle',
-  );
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const pageLink = shortcutPageURL(window.location.href);
 
   /**
@@ -49,9 +47,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    surface.current
-      ?.querySelector<HTMLButtonElement>('button')
-      ?.focus({ preventScroll: true });
+    surface.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
 
     /** Close with Escape and keep Tab navigation inside the shortcut dialog. */
     const handleKey = (event: KeyboardEvent) => {
@@ -62,9 +58,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
       if (event.key !== 'Tab') {
         return;
       }
-      const controls = surface.current?.querySelectorAll<HTMLElement>(
-        'button, select, input',
-      );
+      const controls = surface.current?.querySelectorAll<HTMLElement>('button, select, input');
       if (!controls?.length) {
         return;
       }
@@ -181,11 +175,7 @@ export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
           {copyStatus === 'copied' ? copy.copied : copy.copy}
         </button>
         <span className="shortcut-status" role="status">
-          {copyStatus === 'failed'
-            ? copy.copyFailed
-            : copyStatus === 'copied'
-              ? copy.copied
-              : ''}
+          {copyStatus === 'failed' ? copy.copyFailed : copyStatus === 'copied' ? copy.copied : ''}
         </span>
       </PopupSurface>
     </div>,
