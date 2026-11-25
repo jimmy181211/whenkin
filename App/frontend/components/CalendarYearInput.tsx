@@ -11,7 +11,6 @@ import {
 import { langService } from '../i18n/language';
 import { useNotice } from '../utils/use-notice';
 import Toast from './Toast';
-import './option-select.css';
 
 /** Saved year and the parent-owned action for moving the calendar. */
 type Props = {

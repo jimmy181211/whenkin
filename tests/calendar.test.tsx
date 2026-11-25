@@ -59,11 +59,12 @@ describe('calendar month and year navigation', () => {
     }
   });
   /**
-   * Renders editable localized month and year controls without blocking
+   * Renders native localized month choices and numeric years without blocking
    * past-month browsing.
    */
   it(
-    'renders editable localized month and year controls without ' + 'blocking past-month browsing',
+    'renders native localized month choices and numeric years without ' +
+      'blocking past-month browsing',
     () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
@@ -90,12 +91,12 @@ describe('calendar month and year navigation', () => {
         );
         expect(html).toContain(`aria-label="${langService.t('Month')}"`);
         expect(html).toContain(`aria-label="${langService.t('Year')}"`);
-        expect(html).toContain('role="combobox"');
-        expect(html).toContain('<button type="button" class="option-select-trigger"');
-        expect(html).toContain('aria-haspopup="listbox"');
+        expect(html).toContain('<select class="calendar-month"');
+        expect(html.match(/<option /g)).toHaveLength(12);
+        expect(html).not.toContain('aria-haspopup="listbox"');
         expect(html).toContain('type="number"');
         expect(html).toContain('min="2026" max="9999" step="1"');
-        expect(html).toContain(`<span>${october}</span>`);
+        expect(html).toContain(`<option value="10" selected="">${october}</option>`);
         expect(html).toContain('value="2026"');
         expect(html).toContain('inputMode="numeric"');
         expect(html).toMatch(/aria-label="2026-10-21" aria-pressed="false" disabled=""/);

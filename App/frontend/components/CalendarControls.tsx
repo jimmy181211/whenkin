@@ -1,4 +1,4 @@
-/** Renders editable month/year choices and bounded calendar navigation. */
+/** Renders native month selection, numeric year input, and calendar navigation. */
 import { Temporal } from '@js-temporal/polyfill';
 import {
   ChevronLeft,
@@ -10,8 +10,8 @@ import {
   LAST_EVENT_DATE,
 } from '../../shared/date-limits';
 import CalendarYearInput from './CalendarYearInput';
-import OptionSelect from './OptionSelect';
 import { useMediaQuery } from '../utils/use-media-query';
+import './calendar-controls.css';
 
 /** Visible month and validated navigation action supplied by the calendar. */
 type CalendarControlsProps = {
@@ -20,10 +20,10 @@ type CalendarControlsProps = {
 };
 
 /**
- * Calendar navigation component. Months use a selection-only list opening below;
- * years use bounded numeric input without an option list.
+ * Calendar navigation component using the browser's native month selector.
+ * Narrow screens show abbreviated month names; years use bounded numeric input.
  * The parent clamps requested months to the same supported date range.
- * @returns A downward month selector, year field, and bounded navigation buttons.
+ * @returns A month selector, year field, and bounded navigation buttons.
  */
 export default function CalendarControls({
   month,
@@ -37,29 +37,28 @@ export default function CalendarControls({
     timeZone: 'UTC',
   } as const;
   const localMonths = new Intl.DateTimeFormat(langService.getLocale(), monthFormat);
-  const monthOptions = Array.from(
-    { length: 12 },
-    /* Pair each month number with its localized display label. */
-    (_, i) => {
-      const date = new Date(Date.UTC(2000, i, 1));
-      return {
-        label: localMonths.format(date),
-        value: String(i + 1),
-      };
-    },
-  );
   return (
     <div className="calendar-heading">
       <div className="calendar-selects">
-        <OptionSelect
-          label={langService.t('Month')}
+        <select
+          className="calendar-month"
+          aria-label={langService.t('Month')}
           value={String(month.month)}
-          options={monthOptions}
           onChange={
-            /** Apply the month number chosen from the downward option list. */
-            (value) => setMonth(month.with({ month: Number(value) }))
+            /** Apply the month number selected with the browser's native controls. */
+            (event) => setMonth(month.with({ month: Number(event.currentTarget.value) }))
           }
-        />
+        >
+          {Array.from(
+            { length: 12 },
+            /** Render a localized month label while keeping its saved numeric value. */
+            (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                {localMonths.format(new Date(Date.UTC(2000, index, 1)))}
+              </option>
+            ),
+          )}
+        </select>
         <CalendarYearInput
           value={month.year}
           onChange={
