@@ -1,7 +1,6 @@
 import { Languages } from 'lucide-react';
 import {
   langService,
-  languageOptions,
   useLanguage,
   type Language,
 } from '../i18n/language';
@@ -24,16 +23,8 @@ export default function LanguageSelector() {
           (event) => langService.setLanguage(event.target.value as Language)
         }
       >
-        {languageOptions.map(
-          /**
-           * @returns One native-language option in the language selector.
-           */
-          (option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ),
-        )}
+        <option value="en">English</option>
+        <option value="zh">简体中文</option>
       </select>
     </label>
   );
