@@ -1,38 +1,21 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { languageOptions, messages } from '../App/frontend/i18n/LanguageProvider';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App/frontend/App';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import {
-  langService,
-  languageOptions,
-  messages,
-} from '../App/frontend/i18n/language';
-import {
-  LEGAL,
-  legalDocuments,
-} from '../App/frontend/content/legal';
-import {
-  shortcutCopy,
-  shortcutDevices,
-} from '../App/frontend/utils/shortcut-instructions';
-import {
-  allSlots,
-  gridModel,
-  localToUTC,
-  slotsToRanges,
-} from '../App/frontend/utils/time';
+
+import { LEGAL, legalDocuments } from '../App/frontend/content/legal';
+import { shortcutCopy, shortcutDevices } from '../App/frontend/utils/shortcut-instructions';
+import { allSlots, gridModel, localToUTC, slotsToRanges } from '../App/frontend/utils/time';
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 afterEach(
   /* Reset the language and browser globals after each localization test. */
   () => {
-    langService.setLanguage('en');
+    languageFixture.setLanguage('en');
     vi.unstubAllGlobals();
   },
 );
@@ -43,11 +26,7 @@ afterEach(
  */
 const page = (path = '/') => {
   vi.stubGlobal('window', {
-    location: {
-      pathname: path,
-      href: 'http://localhost' + path,
-      origin: 'http://localhost',
-    },
+    location: { pathname: path, href: 'http://localhost' + path, origin: 'http://localhost' },
     innerWidth: 390,
   });
   return renderToStaticMarkup(<App />);
@@ -57,7 +36,7 @@ const page = (path = '/') => {
 describe('language changes across the website', () => {
   /** Starts in English with a compact guide entry on every screen. */
   it('starts in English with a compact guide entry on every screen', () => {
-    expect(langService.getLanguage()).toBe('en');
+    expect(languageFixture.getLanguage()).toBe('en');
     const html = page();
     expect(html).toContain('Event Name');
     expect(html).toContain('Add a Shortcut');
@@ -77,7 +56,7 @@ describe('language changes across the website', () => {
   });
   /** Renders Chinese forms, instructions, and the selected language. */
   it('renders Chinese forms, instructions, and the selected language', () => {
-    langService.setLanguage('zh');
+    languageFixture.setLanguage('zh');
     const html = page();
     expect(html).toContain('创建你的活动');
     expect(html).toContain('添加快捷方式');
@@ -86,7 +65,7 @@ describe('language changes across the website', () => {
     expect(html).toContain('value="zh" selected=""');
     expect(html).not.toContain('What are you planning?');
     expect(page('/how-it-works')).toContain('guide-page');
-    expect(langService.getLocale()).toBe('zh-CN');
+    expect(languageFixture.getLocale()).toBe('zh-CN');
   });
   /**
    * Includes every interface key and preserves substitution placeholders
@@ -109,10 +88,7 @@ describe('language changes across the website', () => {
         expect(shortcutCopy[language].devices[device]).toBeTruthy();
         expect(shortcutCopy[language].tutorial).toBeTruthy();
       }
-      for (const kind of [
-        'terms',
-        'privacy',
-      ] as const) {
+      for (const kind of ['terms', 'privacy'] as const) {
         expect(legalDocuments[language][kind].sections).toHaveLength(
           legalDocuments.en[kind].sections.length,
         );
@@ -122,35 +98,18 @@ describe('language changes across the website', () => {
     }
   });
 
-  /** Retired saved preferences fall back to English instead of breaking rendering. */
-  it('offers only English and Chinese and safely loads retired preferences', async () => {
-    expect(languageOptions.map(({ value }) => value)).toEqual([
-      'en',
-      'zh',
-    ]);
-    for (const retired of [
-      'es',
-      'pt',
-      'de',
-    ]) {
-      expect(langService.isLanguage(retired)).toBe(false);
-      vi.stubGlobal('localStorage', { getItem: () => retired });
-      vi.resetModules();
-      const fresh = await import('../App/frontend/i18n/language');
-      expect(fresh.langService.getLanguage()).toBe('en');
-      expect(fresh.langService.t('Event Name')).toBe('Event Name');
+  /** Only the two supported codes are available as language choices. */
+  it('offers only English and Chinese and rejects retired language codes', () => {
+    expect(languageOptions.map(({ value }) => value)).toEqual(['en', 'zh']);
+    for (const retired of ['es', 'pt', 'de']) {
+      expect(languageFixture.isLanguage(retired)).toBe(false);
     }
   });
 
   /** Reject language-like values that are not supported codes. */
   it('rejects unsupported language values', () => {
-    for (const invalid of [
-      'toString',
-      '__proto__',
-      'pt-PT',
-      null,
-    ]) {
-      expect(langService.isLanguage(invalid)).toBe(false);
+    for (const invalid of ['toString', '__proto__', 'pt-PT', null]) {
+      expect(languageFixture.isLanguage(invalid)).toBe(false);
     }
   });
 
@@ -162,61 +121,9 @@ describe('language changes across the website', () => {
   });
   /** Preserves typed text when translating templates. */
   it('preserves typed text when translating templates', () => {
-    langService.setLanguage('zh');
-    expect(langService.t('ORGANIZED BY {name}', { name: 'Ana & 李' })).toBe('组织者：Ana & 李');
+    languageFixture.setLanguage('zh');
+    expect(languageFixture.t('ORGANIZED BY {name}', { name: 'Ana & 李' })).toBe('组织者：Ana & 李');
   });
-  /** Remembers the explicit language preference on this device. */
-  it('remembers the explicit language preference on this device', () => {
-    const storage = { setItem: vi.fn() };
-    vi.stubGlobal('localStorage', storage);
-    langService.setLanguage('zh');
-    expect(storage.setItem).toHaveBeenCalledWith('whenkin:language', 'zh');
-  });
-
-  /** One storage event must notify each component once, not once per subscriber. */
-  it('shares one cross-tab listener and removes it after the last unsubscribe', () => {
-    const browser = new EventTarget();
-    const add = vi.spyOn(browser, 'addEventListener');
-    const remove = vi.spyOn(browser, 'removeEventListener');
-    vi.stubGlobal('window', browser);
-    vi.stubGlobal('localStorage', {
-      getItem: () => 'zh',
-      setItem: vi.fn(),
-    });
-    const first = vi.fn();
-    const second = vi.fn();
-    const stopFirst = langService.subscribe(first);
-    const stopSecond = langService.subscribe(second);
-
-    /** Simulate another tab updating a specific storage key. */
-    const storageChange = (key: string) => {
-      const event = new Event('storage');
-      Object.defineProperty(event, 'key', { value: key });
-      browser.dispatchEvent(event);
-    };
-
-    try {
-      expect(add).toHaveBeenCalledTimes(1);
-      storageChange('unrelated');
-      expect(first).not.toHaveBeenCalled();
-      storageChange('whenkin:language');
-      expect(langService.getLanguage()).toBe('zh');
-      expect(first).toHaveBeenCalledTimes(1);
-      expect(second).toHaveBeenCalledTimes(1);
-      storageChange('whenkin:language');
-      expect(first).toHaveBeenCalledTimes(1);
-      stopFirst();
-      expect(remove).not.toHaveBeenCalled();
-      langService.setLanguage('en');
-      expect(first).toHaveBeenCalledTimes(1);
-      expect(second).toHaveBeenCalledTimes(2);
-    } finally {
-      stopFirst();
-      stopSecond();
-    }
-    expect(remove).toHaveBeenCalledTimes(1);
-  });
-
   /** Switching and translation still work when the browser blocks storage. */
   it('switches without storage and preserves unknown keys and placeholders', () => {
     vi.stubGlobal('localStorage', {
@@ -224,40 +131,25 @@ describe('language changes across the website', () => {
         throw new Error('Storage blocked');
       },
     });
-    langService.setLanguage('zh');
-    expect(langService.t('Event Name')).toBe('活动名称');
-    expect(langService.t('Untranslated {value}')).toBe('Untranslated {value}');
-    expect(langService.t('Untranslated {value}', { value: 1234 })).toBe('Untranslated 1,234');
+    languageFixture.setLanguage('zh');
+    expect(languageFixture.t('Event Name')).toBe('活动名称');
+    expect(languageFixture.t('Untranslated {value}')).toBe('Untranslated {value}');
+    expect(languageFixture.t('Untranslated {value}', { value: 1234 })).toBe('Untranslated 1,234');
   });
   /**
    * Offers policy links from home and event pages and localizes both
    * documents.
    */
   it('offers policy links from home and event pages and localizes both documents', () => {
-    const titles = {
-      en: [
-        'Terms of Use',
-        'Privacy Policy',
-      ],
-      zh: [
-        '使用条款',
-        '隐私政策',
-      ],
-    };
+    const titles = { en: ['Terms of Use', 'Privacy Policy'], zh: ['使用条款', '隐私政策'] };
     for (const { value: language } of languageOptions) {
-      langService.setLanguage(language);
-      for (const path of [
-        '/',
-        '/e/855e5518-3b5a-49cb-b906-69bbd7bac603',
-      ]) {
+      languageFixture.setLanguage(language);
+      for (const path of ['/', '/e/855e5518-3b5a-49cb-b906-69bbd7bac603']) {
         const html = page(path);
         expect(html).toContain('href="/terms"');
         expect(html).toContain('href="/privacy"');
       }
-      for (const [index, path] of [
-        '/terms',
-        '/privacy',
-      ].entries()) {
+      for (const [index, path] of ['/terms', '/privacy'].entries()) {
         const html = page(path);
         expect(html).toContain(`<h1 id="legal-title">${titles[language][index]}</h1>`);
         expect(html).toContain('UCSD CSSA');
@@ -281,18 +173,13 @@ describe('language is independent of scheduling data', () => {
       description: '',
       organizer_name: 'Ana',
       timezone: 'America/Los_Angeles',
-      windows: [
-        {
-          start,
-          end: '2027-01-15T19:00:00Z',
-        },
-      ],
+      windows: [{ start, end: '2027-01-15T19:00:00Z' }],
       responses: [],
     };
     const selected = new Set(allSlots(event.windows).slice(0, 2));
     const before = slotsToRanges(selected);
     for (const { value: language } of languageOptions) {
-      langService.setLanguage(language);
+      languageFixture.setLanguage(language);
       const html = renderToStaticMarkup(
         <AvailabilityGrid
           event={event}

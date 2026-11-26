@@ -8,19 +8,12 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import {
-  join,
-  resolve,
-} from 'node:path';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const mode = process.argv[2] || 'all';
-if (![
-  'all',
-  'server',
-  'sites',
-].includes(mode)) {
+if (!['all', 'server', 'sites'].includes(mode)) {
   throw new Error('Choose server, sites or all.');
 }
 const serverOutput = resolve(root, 'dist/node');
@@ -32,27 +25,14 @@ if (existsSync(join(root, 'dist')) && lstatSync(join(root, 'dist')).isSymbolicLi
 }
 // Remove only generated backend output, so deleted source modules cannot remain in a build.
 if (mode !== 'sites') {
-  rmSync(serverOutput, {
-    recursive: true,
-    force: true,
-  });
+  rmSync(serverOutput, { recursive: true, force: true });
 }
 if (mode !== 'server') {
-  rmSync(join(resolve(root), 'dist', 'server'), {
-    recursive: true,
-    force: true,
-  });
+  rmSync(join(resolve(root), 'dist', 'server'), { recursive: true, force: true });
 }
-const commands = [[
-  'node_modules/vite/bin/vite.js',
-  'build',
-]];
+const commands = [['node_modules/vite/bin/vite.js', 'build']];
 if (mode !== 'sites') {
-  commands.push([
-    'node_modules/typescript/bin/tsc',
-    '-p',
-    'App/backend/tsconfig.json',
-  ]);
+  commands.push(['node_modules/typescript/bin/tsc', '-p', 'App/backend/tsconfig.json']);
 }
 if (mode !== 'server') {
   commands.push([
@@ -66,10 +46,7 @@ if (mode !== 'server') {
   ]);
 }
 for (const args of commands) {
-  const result = spawnSync(process.execPath, args, {
-    cwd: root,
-    stdio: 'inherit',
-  });
+  const result = spawnSync(process.execPath, args, { cwd: root, stdio: 'inherit' });
   if (result.error || result.status !== 0) {
     process.exit(result.status || 1);
   }

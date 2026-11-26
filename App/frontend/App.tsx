@@ -1,4 +1,5 @@
 /** Selects the page for the current URL and sets its localized document title. */
+import { useLanguage } from './i18n/LanguageProvider';
 import { useEffect } from 'react';
 import { pageRoute } from '../shared/routes';
 import { ArrowRight } from 'lucide-react';
@@ -7,10 +8,6 @@ import LegalPage from './pages/LegalPage';
 import CreateEventPage from './pages/CreateEventPage';
 import EventPage from './pages/EventPage';
 import HowItWorksPage from './pages/HowItWorksPage';
-import {
-  langService,
-  useLanguage,
-} from './i18n/language';
 import { legalDocuments } from './content/legal';
 
 /**
@@ -20,7 +17,8 @@ import { legalDocuments } from './content/legal';
  * unknown-page message.
  */
 export default function App() {
-  const language = useLanguage();
+  const { t, locale, language } = useLanguage();
+
   const path = typeof window === 'undefined' ? '/' : window.location.pathname;
   const route = pageRoute(path);
   const eventId = route.kind === 'event' ? route.id : null;
@@ -30,14 +28,11 @@ export default function App() {
    * legal page changes.
    */
   useEffect(() => {
-    document.documentElement.lang = langService.getLocale();
+    document.documentElement.lang = locale;
     document.title = legalKind
       ? `${legalDocuments[language][legalKind].title} — Whenkin`
-      : `Whenkin — ${langService.t('Find Your Shared Time.')}`;
-  }, [
-    language,
-    legalKind,
-  ]);
+      : `Whenkin — ${t('Find Your Shared Time.')}`;
+  }, [language, legalKind]);
   return (
     <SiteLayout
       showNewEvent={!!eventId}
@@ -54,9 +49,9 @@ export default function App() {
         <LegalPage kind={legalKind} />
       ) : (
         <main className="error-page">
-          <h1>{langService.t('That Page Is a Little Off-Grid.')}</h1>
+          <h1>{t('That Page Is a Little Off-Grid.')}</h1>
           <a className="button primary" href="/">
-            {langService.t('Create an Event')} <ArrowRight size={17} />
+            {t('Create an Event')} <ArrowRight size={17} />
           </a>
         </main>
       )}

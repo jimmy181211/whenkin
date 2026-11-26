@@ -1,7 +1,8 @@
 /** Renders a selectable month grid using the calendar's controlled selection. */
+import { useLanguage } from '../i18n/LanguageProvider';
 import { Temporal } from '@js-temporal/polyfill';
-import { langService } from '../i18n/language';
 import { isEventDateAllowed } from '../../shared/date-limits';
+import { EVENT_INPUT_LIMITS } from '../../shared/event-input';
 
 /** Visible dates and selected-date values; all selection updates go to the parent. */
 type CalendarDatesProps = {
@@ -16,18 +17,11 @@ type CalendarDatesProps = {
  * 31-date limit; removing a date remains allowed when that limit is reached.
  * @returns Sunday-first weekday headings and the visible month's date buttons.
  */
-export default function CalendarDates({
-  month,
-  today,
-  value,
-  onChange,
-}: CalendarDatesProps) {
+export default function CalendarDates({ month, today, value, onChange }: CalendarDatesProps) {
+  const { locale } = useLanguage();
   // Convert Monday-based Temporal numbering to the calendar's Sunday-first columns.
   const offset = month.dayOfWeek % 7;
-  const weekdayFormat = new Intl.DateTimeFormat(langService.getLocale(), {
-    weekday: 'narrow',
-    timeZone: 'UTC',
-  });
+  const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: 'narrow', timeZone: 'UTC' });
   const todayKey = today.toString();
   const dates = Array.from(
     { length: Math.ceil((offset + month.daysInMonth) / 7) * 7 },
@@ -81,11 +75,8 @@ export default function CalendarDates({
                         /* Remove the date that the user just deselected. */
                         (v) => v !== key,
                       )
-                      : value.length < 31
-                        ? [
-                          ...value,
-                          key,
-                        ].sort()
+                      : value.length < EVENT_INPUT_LIMITS.dates
+                        ? [...value, key].sort()
                         : value,
                   )
               }

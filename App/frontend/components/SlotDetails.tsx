@@ -1,27 +1,14 @@
-import {
-  Check,
-  X,
-} from 'lucide-react';
-import { langService } from '../i18n/language';
-import {
-  displayRange,
-  slotDuration,
-} from '../utils/time';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { Check, X } from 'lucide-react';
+import { displayRange, slotDuration } from '../utils/time';
 import { inspectAvailability } from '../utils/group-availability';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from '../../shared/types';
+import type { MeetingEvent, TimeRange } from '../../shared/types';
 
 /**
  * Stored slot starts, displayed range, and optional anchor for
  * availability details.
  */
-export type SlotInspection = {
-  stamps: number[];
-  range: TimeRange;
-  anchor?: HTMLElement;
-};
+export type SlotInspection = { stamps: number[]; range: TimeRange; anchor?: HTMLElement };
 
 /**
  * Responder-breakdown component for a selected time block.
@@ -37,10 +24,8 @@ export default function SlotDetails({
   zone: string;
   inspection: SlotInspection;
 }) {
-  const {
-    available,
-    unavailable,
-  } = inspectAvailability(
+  const { t, locale } = useLanguage();
+  const { available, unavailable } = inspectAvailability(
     event.responses,
     inspection.stamps,
     slotDuration(event),
@@ -63,21 +48,18 @@ export default function SlotDetails({
       ),
   );
   return (
-    <section
-      id="slot-details"
-      className="slot-details"
-      aria-label={langService.t('Availability at This Time')}
-    >
-      <h2>{langService.t('Availability at This Time')}</h2>
+    <section id="slot-details" className="slot-details" aria-label={t('Availability at This Time')}>
+      <h2>{t('Availability at This Time')}</h2>
       <p className="slot-detail-time">
         {displayRange(
           inspection.range,
           event.schedule_mode === 'weekdays' ? 'UTC' : zone,
           event.schedule_mode === 'weekdays',
+          locale,
         )}
       </p>
       <p className="slot-detail-count">
-        {langService.t('{count} of {total} available', {
+        {t('{count} of {total} available', {
           count: available.length,
           total: event.responses.length,
         })}
@@ -92,14 +74,14 @@ export default function SlotDetails({
             <li key={person.id}>
               <span className="slot-responder-name">
                 {person.name}
-                {partial.has(person.id) && <small>{langService.t('Partly available')}</small>}
+                {partial.has(person.id) && <small>{t('Partly available')}</small>}
               </span>
               <span
                 className={
                   free.has(person.id) ? 'slot-presence available' : 'slot-presence unavailable'
                 }
                 role="img"
-                aria-label={langService.t(
+                aria-label={t(
                   free.has(person.id)
                     ? 'Available'
                     : partial.has(person.id)

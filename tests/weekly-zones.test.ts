@@ -1,23 +1,11 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { projectWeekly } from '../App/shared/weekly';
-import {
-  allSlots,
-  SLOT,
-} from '../App/frontend/utils/time';
+import { allSlots, SLOT } from '../App/frontend/utils/time';
 
 const event = {
   timezone: 'America/Los_Angeles',
   created_at: '2026-10-22T18:00:00Z',
-  windows: [
-    {
-      start: '2000-01-03T09:00:00Z',
-      end: '2000-01-03T11:00:00Z',
-    },
-  ],
+  windows: [{ start: '2000-01-03T09:00:00Z', end: '2000-01-03T11:00:00Z' }],
 };
 /** Group the date-free weekly display conversion checks. */
 describe('date-free weekly display conversion', () => {
@@ -50,10 +38,7 @@ describe('date-free weekly display conversion', () => {
       const stamp = Date.parse(event.windows[0].start);
       const summer = projectWeekly(event, 'Asia/Kathmandu');
       const winter = projectWeekly(
-        {
-          ...event,
-          created_at: '2027-01-15T18:00:00Z',
-        },
+        { ...event, created_at: '2027-01-15T18:00:00Z' },
         'Asia/Kathmandu',
       );
       expect(new Date(summer.toDisplay(stamp)).toISOString()).toBe('2000-01-03T21:45:00.000Z');
@@ -68,21 +53,13 @@ describe('date-free weekly display conversion', () => {
   it('wraps Sunday into Monday and preserves a round trip for every selected slot', () => {
     const source = {
       ...event,
-      windows: [
-        {
-          start: '2000-01-09T17:00:00Z',
-          end: '2000-01-09T19:00:00Z',
-        },
-      ],
+      windows: [{ start: '2000-01-09T17:00:00Z', end: '2000-01-09T19:00:00Z' }],
     };
     const view = projectWeekly(source, 'Asia/Tokyo');
     const original = allSlots(source.windows);
     const display = allSlots(view.windows);
     expect(view.windows).toEqual([
-      {
-        start: '2000-01-03T09:00:00.000Z',
-        end: '2000-01-03T11:00:00.000Z',
-      },
+      { start: '2000-01-03T09:00:00.000Z', end: '2000-01-03T11:00:00.000Z' },
     ]);
     expect(display.map(view.toCanonical)).toEqual(original);
     expect(new Set(display).size).toBe(original.length);
@@ -92,15 +69,9 @@ describe('date-free weekly display conversion', () => {
    * week boundary.
    */
   it('keeps a meeting duration intact when its displayed end crosses the week boundary', () => {
-    const source = {
-      ...event,
-      timezone: 'UTC',
-    };
+    const source = { ...event, timezone: 'UTC' };
     const view = projectWeekly(source, 'Asia/Kolkata');
-    const shown = view.range({
-      start: '2000-01-09T18:00:00Z',
-      end: '2000-01-09T20:00:00Z',
-    });
+    const shown = view.range({ start: '2000-01-09T18:00:00Z', end: '2000-01-09T20:00:00Z' });
     expect(shown.start).toBe('2000-01-09T23:30:00.000Z');
     expect(shown.end).toBe('2000-01-10T01:30:00.000Z');
     expect(Date.parse(shown.end) - Date.parse(shown.start)).toBe(8 * SLOT);

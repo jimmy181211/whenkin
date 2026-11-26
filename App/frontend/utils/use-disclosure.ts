@@ -1,10 +1,5 @@
 /** Coordinates a small nonmodal disclosure and its outside/Escape dismissal. */
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Disclosure hook shared by navigation and display options. Outside clicks close
@@ -69,18 +64,7 @@ export function useDisclosure() {
       document.removeEventListener('pointerdown', outside);
       document.removeEventListener('keydown', keyboard);
     };
-  }, [
-    open,
-    close,
-    closeAndFocus,
-  ]);
+  }, [open, close, closeAndFocus]);
 
-  return {
-    open,
-    container,
-    trigger,
-    toggle,
-    close,
-    closeAndFocus,
-  };
+  return { open, container, trigger, toggle, close, closeAndFocus };
 }

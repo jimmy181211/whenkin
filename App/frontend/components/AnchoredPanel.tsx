@@ -8,10 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  anchoredPanelPosition,
-  visibleViewport,
-} from '../utils/anchored-panel-position';
+import { anchoredPanelPosition, visibleViewport } from '../utils/anchored-panel-position';
 import PopupSurface from './PopupSurface';
 
 /** Trigger, content, and close behavior for a small anchored popup. */
@@ -45,9 +42,7 @@ export default function AnchoredPanel({
   // Event listeners use the latest close callback without being attached again.
   const close = useRef(onClose);
   close.current = onClose;
-  const [position, setPosition] = useState<CSSProperties>({
-    visibility: 'hidden',
-  });
+  const [position, setPosition] = useState<CSSProperties>({ visibility: 'hidden' });
   /**
    * Measure the panel immediately and keep its position aligned with scrolling
    * and resizing.
@@ -70,10 +65,7 @@ export default function AnchoredPanel({
       });
     };
 
-    return observeOverlayLayout(place, [
-      panel.current,
-      anchor,
-    ]);
+    return observeOverlayLayout(place, [panel.current, anchor]);
   }, [anchor]);
   /**
    * Handle focus, Escape, and outside clicks for the open panel.
@@ -118,10 +110,7 @@ export default function AnchoredPanel({
         previous.focus({ preventScroll: true });
       }
     };
-  }, [
-    anchor,
-    focusOnOpen,
-  ]);
+  }, [anchor, focusOnOpen]);
   return createPortal(
     <PopupSurface
       ref={panel}

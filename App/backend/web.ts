@@ -2,10 +2,7 @@ import express from 'express';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import {
-  createApp,
-  type AppOptions,
-} from './app.js';
+import { createApp, type AppOptions } from './app.js';
 import { errorHandler } from './shared/errors.js';
 import type { Database } from './db/types.js';
 import { pageRoute } from '../shared/routes.js';
@@ -34,12 +31,7 @@ export function createWebApp(
       dotfiles: 'deny',
     }),
   );
-  app.use(
-    express.static(root, {
-      index: false,
-      dotfiles: 'deny',
-    }),
-  );
+  app.use(express.static(root, { index: false, dotfiles: 'deny' }));
   app.get(
     /.*/,
     /**

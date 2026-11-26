@@ -1,14 +1,7 @@
+import { useLanguage } from '../i18n/LanguageProvider';
 import React from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-} from 'lucide-react';
-import { langService } from '../i18n/language';
-import {
-  LEGAL,
-  legalDocuments,
-  type LegalKind,
-} from '../content/legal';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { LEGAL, legalDocuments, type LegalKind } from '../content/legal';
 import EventLimits from '../components/EventLimits';
 
 /**
@@ -53,13 +46,14 @@ function Paragraph({ text }: { text: string }) {
  * the other policy.
  */
 export default function LegalPage({ kind }: { kind: LegalKind }) {
-  const document = legalDocuments[langService.getLanguage()][kind];
+  const { t, locale, language } = useLanguage();
+  const document = legalDocuments[language][kind];
   const otherKind = kind === 'terms' ? 'privacy' : 'terms';
   return (
     <main className="legal-page">
       <a className="text-button legal-back" href="/">
         <ArrowLeft size={16} />
-        {langService.t('Back to Whenkin')}
+        {t('Back to Whenkin')}
       </a>
       <article className="legal-card" aria-labelledby="legal-title">
         <header className="legal-heading">
@@ -68,18 +62,17 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
           <div className="legal-meta">
             <span>{LEGAL.operator}</span>
             <span>
-              {langService.t('Effective Date')}:{' '}
+              {t('Effective Date')}:{' '}
               <time dateTime={LEGAL.updated}>
-                {new Intl.DateTimeFormat(langService.getLocale(), {
-                  dateStyle: 'long',
-                  timeZone: 'UTC',
-                }).format(new Date(`${LEGAL.updated}T00:00:00Z`))}
+                {new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(
+                  new Date(`${LEGAL.updated}T00:00:00Z`),
+                )}
               </time>
             </span>
           </div>
         </header>
         <details className="legal-contents">
-          <summary>{langService.t('On This Page')}</summary>
+          <summary>{t('On This Page')}</summary>
           <ol>
             {document.sections.map(
               /**
@@ -122,13 +115,13 @@ export default function LegalPage({ kind }: { kind: LegalKind }) {
         </div>
         {kind === 'privacy' && (
           <section className="legal-provider-links" aria-labelledby="providers-title">
-            <h2 id="providers-title">{langService.t('Provider Information')}</h2>
+            <h2 id="providers-title">{t('Provider Information')}</h2>
             <a href="https://openai.com/policies/privacy-policy/">OpenAI</a>
             <a href="https://neon.com/privacy-policy">Neon</a>
           </section>
         )}
         <a className="text-button legal-other" href={`/${otherKind}`}>
-          {legalDocuments[langService.getLanguage()][otherKind].title}
+          {legalDocuments[language][otherKind].title}
           <ArrowRight size={16} />
         </a>
       </article>

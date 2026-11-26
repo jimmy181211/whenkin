@@ -1,11 +1,7 @@
 import type { CreateInput } from '../../shared/types.js';
 import { validateEvent } from '../shared/validation.js';
 import { body } from '../shared/request.js';
-import type {
-  RequestHandler,
-  Request,
-  Response,
-} from 'express';
+import type { RequestHandler, Request, Response } from 'express';
 import type { Database } from '../db/types.js';
 
 /**

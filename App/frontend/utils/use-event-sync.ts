@@ -70,11 +70,7 @@ export function useEventSync({
     return () => {
       alive = false;
     };
-  }, [
-    id,
-    load,
-    applyEvent,
-  ]);
+  }, [id, load, applyEvent]);
   /** Watch the event deadline and cancel its timer when the deadline changes. */
   useEffect(() => {
     if (!event?.expires_at) {
@@ -98,10 +94,7 @@ export function useEventSync({
     checkExpiry();
     // Cancel the old expiry check when its effect is cleaned up.
     return () => clearTimeout(timer);
-  }, [
-    event?.expires_at,
-    expire,
-  ]);
+  }, [event?.expires_at, expire]);
   /**
    * Refresh visible event pages on a timer and when the user returns to
    * them.
@@ -143,10 +136,5 @@ export function useEventSync({
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
     };
-  }, [
-    hasEvent,
-    load,
-    applyEvent,
-    expire,
-  ]);
+  }, [hasEvent, load, applyEvent, expire]);
 }

@@ -1,9 +1,4 @@
-import {
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BrowserInstall } from '../App/frontend/utils/browser-install';
 
 /**
@@ -31,12 +26,7 @@ function setup() {
     return event;
   };
 
-  return {
-    target,
-    install,
-    offer,
-    dispose,
-  };
+  return { target, install, offer, dispose };
 }
 
 /** Group the browser-owned shortcut prompt checks. */
@@ -50,10 +40,7 @@ describe('browser-owned shortcut prompt', () => {
    * once.
    */
   it('calls the real prompt synchronously within the click, then consumes it once', async () => {
-    const {
-      install,
-      offer,
-    } = setup();
+    const { install, offer } = setup();
     const event = offer();
     expect(event.defaultPrevented).toBe(true);
     const result = install.prompt();
@@ -63,20 +50,14 @@ describe('browser-owned shortcut prompt', () => {
   });
   /** Respects cancellation without immediately showing more instructions. */
   it('respects cancellation without immediately showing more instructions', async () => {
-    const {
-      install,
-      offer,
-    } = setup();
+    const { install, offer } = setup();
     offer('dismissed');
     expect(await install.prompt()).toBe('dismissed');
     expect(await install.prompt()).toBe('unavailable');
   });
   /** Falls back if the browser refuses to show the prompt. */
   it('falls back if the browser refuses to show the prompt', async () => {
-    const {
-      install,
-      offer,
-    } = setup();
+    const { install, offer } = setup();
     const event = offer();
     event.prompt.mockRejectedValueOnce(new Error('not allowed'));
     expect(await install.prompt()).toBe('unavailable');
@@ -86,10 +67,7 @@ describe('browser-owned shortcut prompt', () => {
    * pending.
    */
   it('does not open duplicate prompts while a browser confirmation is pending', async () => {
-    const {
-      install,
-      offer,
-    } = setup();
+    const { install, offer } = setup();
     const event = offer();
     let resolve!: () => void;
     event.prompt.mockImplementationOnce(
@@ -110,11 +88,7 @@ describe('browser-owned shortcut prompt', () => {
   });
   /** Clears stale offers when installation completes outside this button. */
   it('clears stale offers when installation completes outside this button', async () => {
-    const {
-      install,
-      offer,
-      target,
-    } = setup();
+    const { install, offer, target } = setup();
     const event = offer();
     target.dispatchEvent(new Event('appinstalled'));
     expect(await install.prompt()).toBe('unavailable');
@@ -122,10 +96,7 @@ describe('browser-owned shortcut prompt', () => {
   });
   /** Can use a fresh browser offer after a dismissal. */
   it('can use a fresh browser offer after a dismissal', async () => {
-    const {
-      install,
-      offer,
-    } = setup();
+    const { install, offer } = setup();
     offer('dismissed');
     await install.prompt();
     const fresh = offer();
@@ -134,12 +105,7 @@ describe('browser-owned shortcut prompt', () => {
   });
   /** Releases listeners and ignores events without a native prompt method. */
   it('releases listeners and ignores events without a native prompt method', async () => {
-    const {
-      install,
-      offer,
-      target,
-      dispose,
-    } = setup();
+    const { install, offer, target, dispose } = setup();
     target.dispatchEvent(new Event('beforeinstallprompt'));
     expect(await install.prompt()).toBe('unavailable');
     dispose();

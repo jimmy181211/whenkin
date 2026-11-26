@@ -18,15 +18,14 @@ import getRetention from './api/get-retention.js';
  * Options for API origin checks, proxy handling, and per-process write
  * limits.
  */
-export type AppOptions = {
-  publicOrigin?: string;
-  trustProxy?: boolean;
-  rateLimit?: boolean;
-};
+export type AppOptions = { publicOrigin?: string; trustProxy?: boolean; rateLimit?: boolean };
 
 /**
  * Build the API with shared validation, write limits, and error handling.
  * The caller supplies database access so Node, Workers, and tests use the same routes.
+ * @remarks The Express application determines whether a request is from Whenkin front-end using
+ * the origin check. If a malicious request disguises itself by tempering the origin header,
+ * the app might not be able to distinguish it from a legitimate request.
  * @param options - Public origin, proxy trust, and per-process write-limit settings.
  * @returns An Express application; listening and static-file serving happen separately.
  */
@@ -47,9 +46,10 @@ export function createApp(database: Database, options: AppOptions = {}) {
       if (!req.path.startsWith('/assets/')) {
         res.setHeader('Cache-Control', 'no-store');
       }
+      // Require the allowed Origin on every request except GET and HEAD.
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         const origin = req.get('Origin');
-        if (origin && origin !== (publicOrigin || req.protocol + '://' + req.get('host'))) {
+        if (!origin || origin !== (publicOrigin || req.protocol + '://' + req.get('host'))) {
           throw new Problem(403, 'Please make changes from the Whenkin website.');
         }
         if (
@@ -63,14 +63,7 @@ export function createApp(database: Database, options: AppOptions = {}) {
     },
   );
   // Keep the previous 128 KiB JSON-body limit, including clients without a content type.
-  app.use(
-    express.json({
-      limit: 131072,
-      strict: true,
-      /* Parse JSON bodies even when a client omits the content-type header. */
-      type: () => true,
-    }),
-  );
+  app.use(express.json({ limit: 131072 }));
   app.get(
     '/site.webmanifest',
     /* Return installation metadata for the requested local page. */

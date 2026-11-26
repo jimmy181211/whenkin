@@ -1,8 +1,5 @@
 /** Formats authored source; --check reports differences without writing. */
-import {
-  readFile,
-  writeFile,
-} from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { ESLint } from 'eslint';
 import stylistic from '@stylistic/eslint-plugin';
@@ -12,10 +9,7 @@ import tseslint from 'typescript-eslint';
 
 const checkOnly = process.argv.includes('--check');
 const config = JSON.parse(await readFile('.prettierrc.json', 'utf8'));
-const parserConfig = {
-  files: ['**/*.{js,ts,tsx}'],
-  languageOptions: { parser: tseslint.parser },
-};
+const parserConfig = { files: ['**/*.{js,ts,tsx}'], languageOptions: { parser: tseslint.parser } };
 const layout = new ESLint({
   overrideConfigFile: true,
   fix: true,
@@ -24,65 +18,28 @@ const layout = new ESLint({
       ...parserConfig,
       plugins: { '@stylistic': stylistic },
       rules: {
-        curly: [
-          'error',
-          'all',
-        ],
-        'one-var': [
-          'error',
-          'never',
-        ],
+        curly: ['error', 'all'],
+        'one-var': ['error', 'never'],
         '@stylistic/member-delimiter-style': [
           'error',
           {
-            multiline: {
-              delimiter: 'semi',
-              requireLast: true,
-            },
-            singleline: {
-              delimiter: 'semi',
-              requireLast: false,
-            },
+            multiline: { delimiter: 'semi', requireLast: true },
+            singleline: { delimiter: 'semi', requireLast: false },
             multilineDetection: 'brackets',
           },
         ],
-        '@stylistic/indent': [
-          'error',
-          2,
-          { SwitchCase: 1 },
-        ],
+        '@stylistic/indent': ['error', 2, { SwitchCase: 1 }],
         '@stylistic/object-curly-newline': [
           'error',
           {
-            ObjectExpression: {
-              minProperties: 2,
-              consistent: true,
-            },
-            ObjectPattern: {
-              minProperties: 2,
-              consistent: true,
-            },
-            ImportDeclaration: {
-              multiline: true,
-              consistent: true,
-            },
-            ExportDeclaration: {
-              multiline: true,
-              consistent: true,
-            },
+            ObjectExpression: { multiline: true, consistent: true },
+            ObjectPattern: { multiline: true, consistent: true },
+            ImportDeclaration: { multiline: true, consistent: true },
+            ExportDeclaration: { multiline: true, consistent: true },
           },
         ],
-        '@stylistic/object-property-newline': [
-          'error',
-          { allowAllPropertiesOnSameLine: false },
-        ],
-        '@stylistic/array-element-newline': [
-          'error',
-          {
-            ArrayExpression: { minItems: 2 },
-            ArrayPattern: 'never',
-          },
-        ],
+        '@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
+        '@stylistic/array-element-newline': ['error', 'consistent'],
         '@stylistic/comma-dangle': [
           'error',
           {
@@ -127,37 +84,6 @@ const definesFunction = (statement, syntax) =>
       },
     ));
 
-/** Put multi-item declarations and lists on separate lines without changing tokens. */
-function planListSpacing(node, syntax, source, add) {
-  let names = null;
-  if (ts.isTypeLiteralNode(node)) {
-    names = node.members;
-  } else if (
-    ts.isNamedImports(node) ||
-    ts.isNamedExports(node) ||
-    ts.isObjectBindingPattern(node) ||
-    ts.isArrayLiteralExpression(node)
-  ) {
-    names = node.elements;
-  }
-  if (names?.length > 1) {
-    for (const name of names) {
-      const position = name.getStart(syntax);
-      const lineStart = source.lastIndexOf('\n', position - 1) + 1;
-      if (source.slice(lineStart, position).trim()) {
-        add(position, '\n');
-      }
-    }
-  }
-  if ((ts.isArrayLiteralExpression(node) || ts.isTypeLiteralNode(node)) && names.length > 1) {
-    const end = node.end - 1;
-    const lineStart = source.lastIndexOf('\n', end - 1) + 1;
-    if (source.slice(lineStart, end).trim()) {
-      add(end, '\n');
-    }
-  }
-}
-
 /** Separate function declarations from their neighboring statements. */
 function planFunctionSpacing(node, syntax, source, add) {
   if (node.statements) {
@@ -180,7 +106,7 @@ function planFunctionSpacing(node, syntax, source, add) {
 }
 
 /**
- * Add only whitespace around functions and between imported/destructured names.
+ * Add blank lines around functions without forcing short lists onto separate lines.
  * @returns Source text with the planned layout insertions applied.
  */
 function expandLayout(source, file) {
@@ -195,7 +121,6 @@ function expandLayout(source, file) {
    * expressions.
    */
   const visit = (node) => {
-    planListSpacing(node, syntax, source, add);
     planFunctionSpacing(node, syntax, source, add);
     ts.forEachChild(node, visit);
   };
@@ -211,15 +136,12 @@ function expandLayout(source, file) {
 }
 
 /**
- * Print source once, then apply the project's block and multiline-list rules together.
+ * Format lists at the configured width, then apply block and function-spacing rules.
  * @returns Formatted source text, or rejects when the formatter reports a blocking error.
  */
 async function formatSource(source, file) {
   const isCode = /\.(js|ts|tsx)$/.test(file);
-  const pretty = await prettier.format(source, {
-    ...config,
-    filepath: file,
-  });
+  const pretty = await prettier.format(source, { ...config, filepath: file });
   if (!isCode) {
     return pretty;
   }
@@ -247,12 +169,7 @@ async function formatSource(source, file) {
 
 const files = [
   ...new Set(
-    execFileSync('git', [
-      'ls-files',
-      '--cached',
-      '--others',
-      '--exclude-standard',
-    ])
+    execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'])
       .toString()
       .trim()
       .split('\n'),

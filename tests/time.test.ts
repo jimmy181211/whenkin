@@ -1,8 +1,4 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   allSlots,
   contains,
@@ -18,21 +14,8 @@ import { validateRanges } from '../App/backend/shared/validation';
 describe('30-minute grid grouping', () => {
   /** No complete slots means no columns or rows. */
   it('returns an empty model for empty or incomplete windows', () => {
-    expect(gridModel([], 'UTC')).toEqual({
-      days: [],
-      rows: [],
-    });
-    expect(
-      gridModel(
-        [
-          {
-            start: '2027-01-15T09:00Z',
-            end: '2027-01-15T09:10Z',
-          },
-        ],
-        'UTC',
-      ),
-    ).toEqual({
+    expect(gridModel([], 'UTC')).toEqual({ days: [], rows: [] });
+    expect(gridModel([{ start: '2027-01-15T09:00Z', end: '2027-01-15T09:10Z' }], 'UTC')).toEqual({
       days: [],
       rows: [],
     });
@@ -41,33 +24,16 @@ describe('30-minute grid grouping', () => {
   /** Overlaps are deduplicated; identical clock minutes on separate dates stay ordinary. */
   it('keeps dates sorted and resets occurrence counts for each date', () => {
     const windows = [
-      {
-        start: '2027-01-16T09:00Z',
-        end: '2027-01-16T10:00Z',
-      },
-      {
-        start: '2027-01-15T09:00Z',
-        end: '2027-01-15T10:00Z',
-      },
-      {
-        start: '2027-01-15T09:15Z',
-        end: '2027-01-15T09:45Z',
-      },
+      { start: '2027-01-16T09:00Z', end: '2027-01-16T10:00Z' },
+      { start: '2027-01-15T09:00Z', end: '2027-01-15T10:00Z' },
+      { start: '2027-01-15T09:15Z', end: '2027-01-15T09:45Z' },
     ];
     const before = JSON.stringify(windows);
     const model = gridModel(windows, 'UTC');
-    expect(model.days.map(([date]) => date)).toEqual([
-      '2027-01-15',
-      '2027-01-16',
-    ]);
+    expect(model.days.map(([date]) => date)).toEqual(['2027-01-15', '2027-01-16']);
     for (const [, cells] of model.days) {
       expect(cells).toHaveLength(4);
-      expect(cells.map((cell) => cell.occurrence)).toEqual([
-        0,
-        0,
-        0,
-        0,
-      ]);
+      expect(cells.map((cell) => cell.occurrence)).toEqual([0, 0, 0, 0]);
     }
     expect(model.rows).toHaveLength(2);
     expect(JSON.stringify(windows)).toBe(before);
@@ -77,23 +43,13 @@ describe('30-minute grid grouping', () => {
   it('retains gap rows and rounds the observed range to whole hours', () => {
     const model = gridModel(
       [
-        {
-          start: '2027-01-15T12:00Z',
-          end: '2027-01-15T12:30Z',
-        },
-        {
-          start: '2027-01-15T09:15Z',
-          end: '2027-01-15T09:45Z',
-        },
+        { start: '2027-01-15T12:00Z', end: '2027-01-15T12:30Z' },
+        { start: '2027-01-15T09:15Z', end: '2027-01-15T09:45Z' },
       ],
       'UTC',
     );
     expect(model.rows).toHaveLength(8);
-    expect(model.rows[0]).toEqual({
-      key: '540:0',
-      minute: 540,
-      occurrence: 0,
-    });
+    expect(model.rows[0]).toEqual({ key: '540:0', minute: 540, occurrence: 0 });
     expect(model.rows.at(-1)?.minute).toBe(750);
     expect(model.days[0][1]).toHaveLength(4);
   });
@@ -101,36 +57,13 @@ describe('30-minute grid grouping', () => {
   /** Lord Howe rolls back thirty minutes; repeated instants must remain distinct. */
   it('preserves partial-hour DST repeats and the existing complete-hour row groups', () => {
     const model = gridModel(
-      [
-        {
-          start: '2026-04-04T14:00Z',
-          end: '2026-04-04T16:00Z',
-        },
-      ],
+      [{ start: '2026-04-04T14:00Z', end: '2026-04-04T16:00Z' }],
       'Australia/Lord_Howe',
     );
     const cells = model.days[0][1];
     expect(model.days[0][0]).toBe('2026-04-05');
-    expect(cells.map((cell) => cell.minute)).toEqual([
-      60,
-      75,
-      90,
-      105,
-      90,
-      105,
-      120,
-      135,
-    ]);
-    expect(cells.map((cell) => cell.occurrence)).toEqual([
-      0,
-      0,
-      0,
-      0,
-      1,
-      1,
-      0,
-      0,
-    ]);
+    expect(cells.map((cell) => cell.minute)).toEqual([60, 75, 90, 105, 90, 105, 120, 135]);
+    expect(cells.map((cell) => cell.occurrence)).toEqual([0, 0, 0, 0, 1, 1, 0, 0]);
     expect(new Set(cells.map((cell) => cell.offset)).size).toBe(2);
     expect(model.rows.filter((row) => row.minute === 90)).toHaveLength(2);
     expect(model.rows.filter((row) => row.minute === 60)).toHaveLength(2);
@@ -141,10 +74,7 @@ describe('30-minute grid grouping', () => {
  * Build an ISO time-range fixture without additional metadata.
  * @returns A time-range fixture containing the supplied start and end strings.
  */
-const span = (start: string, end: string) => ({
-  start,
-  end,
-});
+const span = (start: string, end: string) => ({ start, end });
 
 /** Group the time zones and real moments checks. */
 describe('time zones and real moments', () => {
@@ -244,12 +174,7 @@ describe('whole meetings and compact storage', () => {
   const start = Date.parse('2027-01-15T18:00Z');
   /** Merges consecutive slots into one range. */
   it('merges consecutive slots into one range', () =>
-    expect(slotsToRanges([
-      start,
-      start + SLOT,
-      start + 2 * SLOT,
-      start,
-    ])).toEqual([
+    expect(slotsToRanges([start, start + SLOT, start + 2 * SLOT, start])).toEqual([
       span('2027-01-15T18:00:00.000Z', '2027-01-15T18:45:00.000Z'),
     ]));
   /** Does not bridge a gap. */
@@ -288,12 +213,7 @@ describe('30-minute display with 15-minute storage', () => {
   it('uses fixed half-hour rows without dropping saved quarter-hours', () => {
     const windows = [span('2027-01-15T09:15:00Z', '2027-01-15T10:45:00Z')];
     const model = gridModel(windows, 'UTC');
-    expect(model.rows.map((row) => row.minute)).toEqual([
-      540,
-      570,
-      600,
-      630,
-    ]);
+    expect(model.rows.map((row) => row.minute)).toEqual([540, 570, 600, 630]);
     expect(
       model.days[0][1].map(
         /* Compare the underlying instants retained by the coarser grid. */

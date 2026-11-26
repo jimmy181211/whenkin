@@ -1,5 +1,6 @@
+import { useLanguage } from '../i18n/LanguageProvider';
 import type { Ref } from 'react';
-import { langService } from '../i18n/language';
+import { EVENT_INPUT_LIMITS } from '../../shared/event-input';
 
 /**
  * Name value, input reference, and validation state for the reply-name
@@ -19,25 +20,20 @@ type Props = {
  * @returns A labeled name input with the current validation and disabled
  * state.
  */
-export default function ParticipantName({
-  name,
-  onChange,
-  inputRef,
-  editNotice,
-  disabled,
-}: Props) {
+export default function ParticipantName({ name, onChange, inputRef, editNotice, disabled }: Props) {
+  const { t } = useLanguage();
   const showNotice = !name.trim() && editNotice;
   return (
     <div className="participant-line">
       <div className="participant-name">
-        <label htmlFor="participant-name">{langService.t('Your Name')}</label>
+        <label htmlFor="participant-name">{t('Your Name')}</label>
         <div className="participant-name-field">
           <input
             id="participant-name"
             disabled={disabled}
             ref={inputRef}
-            maxLength={60}
-            placeholder={langService.t('Enter your name')}
+            maxLength={EVENT_INPUT_LIMITS.name}
+            placeholder={t('Enter your name')}
             value={name}
             aria-invalid={showNotice}
             onChange={

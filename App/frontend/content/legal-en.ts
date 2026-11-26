@@ -1,8 +1,5 @@
 /** English terms and privacy text. */
-import type {
-  LegalDocument,
-  LegalKind,
-} from './legal';
+import type { LegalDocument, LegalKind } from './legal';
 
 export const enLegalDocuments: Record<LegalKind, LegalDocument> = {
   terms: {

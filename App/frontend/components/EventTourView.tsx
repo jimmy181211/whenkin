@@ -1,23 +1,18 @@
 /** Presents the guide trigger, spotlight, instructions, and navigation. */
-import type { RefObject } from 'react';
+import { useId, useLayoutEffect, useRef, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { CircleHelp } from 'lucide-react';
-import {
-  tourCopy,
-  tourSteps,
-} from '../utils/event-tour';
+import { tourCopy, tourSteps } from '../utils/event-tour';
 import type { TourPosition } from '../utils/use-tour-position';
 import PopupSurface from './PopupSurface';
 
-/** Display state and semantic actions; progression stays in EventTour. */
+/** Display state and navigation actions supplied by EventTour. */
 type EventTourViewProps = {
   step: number | null;
   position: TourPosition | null;
-  moving: boolean;
   copy: (typeof tourCopy)[keyof typeof tourCopy];
-  id: string;
   panel: RefObject<HTMLDivElement | null>;
-  trigger: RefObject<HTMLButtonElement | null>;
+  onRestoreFocus?: () => void;
   onStart: () => void;
   onSkip: () => void;
   onBack: () => void;
@@ -25,100 +20,81 @@ type EventTourViewProps = {
 };
 
 /**
- * Guide presentation component. The caller supplies measured viewport positions
- * and refs needed for focus management; this component does not install listeners.
- * @returns The help button and, while open, the guide overlay in a body portal.
+ * Show the guide in a native modal, with keyboard focus managed by the browser.
+ * @returns The help button and, while open, a spotlight and instruction card.
  */
 export default function EventTourView({
   step,
   position,
-  moving,
   copy,
-  id,
   panel,
-  trigger,
+  onRestoreFocus,
   onStart,
   onSkip,
   onBack,
   onNext,
 }: EventTourViewProps) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const id = useId();
   const active = step !== null;
   const welcome = step === -1;
-  const definition = step !== null && step >= 0 ? tourSteps[step] : null;
-  const content = definition ? copy[definition.key] : null;
+  const content = step !== null && step >= 0 ? copy[tourSteps[step].key] : null;
+
+  /** Open once per visit; native modal focus containment replaces custom Tab handling. */
+  useLayoutEffect(() => {
+    if (!active) {
+      return;
+    }
+    const node = dialog.current!;
+    node.showModal();
+    /** Close the modal and restore the visible menu trigger if needed. */
+    return () => {
+      node.close();
+      onRestoreFocus?.();
+    };
+  }, [active, onRestoreFocus]);
+
   return (
     <>
-      <button
-        ref={trigger}
-        type="button"
-        className="header-control event-tour-trigger"
-        onClick={
-          /* Open the guide's welcome card from the help button. */
-          onStart
-        }
-      >
+      <button type="button" className="header-control event-tour-trigger" onClick={onStart}>
         <CircleHelp size={16} aria-hidden="true" />
         {copy.guide}
       </button>
       {active &&
         createPortal(
-          <div className="event-tour-layer" data-moving={moving}>
-            <svg className="event-tour-shade" aria-hidden="true" width="100%" height="100%">
-              <defs>
-                <mask id={id}>
-                  <rect width="100%" height="100%" fill="white" />
-                  {position && (
-                    <rect
-                      className="event-tour-cutout"
-                      x={position.x}
-                      y={position.y}
-                      width={position.width}
-                      height={position.height}
-                      rx="12"
-                      fill="black"
-                    />
-                  )}
-                </mask>
-              </defs>
-              <rect
-                width="100%"
-                height="100%"
-                fill="#102e28"
-                fillOpacity=".20"
-                mask={`url(#${id})`}
+          <dialog
+            ref={dialog}
+            className="event-tour-layer"
+            aria-labelledby={`${id}-title`}
+            aria-describedby={`${id}-body`}
+            onCancel={
+              /** Keep React state in sync when Escape requests closing. */
+              (event) => {
+                event.preventDefault();
+                onSkip();
+              }
+            }
+          >
+            {position && position.height > 0 ? (
+              <div
+                className="event-tour-spotlight"
+                aria-hidden="true"
+                style={{
+                  left: position.x,
+                  top: position.y,
+                  width: position.width,
+                  height: position.height,
+                }}
               />
-              {position && position.height > 0 && (
-                <rect
-                  className="event-tour-ring"
-                  x={position.x}
-                  y={position.y}
-                  width={position.width}
-                  height={position.height}
-                  rx="12"
-                  fill="none"
-                  stroke="#238d80"
-                  strokeWidth="2"
-                />
-              )}
-            </svg>
+            ) : (
+              <div className="event-tour-shade" aria-hidden="true" />
+            )}
             <PopupSurface
               ref={panel}
               className="event-tour-panel"
               data-welcome={welcome}
-              role="dialog"
-              aria-modal="true"
-              aria-busy={moving}
-              aria-labelledby={`${id}-title`}
-              aria-describedby={`${id}-body`}
               tabIndex={-1}
-              style={
-                position
-                  ? {
-                    left: position.cardX,
-                    top: position.cardY,
-                  }
-                  : undefined
-              }
+              style={position ? { left: position.cardX, top: position.cardY } : undefined}
             >
               <div className="event-tour-content">
                 {!welcome && (
@@ -130,48 +106,27 @@ export default function EventTourView({
                 )}
                 <h2 id={`${id}-title`}>{welcome ? copy.welcome : content?.[0]}</h2>
                 <p id={`${id}-body`}>{welcome ? copy.intro : content?.[1]}</p>
-                {!welcome && !moving && position?.height === 0 && (
+                {!welcome && position?.height === 0 && (
                   <p className="event-tour-unavailable">{copy.unavailable}</p>
                 )}
               </div>
               <div className="event-tour-actions">
-                <button
-                  type="button"
-                  className="text-button event-tour-skip"
-                  onClick={
-                    /* Close the guide and remember that it was skipped. */
-                    onSkip
-                  }
-                >
+                <button type="button" className="text-button event-tour-skip" onClick={onSkip}>
                   {copy.skip}
                 </button>
                 <div>
                   {!welcome && (
-                    <button
-                      type="button"
-                      className="button secondary compact"
-                      onClick={
-                        /* Move to the preceding guide step. */
-                        onBack
-                      }
-                    >
+                    <button type="button" className="button secondary compact" onClick={onBack}>
                       {copy.back}
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className="button primary compact"
-                    onClick={
-                      /* Advance the guide, or record completion after its final step. */
-                      onNext
-                    }
-                  >
+                  <button type="button" className="button primary compact" onClick={onNext}>
                     {welcome ? copy.start : step === tourSteps.length - 1 ? copy.done : copy.next}
                   </button>
                 </div>
               </div>
             </PopupSurface>
-          </div>,
+          </dialog>,
           document.body,
         )}
     </>

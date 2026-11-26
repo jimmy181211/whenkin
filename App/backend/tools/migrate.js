@@ -1,9 +1,6 @@
 /** Applies checked SQL migrations on one locked database connection. */
 import { PostgresDatabase } from '../db/connection.js';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { sqlStatements } from './sql-statements.js';
@@ -46,10 +43,7 @@ export async function migrate(
       ).rows;
       if (existing.length) {
         // Accept the same historical SQL checked out with either OS's line endings.
-        const compatible = [
-          checksum,
-          digest(canonical.replaceAll('\n', '\r\n')),
-        ];
+        const compatible = [checksum, digest(canonical.replaceAll('\n', '\r\n'))];
         if (!compatible.includes(existing[0].checksum)) {
           throw new Error('A previously applied migration changed.');
         }

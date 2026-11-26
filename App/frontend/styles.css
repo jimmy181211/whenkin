@@ -2221,11 +2221,6 @@ input[aria-invalid='true'] {
   padding: 15px 14px 15px 16px;
   font-size: 13px;
   line-height: 1.6;
-  animation: toast-appear 0.16s ease-out;
-}
-.toast-notice > svg {
-  margin-top: 2px;
-  color: var(--teal);
 }
 .toast-notice > span {
   min-width: 0;
@@ -2237,40 +2232,6 @@ input[aria-invalid='true'] {
   min-height: 24px;
   margin-top: -1px;
 }
-@keyframes toast-appear {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@media (max-width: 699px) {
-  .toast-notice {
-    font-size: 13px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .toast-notice {
-    animation: none;
-  }
-}
-
-.toast-notice:after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: calc(var(--notice-arrow, 50%) - 5px);
-  width: 9px;
-  height: 9px;
-  background: #fff;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  transform: rotate(45deg);
-}
-
 button.person {
   width: 100%;
   text-align: left;
@@ -2577,4 +2538,18 @@ button.person > svg {
   color: var(--muted);
   font-size: 0.875rem;
   line-height: 1.6;
+}
+
+/* Keep the explicit save action beside its status, wrapping on small screens. */
+.response-save-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+.response-save-controls [role='status'] {
+  color: var(--muted);
+  font-size: 13px;
 }

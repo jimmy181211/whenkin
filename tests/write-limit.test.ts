@@ -1,8 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-} from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { WriteLimiter } from '../App/backend/shared/write-limit';
 /** Group the Sites write protection checks. */
 describe('Sites write protection', () => {

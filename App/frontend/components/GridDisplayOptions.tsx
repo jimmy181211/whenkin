@@ -1,29 +1,20 @@
 /** Groups calendar row-height controls without changing the event's time slots. */
+import { useLanguage } from '../i18n/LanguageProvider';
 import { useId } from 'react';
-import {
-  Minus,
-  Plus,
-  SlidersHorizontal,
-} from 'lucide-react';
-import { langService } from '../i18n/language';
+import { Minus, Plus, SlidersHorizontal } from 'lucide-react';
 import { useDisclosure } from '../utils/use-disclosure';
 import './grid-display-options.css';
 
 /** Current row-height level and its parent-owned update action. */
-type Props = {
-  zoom: number;
-  onZoomChange: (value: number) => void;
-};
+type Props = { zoom: number; onZoomChange: (value: number) => void };
 
 /**
  * Compact display-options component. Levels change row height only; they never
  * change stored slot duration or selection. Escape and outside clicks dismiss it.
  * @returns The options trigger and an expandable row-height control panel.
  */
-export default function GridDisplayOptions({
-  zoom,
-  onZoomChange,
-}: Props) {
+export default function GridDisplayOptions({ zoom, onZoomChange }: Props) {
+  const { t } = useLanguage();
   const disclosure = useDisclosure();
   const id = useId();
   return (
@@ -32,8 +23,8 @@ export default function GridDisplayOptions({
         type="button"
         className="icon-button"
         ref={disclosure.trigger}
-        aria-label={langService.t('Display options')}
-        title={langService.t('Display options')}
+        aria-label={t('Display options')}
+        title={t('Display options')}
         aria-expanded={disclosure.open}
         aria-controls={id}
         onClick={disclosure.toggle}
@@ -41,18 +32,13 @@ export default function GridDisplayOptions({
         <SlidersHorizontal size={18} />
       </button>
       {disclosure.open && (
-        <div
-          id={id}
-          className="grid-display-panel"
-          role="group"
-          aria-label={langService.t('Row height')}
-        >
-          <span>{langService.t('Row height')}</span>
+        <div id={id} className="grid-display-panel" role="group" aria-label={t('Row height')}>
+          <span>{t('Row height')}</span>
           <div>
             <button
               type="button"
               className="icon-button"
-              aria-label={langService.t('Smaller time slots')}
+              aria-label={t('Smaller time slots')}
               disabled={zoom <= 1}
               onClick={
                 /* Reduce row height without changing time coordinates. */
@@ -64,7 +50,7 @@ export default function GridDisplayOptions({
             <button
               type="button"
               className="icon-button"
-              aria-label={langService.t('Larger time slots')}
+              aria-label={t('Larger time slots')}
               disabled={zoom >= 3}
               onClick={
                 /* Increase row height without changing time coordinates. */

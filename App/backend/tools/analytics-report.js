@@ -19,42 +19,24 @@ const escape = (value) =>
  */
 export function renderAnalysisReport(result, columns) {
   const cards = [
-    [
-      '活动数',
-      result.summary.events,
-    ],
-    [
-      '回复数',
-      result.summary.responses,
-    ],
-    [
-      '回复人数中位数',
-      result.summary.median_responses,
-    ],
+    ['活动数', result.summary.events],
+    ['回复数', result.summary.responses],
+    ['回复人数中位数', result.summary.median_responses],
     [
       '多人活动有共同时间',
       result.summary.multiple_response_events_with_shared_time +
         ' / ' +
         result.summary.multiple_response_events,
     ],
-    [
-      '零回复活动',
-      result.summary.zero_response_events,
-    ],
-    [
-      '保留 / 剔除',
-      result.summary.retained_events + ' / 0',
-    ],
+    ['零回复活动', result.summary.zero_response_events],
+    ['保留 / 剔除', result.summary.retained_events + ' / 0'],
   ];
   const methods = [
     [
       '创建量、创建星期和小时',
       '了解使用频率、创建高峰；小时按活动时区，日期表按 UTC，时区不代表所在地。',
     ],
-    [
-      '回复人数及零／单人回复比例',
-      '了解协调规模；每条回复是一条记录，不保证对应唯一自然人。',
-    ],
+    ['回复人数及零／单人回复比例', '了解协调规模；每条回复是一条记录，不保证对应唯一自然人。'],
     [
       '备选日期、开放时长和提前天数',
       '了解安排习惯；星期模式没有实际活动日期，提前天数为 NULL。开放时长按时间区间并集计算。',
@@ -63,14 +45,8 @@ export function renderAnalysisReport(result, columns) {
       '共同时间总长、最长连续时段、覆盖比例',
       '了解协调结果；所有回复者都纳入，空白回复会影响交集。无回复时为 NULL，有回复但无交集时为 0。',
     ],
-    [
-      '回复人数与共同时间的散点图',
-      '观察人数增加与共同时间的关系，不将相关性解释为因果。',
-    ],
-    [
-      '共同空闲的星期和小时分布',
-      '按活动的时区汇总总分钟数；星期模式使用活动的共同钟面时间。',
-    ],
+    ['回复人数与共同时间的散点图', '观察人数增加与共同时间的关系，不将相关性解释为因果。'],
+    ['共同空闲的星期和小时分布', '按活动的时区汇总总分钟数；星期模式使用活动的共同钟面时间。'],
     [
       '创建者及首次回复耗时',
       '创建者身份、实际所在地和首次回复时间均未记录，保持 NULL；现有 organizer_name 仅表示填写过一个标签，不能识别创建者；updated_at 不能代替首次回复时间。',

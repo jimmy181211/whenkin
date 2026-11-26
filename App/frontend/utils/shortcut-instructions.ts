@@ -1,12 +1,5 @@
 /** Provides official installation tutorials and localized shortcut-help labels. */
-export const shortcutDevices = [
-  'ios',
-  'android',
-  'edge',
-  'chrome',
-  'windows',
-  'mac',
-] as const;
+export const shortcutDevices = ['ios', 'android', 'edge', 'chrome', 'windows', 'mac'] as const;
 /** Supported device/browser categories for manual shortcut instructions. */
 export type ShortcutDevice = (typeof shortcutDevices)[number];
 

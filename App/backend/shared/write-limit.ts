@@ -4,13 +4,7 @@
  */
 export class WriteLimiter {
   // Each client key stores its write count and an absolute expiration timestamp.
-  private readonly windows = new Map<
-    string,
-    {
-      count: number;
-      ends: number;
-    }
-  >();
+  private readonly windows = new Map<string, { count: number; ends: number }>();
 
   /** Keep an independent counter set and an injectable millisecond clock. */
   constructor(private readonly now: () => number = Date.now) {}
@@ -33,10 +27,7 @@ export class WriteLimiter {
       if (this.windows.size >= 5000 && !this.windows.has(key)) {
         return { success: false };
       }
-      current = {
-        count: 0,
-        ends: time + 60000,
-      };
+      current = { count: 0, ends: time + 60000 };
       this.windows.set(key, current);
     }
     current.count++;

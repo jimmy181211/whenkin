@@ -1,24 +1,15 @@
 /** Displays an event's calendar, responders, results, and sharing controls. */
-import {
-  useMemo,
-  useState,
-} from 'react';
-import {
-  Link2,
-  LoaderCircle,
-} from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useMemo, useState } from 'react';
+import { Link2, LoaderCircle } from 'lucide-react';
 import ParticipantName from '../components/ParticipantName';
 import AvailabilityGrid from '../components/AvailabilityGrid';
 import TimezonePicker from '../components/TimezonePicker';
 import { projectWeekly } from '../../shared/weekly';
-import { langService } from '../i18n/language';
 import EventResults from '../components/event/EventResults';
 import ShareEventDialog from '../components/event/ShareEventDialog';
 import EventTour from '../components/EventTour';
-import {
-  HeaderAction,
-  useHeaderActions,
-} from '../components/HeaderActions';
+import { HeaderAction, useHeaderActions } from '../components/HeaderActions';
 import Toast from '../components/Toast';
 import AvailabilityPopover from '../components/AvailabilityPopover';
 import EventUnavailablePage from './EventUnavailablePage';
@@ -35,6 +26,7 @@ const COPY_FEEDBACK_MS = 2200;
  * or unavailable-event view.
  */
 export default function EventPage({ id }: { id: string }) {
+  const { t } = useLanguage();
   const { menu } = useHeaderActions();
   const {
     event,
@@ -54,7 +46,8 @@ export default function EventPage({ id }: { id: string }) {
     view,
     inspection,
     highlightShared,
-    canRetrySave,
+    canSave,
+    saveState,
     changeName,
     dismissNotice,
     changeZone,
@@ -95,10 +88,7 @@ export default function EventPage({ id }: { id: string }) {
    */
   const weeklyView = useMemo(
     () => (event?.schedule_mode === 'weekdays' ? projectWeekly(event, zone) : null),
-    [
-      event,
-      zone,
-    ],
+    [event, zone],
   );
   if (unavailableReason) {
     return <EventUnavailablePage reason={unavailableReason} />;
@@ -108,16 +98,16 @@ export default function EventPage({ id }: { id: string }) {
       <main className="loading-page">
         {error ? (
           <>
-            <h1>{langService.t('We Couldn’t Open That Event.')}</h1>
-            <p role="alert">{langService.t(error)}</p>
+            <h1>{t('We Couldn’t Open That Event.')}</h1>
+            <p role="alert">{t(error)}</p>
             <a href="/" className="button secondary">
-              {langService.t('Back to Home')}
+              {t('Back to Home')}
             </a>
           </>
         ) : (
           <>
             <LoaderCircle className="spin" />
-            <p>{langService.t('Finding your shared time…')}</p>
+            <p>{t('Finding your shared time…')}</p>
           </>
         )}
       </main>
@@ -136,7 +126,7 @@ export default function EventPage({ id }: { id: string }) {
             () => setShare(true)
           }
         >
-          <Link2 size={16} /> {langService.t('Share Event')}
+          <Link2 size={16} /> {t('Share Event')}
         </button>
       </HeaderAction>
       <HeaderAction name="guide">
@@ -173,20 +163,7 @@ export default function EventPage({ id }: { id: string }) {
           </header>
           {error && (
             <div className="error-message" role="alert">
-              {langService.t(error)}{' '}
-              {canRetrySave && (
-                <button
-                  type="button"
-                  className="text-button"
-                  disabled={isSaving}
-                  onClick={
-                    /* Retry saving the current response after a recoverable failure. */
-                    () => void save()
-                  }
-                >
-                  {langService.t('Retry')}
-                </button>
-              )}
+              {t(error)}{' '}
             </div>
           )}
           <div className="participant-controls">
@@ -232,6 +209,30 @@ export default function EventPage({ id }: { id: string }) {
               }
             }
           />
+          <div className="response-save-controls">
+            <span role="status">
+              {t(
+                isSaving
+                  ? 'Saving…'
+                  : saveState !== 'saved'
+                    ? 'Unsaved changes'
+                    : editingId
+                      ? 'All changes saved'
+                      : '',
+              )}
+            </span>
+            <button
+              type="button"
+              className="button primary"
+              disabled={!canSave}
+              onClick={
+                /* Submit the current draft only when the user explicitly chooses to save. */
+                () => void save()
+              }
+            >
+              {t('Save Availability')}
+            </button>
+          </div>
         </section>
         <EventResults
           onDeleteResponse={deleteResponse}
@@ -255,11 +256,9 @@ export default function EventPage({ id }: { id: string }) {
                 requestAnimationFrame(
                   /* Scroll to a highlighted block after React has rendered the new group view. */
                   () =>
-                    document.querySelector<HTMLElement>('.time-cell.highlighted')?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'center',
-                      inline: 'nearest',
-                    }),
+                    document
+                      .querySelector<HTMLElement>('.time-cell.highlighted')
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }),
                 );
               }
             }

@@ -1,13 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import {
-  revealRequiredField,
-  type RequiredField,
-} from './reveal-required-field';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { revealRequiredField, type RequiredField } from './reveal-required-field';
 
 /**
  * React Hook for one anchored Toast reminder and its required-field reveal.
@@ -25,8 +17,7 @@ export function useNotice() {
   const pending = useRef<AbortController | null>(null);
 
   /**
-   * Cancel an unfinished field reveal and release its cancellation
-   * controller.
+   * Cancel the current reminder and release any pending scroll listeners.
    */
   const cancelPending = useCallback(() => {
     pending.current?.abort();
@@ -46,11 +37,7 @@ export function useNotice() {
   const notify = useCallback(
     (message: string, anchor: HTMLElement | null) => {
       cancelPending();
-      setNotice({
-        message,
-        anchor,
-        id: ++nextId.current,
-      });
+      setNotice({ message, anchor, id: ++nextId.current });
     },
     [cancelPending],
   );
@@ -61,11 +48,11 @@ export function useNotice() {
    */
   const notifyRequired = useCallback(
     async (message: string, field: RequiredField | null) => {
-      cancelPending();
-      setNotice(null);
+      dismissNotice();
       if (!field) {
         return;
       }
+      // Each reminder owns a controller, so cancellation cannot affect its replacement.
       const controller = new AbortController();
       pending.current = controller;
       const ready = await revealRequiredField(field, controller.signal);
@@ -76,16 +63,8 @@ export function useNotice() {
         notify(message, field);
       }
     },
-    [
-      cancelPending,
-      notify,
-    ],
+    [dismissNotice, notify],
   );
 
-  return {
-    notice,
-    notify,
-    notifyRequired,
-    dismissNotice,
-  };
+  return { notice, notify, notifyRequired, dismissNotice };
 }

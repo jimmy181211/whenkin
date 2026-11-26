@@ -55,30 +55,12 @@ export class EventTourService {
 export const tourService = new EventTourService();
 
 export const tourSteps = [
-  {
-    target: '.availability-view-switch button:first-child',
-    key: 'personal',
-  },
-  {
-    target: '.availability-view-switch button:last-child',
-    key: 'group',
-  },
-  {
-    target: '[data-tour-responders]',
-    key: 'responders',
-  },
-  {
-    target: '[data-tour-shared-times]',
-    key: 'sharedTimes',
-  },
-  {
-    target: '[data-tour-share]',
-    key: 'share',
-  },
-  {
-    target: '[data-tour-shortcut]',
-    key: 'shortcut',
-  },
+  { target: '.availability-view-switch button:first-child', key: 'personal' },
+  { target: '.availability-view-switch button:last-child', key: 'group' },
+  { target: '[data-tour-responders]', key: 'responders' },
+  { target: '[data-tour-shared-times]', key: 'sharedTimes' },
+  { target: '[data-tour-share]', key: 'share' },
+  { target: '[data-tour-shortcut]', key: 'shortcut' },
 ] as const;
 
 export const tourCopy = {
@@ -93,30 +75,12 @@ export const tourCopy = {
     done: 'Done',
     progress: 'Step {step} of {total}',
     unavailable: 'This area is hidden. Continue to the next step.',
-    personal: [
-      'Your Availability',
-      'View or edit your current response.',
-    ],
-    group: [
-      'Group Availability',
-      'Hover over a time block to see who’s free.',
-    ],
-    responders: [
-      'Responders',
-      'Click a name to view a response. Click your name to edit yours.',
-    ],
-    sharedTimes: [
-      'When Everyone Is Free',
-      'Click to highlight all shared free time.',
-    ],
-    share: [
-      'Share the event',
-      'Share the event using this icon or copy the URL.',
-    ],
-    shortcut: [
-      'Add a Shortcut',
-      'Click to add a shortcut or see your device’s steps.',
-    ],
+    personal: ['Your Availability', 'View or edit your response, then click Save Availability.'],
+    group: ['Group Availability', 'Hover over a time block to see who’s free.'],
+    responders: ['Responders', 'Click a name to view a response. Click your name to edit yours.'],
+    sharedTimes: ['When Everyone Is Free', 'Click to highlight all shared free time.'],
+    share: ['Share the event', 'Share the event using this icon or copy the URL.'],
+    shortcut: ['Add a Shortcut', 'Click to add a shortcut or see your device’s steps.'],
   },
   zh: {
     guide: '使用指引',
@@ -129,29 +93,11 @@ export const tourCopy = {
     done: '完成',
     progress: '第 {step} 步，共 {total} 步',
     unavailable: '这个区域暂不可见，请继续下一步。',
-    personal: [
-      '你的空闲时间',
-      '查看或修改你正在填写的空闲时间。',
-    ],
-    group: [
-      '群组空闲时间',
-      '悬停时间块，查看谁有空。',
-    ],
-    responders: [
-      '回复者',
-      '点击姓名查看回复，点击自己的姓名修改。',
-    ],
-    sharedTimes: [
-      '大家都有空的时段',
-      '点击高亮所有共同空闲时段。',
-    ],
-    share: [
-      '分享活动',
-      '点击此图标分享活动，或复制网址。',
-    ],
-    shortcut: [
-      '添加快捷方式',
-      '点击添加，或查看对应设备的操作步骤。',
-    ],
+    personal: ['你的空闲时间', '查看或修改空闲时间，然后点击“保存空闲时间”。'],
+    group: ['群组空闲时间', '悬停时间块，查看谁有空。'],
+    responders: ['回复者', '点击姓名查看回复，点击自己的姓名修改。'],
+    sharedTimes: ['大家都有空的时段', '点击高亮所有共同空闲时段。'],
+    share: ['分享活动', '点击此图标分享活动，或复制网址。'],
+    shortcut: ['添加快捷方式', '点击添加，或查看对应设备的操作步骤。'],
   },
 } as const;

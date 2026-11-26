@@ -1,13 +1,6 @@
 /** Response writes and verification of a reply reported as already deleted. */
-import {
-  api,
-  ApiError,
-} from './client';
-import type {
-  MeetingEvent,
-  ResponseData,
-  TimeRange,
-} from '../../shared/types';
+import { api, ApiError } from './client';
+import type { MeetingEvent, ResponseData, TimeRange } from '../../shared/types';
 
 /** The draft's saved-coordinate ranges and the revisions that protect the write. */
 type ResponsePayload = {
@@ -28,10 +21,7 @@ export function saveEventResponse(
   payload: ResponsePayload,
 ) {
   const path = '/events/' + eventId + '/responses' + (responseId ? '/' + responseId : '');
-  return api<{
-    id: string;
-    revision: number;
-  }>(path, {
+  return api<{ id: string; revision: number }>(path, {
     method: responseId ? 'PUT' : 'POST',
     keepalive: true,
     body: JSON.stringify(payload),
@@ -53,10 +43,7 @@ export async function removeEventResponse(
     await api('/events/' + eventId + '/responses/' + response.id, {
       method: 'DELETE',
       keepalive: true,
-      body: JSON.stringify({
-        revision: response.revision,
-        schedule_revision: scheduleRevision,
-      }),
+      body: JSON.stringify({ revision: response.revision, schedule_revision: scheduleRevision }),
     });
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 404) {

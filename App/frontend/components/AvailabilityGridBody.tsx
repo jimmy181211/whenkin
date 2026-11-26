@@ -1,14 +1,7 @@
 /** Renders date headings and time blocks inside the grid's scrolling surface. */
-import type {
-  CSSProperties,
-  PointerEventHandler,
-  RefObject,
-} from 'react';
-import { langService } from '../i18n/language';
-import {
-  type GridCell,
-  type gridModel,
-} from '../utils/time';
+import { useLanguage } from '../i18n/LanguageProvider';
+import type { CSSProperties, PointerEventHandler, RefObject } from 'react';
+import { type GridCell, type gridModel } from '../utils/time';
 import AvailabilityCell, { type AvailabilityCellContext } from './AvailabilityCell';
 
 /** Prepared rows and slot mappings; interaction state stays in AvailabilityGrid. */
@@ -45,29 +38,17 @@ export default function AvailabilityGridBody({
   extendSelection,
   finishSelection,
 }: AvailabilityGridBodyProps) {
-  const {
-    event,
-    zone,
-    clockZone,
-    weekly,
-    group,
-  } = cellContext;
+  const { t, locale } = useLanguage();
+  const { event, zone, clockZone, weekly, group } = cellContext;
   const visibleDays = grid.days.slice(firstColumn, firstColumn + daysPerPage);
-  const locale = langService.getLocale();
-  const weekdayFormat = new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    timeZone: clockZone,
-  });
+  const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: clockZone });
   const dateFormat = new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     timeZone: clockZone,
   });
   // Row clocks encode local wall time in UTC; they must not shift with clockZone again.
-  const hourFormat = new Intl.DateTimeFormat(locale, {
-    timeZone: 'UTC',
-    hour: 'numeric',
-  });
+  const hourFormat = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', hour: 'numeric' });
   const minuteFormat = new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC',
     hour: 'numeric',
@@ -93,7 +74,7 @@ export default function AvailabilityGridBody({
         onLostPointerCapture={finishSelection}
       >
         <div className="time-corner">
-          {weekly ? langService.t('Week') : zoneOffsetShort(zone, event.windows[0].start)}
+          {weekly ? t('Week') : zoneOffsetShort(zone, event.windows[0].start, locale)}
         </div>
         {visibleDays.map(
           /**
@@ -124,7 +105,7 @@ export default function AvailabilityGridBody({
                 {row.minute % 60 < 30 ? (
                   <>
                     {clockLabel(row.minute, row.minute % 60 ? minuteFormat : hourFormat)}
-                    {row.occurrence > 0 && <small>{langService.t('again')}</small>}
+                    {row.occurrence > 0 && <small>{t('again')}</small>}
                   </>
                 ) : zoom > 1 ? (
                   <small>:{String(row.minute % 60).padStart(2, '0')}</small>
@@ -178,12 +159,9 @@ function clockLabel(minute: number, format: Intl.DateTimeFormat) {
  * @returns The zone abbreviation at the reference instant, or an empty string
  * if unavailable.
  */
-function zoneOffsetShort(zone: string, at: string) {
+function zoneOffsetShort(zone: string, at: string, locale: string) {
   return (
-    new Intl.DateTimeFormat(langService.getLocale(), {
-      timeZone: zone,
-      timeZoneName: 'short',
-    })
+    new Intl.DateTimeFormat(locale, { timeZone: zone, timeZoneName: 'short' })
       .formatToParts(new Date(at))
       .find(
         /* Extract the timezone-name part from the formatted date information. */

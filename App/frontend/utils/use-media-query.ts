@@ -1,9 +1,5 @@
 /** Connects responsive React content to a browser media query. */
-import {
-  useCallback,
-  useMemo,
-  useSyncExternalStore,
-} from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 /**
  * Observe one media query without attaching a listener to every window resize.
@@ -31,10 +27,7 @@ export function useMediaQuery(query: string, fallback = false) {
   );
 
   /** Read the current match without creating a new query or changing the page. */
-  const snapshot = useCallback(() => media?.matches ?? fallback, [
-    media,
-    fallback,
-  ]);
+  const snapshot = useCallback(() => media?.matches ?? fallback, [media, fallback]);
 
   return useSyncExternalStore(
     subscribe,

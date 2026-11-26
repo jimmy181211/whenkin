@@ -4,10 +4,7 @@
  */
 export type PageRoute =
   | { kind: 'home' | 'guide' | 'terms' | 'privacy' | 'not-found' }
-  | {
-    kind: 'event';
-    id: string;
-  };
+  | { kind: 'event'; id: string };
 
 /**
  * Match a page path for server response status and React page selection.
@@ -27,10 +24,5 @@ export function pageRoute(pathname: string): PageRoute {
   const event = pathname.match(
     /^\/e\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i,
   );
-  return event
-    ? {
-      kind: 'event',
-      id: event[1],
-    }
-    : { kind: 'not-found' };
+  return event ? { kind: 'event', id: event[1] } : { kind: 'not-found' };
 }

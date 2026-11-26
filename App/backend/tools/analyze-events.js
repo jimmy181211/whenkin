@@ -1,10 +1,6 @@
 /** Summarizes a read-only snapshot and writes local analysis artifacts. */
 import { renderAnalysisReport } from './analytics-report.js';
-import {
-  readFile,
-  mkdir,
-  writeFile,
-} from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PostgresDatabase } from '../db/connection.js';
@@ -94,11 +90,7 @@ export function analyzeSnapshot(snapshot) {
     ),
   );
 
-  for (const key of [
-    'response_count',
-    'lead_days',
-    'shared_minutes',
-  ]) {
+  for (const key of ['response_count', 'lead_days', 'shared_minutes']) {
     const values = events
       .map(
         /* Read the metric currently being checked for outliers. */

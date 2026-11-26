@@ -1,10 +1,7 @@
 /** Validates the retention policy and performs administrator-requested cleanup. */
 import { PostgresDatabase } from '../db/connection.js';
 import { pathToFileURL } from 'node:url';
-import {
-  parseRetentionPolicy,
-  validateRetentionMonths,
-} from '../../shared/retention.js';
+import { parseRetentionPolicy, validateRetentionMonths } from '../../shared/retention.js';
 
 /**
  * Parse --months and --dry-run without opening a database connection.
@@ -33,10 +30,7 @@ export function cleanupOptions(args) {
     }
     throw new Error('Use --dry-run and/or --months followed by a positive whole number.');
   }
-  return {
-    months,
-    dryRun,
-  };
+  return { months, dryRun };
 }
 
 /** Run administrator-requested cleanup; constructing this class changes no data. */
@@ -95,10 +89,7 @@ export class EventCleanup {
   public.event_retention_deadline(created_at , $1)<=statement_timestamp()`,
       [this.#time],
     );
-    return {
-      months: this.#time,
-      eligibleEvents: rows[0]?.eligible_events,
-    };
+    return { months: this.#time, eligibleEvents: rows[0]?.eligible_events };
   }
 
   /**

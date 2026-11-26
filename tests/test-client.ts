@@ -43,18 +43,28 @@ export function testClient(app: Express) {
   );
   return {
     /**
-     * Forward a test request to the fixture server after startup is complete.
+     * Forward a request with a browser-like Origin for methods other than GET/HEAD.
+     * Explicit headers are preserved; omitOrigin lets security tests send a missing Origin.
      * @returns The fetch response after the server is ready; startup and transport failures reject.
      */
-    async request(input: string, init: RequestInit = {}, env: { clientIp?: string } = {}) {
+    async request(
+      input: string,
+      init: RequestInit = {},
+      env: { clientIp?: string; omitOrigin?: boolean } = {},
+    ) {
       await ready;
       const requested = new URL(input);
       const address = server.address() as AddressInfo;
       const headers = new Headers(init.headers);
+      const method = (init.method ?? 'GET').toUpperCase();
+      const origin = `http://127.0.0.1:${address.port}`;
+      if (method !== 'GET' && method !== 'HEAD' && !headers.has('Origin') && !env.omitOrigin) {
+        headers.set('Origin', origin);
+      }
       if (env.clientIp) {
         headers.set('X-Forwarded-For', env.clientIp);
       }
-      return fetch(`http://127.0.0.1:${address.port}${requested.pathname}${requested.search}`, {
+      return fetch(`${origin}${requested.pathname}${requested.search}`, {
         ...init,
         headers,
         signal: AbortSignal.timeout(10000),

@@ -99,10 +99,7 @@ export function slotsToRanges(slots: Set<number> | number[], duration = SLOT): T
     if (last && Date.parse(last.end) === t) {
       last.end = new Date(t + duration).toISOString();
     } else {
-      result.push({
-        start: new Date(t).toISOString(),
-        end: new Date(t + duration).toISOString(),
-      });
+      result.push({ start: new Date(t).toISOString(), end: new Date(t + duration).toISOString() });
     }
   }
   return result;

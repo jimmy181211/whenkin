@@ -1,11 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
 import SlotDetails from '../App/frontend/components/SlotDetails';
 import Toast from '../App/frontend/components/Toast';
@@ -14,8 +7,12 @@ import {
   availabilityColor,
   inspectAvailability,
 } from '../App/frontend/utils/group-availability';
-import { langService } from '../App/frontend/i18n/language';
+
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
+
 const stamp = Date.parse('2027-01-15T09:00:00Z');
 
 /**
@@ -35,30 +32,15 @@ const event: MeetingEvent = {
   timezone: 'UTC',
   windows: [range(0, 60)],
   responses: [
-    {
-      id: 'A',
-      name: 'A',
-      timezone: 'UTC',
-      revision: 1,
-      ranges: [
-        range(0, 30),
-        range(15, 45),
-      ],
-    },
-    {
-      id: 'B',
-      name: 'B',
-      timezone: 'America/New_York',
-      revision: 1,
-      ranges: [range(15, 30)],
-    },
+    { id: 'A', name: 'A', timezone: 'UTC', revision: 1, ranges: [range(0, 30), range(15, 45)] },
+    { id: 'B', name: 'B', timezone: 'America/New_York', revision: 1, ranges: [range(15, 30)] },
   ],
 };
 afterEach(
   /* Restore browser globals and English after each group-grid test. */
   () => {
     vi.unstubAllGlobals();
-    langService.setLanguage('en');
+    languageFixture.setLanguage('en');
   },
 );
 /** Group the group availability checks. */
@@ -72,10 +54,7 @@ describe('group availability', () => {
       'half-slot or changing the personal selection',
     () => {
       vi.stubGlobal('window', { innerWidth: 390 });
-      const shared = [
-        range(15, 30),
-        range(45, 60),
-      ];
+      const shared = [range(15, 30), range(45, 60)];
       const html = renderToStaticMarkup(
         <AvailabilityGrid
           event={event}
@@ -117,20 +96,8 @@ describe('group availability', () => {
    */
   it('lists full-block availability separately from partial and empty responses', () => {
     const inspected = inspectAvailability(
-      [
-        ...event.responses,
-        {
-          id: 'C',
-          name: 'C',
-          timezone: 'UTC',
-          revision: 1,
-          ranges: [],
-        },
-      ],
-      [
-        stamp,
-        stamp + 900000,
-      ],
+      [...event.responses, { id: 'C', name: 'C', timezone: 'UTC', revision: 1, ranges: [] }],
+      [stamp, stamp + 900000],
     );
     expect(
       inspected.available.map(
@@ -141,52 +108,31 @@ describe('group availability', () => {
     expect(
       inspected.unavailable.map(
         /* Compare unavailable responders and their partial-match flags. */
-        (p) => [
-          p.id,
-          p.partial,
-        ],
+        (p) => [p.id, p.partial],
       ),
     ).toEqual([
-      [
-        'B',
-        true,
-      ],
-      [
-        'C',
-        false,
-      ],
+      ['B', true],
+      ['C', false],
     ]);
     expect(inspectAvailability(event.responses, [stamp + 2700000]).available).toEqual([]);
-    expect(inspectAvailability([], [stamp])).toEqual({
-      available: [],
-      unavailable: [],
-    });
+    expect(inspectAvailability([], [stamp])).toEqual({ available: [], unavailable: [] });
   });
 
   /** Shows responder names and marks partial availability in each language. */
   it('shows responder names and marks partial availability in each language', () => {
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      langService.setLanguage(language);
+    for (const language of ['en', 'zh'] as const) {
+      languageFixture.setLanguage(language);
       const html = renderToStaticMarkup(
         <SlotDetails
           event={event}
           zone="UTC"
-          inspection={{
-            stamps: [
-              stamp,
-              stamp + 900000,
-            ],
-            range: range(0, 30),
-          }}
+          inspection={{ stamps: [stamp, stamp + 900000], range: range(0, 30) }}
         />,
       );
-      expect(html).toContain(langService.t('Availability at This Time'));
+      expect(html).toContain(languageFixture.t('Availability at This Time'));
       expect(html).toContain('A</span>');
       expect(html).toContain('B<small>');
-      expect(html).toContain(langService.t('Partly available'));
+      expect(html).toContain(languageFixture.t('Partly available'));
       expect(html).toContain('slot-presence available');
       expect(html).toContain('slot-presence unavailable');
     }
@@ -212,18 +158,9 @@ describe('group availability', () => {
    */
   it('counts distinct saved people at each UTC instant, including overlapping ranges', () => {
     expect([...groupAvailability(event.responses)]).toEqual([
-      [
-        stamp,
-        1,
-      ],
-      [
-        stamp + 900000,
-        2,
-      ],
-      [
-        stamp + 1800000,
-        1,
-      ],
+      [stamp, 1],
+      [stamp + 900000, 2],
+      [stamp + 1800000, 1],
     ]);
     expect(groupAvailability([]).size).toBe(0);
   });
@@ -234,16 +171,10 @@ describe('group availability', () => {
   it(
     'shows exact 15-minute group counts in the same grid across zones, ' + 'widths, and languages',
     () => {
-      for (const width of [
-        390,
-        1280,
-      ]) {
-        for (const language of [
-          'en',
-          'zh',
-        ] as const) {
+      for (const width of [390, 1280]) {
+        for (const language of ['en', 'zh'] as const) {
           vi.stubGlobal('window', { innerWidth: width });
-          langService.setLanguage(language);
+          languageFixture.setLanguage(language);
           const html = renderToStaticMarkup(
             <AvailabilityGrid
               event={event}
@@ -263,7 +194,7 @@ describe('group availability', () => {
           expect(html).toContain('group-legend');
           expect(html).toContain('var(--primary) 50%');
           expect(html).toContain('var(--primary) 100%');
-          expect(html).toContain(langService.t('Group Availability'));
+          expect(html).toContain(languageFixture.t('Group Availability'));
           expect(html).not.toContain('class="time-cell hour-start painted');
         }
       }
@@ -274,11 +205,8 @@ describe('group availability', () => {
 describe('shared link and name notice', () => {
   /** Uses a compact, nonblocking live notification in every language. */
   it('uses a compact, nonblocking live notification in every language', () => {
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      langService.setLanguage(language);
+    for (const language of ['en', 'zh'] as const) {
+      languageFixture.setLanguage(language);
       const html = renderToStaticMarkup(
         <Toast
           anchor={null}
@@ -292,7 +220,7 @@ describe('shared link and name notice', () => {
       expect(html).not.toContain('<dialog');
       expect(html).toContain('role="status"');
       expect(html).toContain('aria-live="polite"');
-      expect(html).toContain(langService.t('Enter your name before editing availability.'));
+      expect(html).toContain(languageFixture.t('Enter your name before editing availability.'));
     }
   });
 });

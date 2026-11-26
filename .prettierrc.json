@@ -5,7 +5,7 @@
   "singleQuote": true,
   "trailingComma": "all",
   "endOfLine": "lf",
-  "objectWrap": "preserve",
+  "objectWrap": "collapse",
   "embeddedLanguageFormatting": "off",
   "proseWrap": "always"
 }

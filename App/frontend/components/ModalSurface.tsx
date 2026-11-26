@@ -1,9 +1,5 @@
 /** Shared native modal shell; each caller supplies its content and closing action. */
-import {
-  useEffect,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import './popup-surface.css';
 import './modal-surface.css';
 

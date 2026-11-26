@@ -1,7 +1,4 @@
-import {
-  allSlots,
-  SLOT,
-} from './time';
+import { allSlots, SLOT } from './time';
 import type { ResponseData } from '../../shared/types';
 
 /**
@@ -51,14 +48,8 @@ export function inspectAvailability(responses: ResponseData[], stamps: number[],
     if (stamps.length && count === stamps.length) {
       available.push(person);
     } else {
-      unavailable.push({
-        ...person,
-        partial: count > 0,
-      });
+      unavailable.push({ ...person, partial: count > 0 });
     }
   }
-  return {
-    available,
-    unavailable,
-  };
+  return { available, unavailable };
 }

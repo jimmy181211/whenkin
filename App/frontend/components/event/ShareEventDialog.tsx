@@ -1,9 +1,6 @@
+import { useLanguage } from '../../i18n/LanguageProvider';
 import { useId } from 'react';
-import {
-  Link2,
-  X,
-} from 'lucide-react';
-import { langService } from '../../i18n/language';
+import { Link2, X } from 'lucide-react';
 import ModalSurface from '../ModalSurface';
 import CopyLinkControl from '../CopyLinkControl';
 
@@ -23,35 +20,27 @@ type Props = {
  * @returns A sharing dialog with the event URL, copy action, and close
  * control.
  */
-export default function ShareEventDialog({
-  eventLink,
-  copied,
-  onClose,
-  onCopy,
-}: Props) {
+export default function ShareEventDialog({ eventLink, copied, onClose, onCopy }: Props) {
+  const { t } = useLanguage();
   const id = useId();
   return (
-    <ModalSurface className="share-modal" label={langService.t('Share Event')} onClose={onClose}>
-      <button
-        className="icon-button modal-close"
-        aria-label={langService.t('Close sharing')}
-        onClick={onClose}
-      >
+    <ModalSurface className="share-modal" label={t('Share Event')} onClose={onClose}>
+      <button className="icon-button modal-close" aria-label={t('Close sharing')} onClick={onClose}>
         <X size={20} />
       </button>
       <div className="share-heading">
         <div className="heading-icon" aria-hidden="true">
           <Link2 size={23} />
         </div>
-        <label htmlFor={id}>{langService.t('Event Link')}</label>
+        <label htmlFor={id}>{t('Event Link')}</label>
       </div>
       <CopyLinkControl
         id={id}
         value={eventLink}
         inputClassName="share-link-input"
         copied={copied === 'event'}
-        copyLabel={langService.t('Copy Event Link')}
-        copiedLabel={langService.t('Link Copied')}
+        copyLabel={t('Copy Event Link')}
+        copiedLabel={t('Link Copied')}
         onCopy={
           /** Preserve the event page's clipboard action and feedback owner. */
           () => onCopy(eventLink, 'event')

@@ -23,10 +23,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     response = await fetch(`/api${path}`, {
       ...options,
       signal: options.signal ?? AbortSignal.timeout(12000),
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers: { 'Content-Type': 'application/json', ...options.headers },
     });
   } catch {
     throw new ApiError('We couldn’t reach Whenkin. Please check your connection and try again.', 0);

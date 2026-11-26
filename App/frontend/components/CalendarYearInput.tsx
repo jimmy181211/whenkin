@@ -1,22 +1,12 @@
 /** Edits a calendar year as a number rather than searching predefined choices. */
-import {
-  useRef,
-  useState,
-} from 'react';
-import {
-  FIRST_EVENT_DATE,
-  LAST_EVENT_DATE,
-  parseEventYear,
-} from '../../shared/date-limits';
-import { langService } from '../i18n/language';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useRef, useState } from 'react';
+import { FIRST_EVENT_DATE, LAST_EVENT_DATE, parseEventYear } from '../../shared/date-limits';
 import { useNotice } from '../utils/use-notice';
 import Toast from './Toast';
 
 /** Saved year and the parent-owned action for moving the calendar. */
-type Props = {
-  value: number;
-  onChange: (year: number) => void;
-};
+type Props = { value: number; onChange: (year: number) => void };
 
 /**
  * Numeric year field. Valid whole years update the calendar as they are typed.
@@ -24,24 +14,18 @@ type Props = {
  * year and shows the shared reminder. Escape discards the temporary text.
  * @returns A bounded number input and a reminder when an invalid edit is finished.
  */
-export default function CalendarYearInput({
-  value,
-  onChange,
-}: Props) {
+export default function CalendarYearInput({ value, onChange }: Props) {
+  const { t } = useLanguage();
   // Null displays the parent's year, including changes from month-navigation buttons.
   const [draft, setDraft] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const {
-    notice,
-    notify,
-    dismissNotice,
-  } = useNotice();
+  const { notice, notify, dismissNotice } = useNotice();
 
   /** Finish editing without allowing invalid text to change the calendar. */
   const finish = () => {
     if (draft !== null && parseEventYear(draft) === null) {
       notify(
-        langService.t('Choose a year from {first} to {last}.', {
+        t('Choose a year from {first} to {last}.', {
           first: String(FIRST_EVENT_DATE.year),
           last: String(LAST_EVENT_DATE.year),
         }),
@@ -57,7 +41,7 @@ export default function CalendarYearInput({
         ref={input}
         type="number"
         inputMode="numeric"
-        aria-label={langService.t('Year')}
+        aria-label={t('Year')}
         autoComplete="off"
         min={FIRST_EVENT_DATE.year}
         max={LAST_EVENT_DATE.year}

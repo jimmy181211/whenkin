@@ -1,22 +1,12 @@
 /** Checks pool ownership without opening a network connection or reading production data. */
-import {
-  afterEach,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { PostgresDatabase } from '../App/backend/db/connection.js';
 
 /** Supply a separate fake pool for each database instance. */
 const { Pool } = vi.hoisted(() => ({
   /** Return driver operations that can be observed without a PostgreSQL server. */
   Pool: vi.fn(function () {
-    return {
-      query: vi.fn(),
-      connect: vi.fn(),
-      end: vi.fn(),
-      on: vi.fn(),
-    };
+    return { query: vi.fn(), connect: vi.fn(), end: vi.fn(), on: vi.fn() };
   }),
 }));
 

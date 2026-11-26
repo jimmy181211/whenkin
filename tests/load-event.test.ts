@@ -1,16 +1,6 @@
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadEvent } from '../App/frontend/api/load-event';
-const event = {
-  id: 'event',
-  responses: [],
-  candidates: [],
-};
+const event = { id: 'event', responses: [], candidates: [] };
 afterEach(
   /* Restore the fetch/browser globals replaced by event-loading tests. */
   () => vi.unstubAllGlobals(),

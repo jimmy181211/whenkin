@@ -1,20 +1,15 @@
-import {
-  describe,
-  expect,
-  it,
-  afterEach,
-} from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, afterEach } from 'vitest';
+
 import { commonGround } from '../App/backend/shared/common-ground';
-import type {
-  MeetingEvent,
-  ResponseData,
-  TimeRange,
-} from '../App/shared/types';
-import { langService } from '../App/frontend/i18n/language';
+import type { MeetingEvent, ResponseData, TimeRange } from '../App/shared/types';
+
 import { slotsToRanges } from '../App/frontend/utils/time';
 import EventResults from '../App/frontend/components/event/EventResults';
 import ShareEventDialog from '../App/frontend/components/event/ShareEventDialog';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
+
 const base = Date.parse('2027-01-15T09:00:00Z');
 
 /**
@@ -40,7 +35,7 @@ const person = (id: string, ranges: TimeRange[]): ResponseData => ({
 
 afterEach(
   /* Restore English after localized shared-time rendering checks. */
-  () => langService.setLanguage('en'),
+  () => languageFixture.setLanguage('en'),
 );
 
 /** Group the everyone-free common ground checks. */
@@ -51,42 +46,18 @@ describe('everyone-free common ground', () => {
    */
   it('merges touching ranges, tolerates overlapping ranges, and keeps true event gaps', () => {
     const people = [
-      person('A', [
-        range(0, 60),
-        range(45, 90),
-      ]),
-      person('B', [
-        range(0, 30),
-        range(30, 90),
-      ]),
+      person('A', [range(0, 60), range(45, 90)]),
+      person('B', [range(0, 30), range(30, 90)]),
     ];
-    expect(commonGround([
-      range(0, 30),
-      range(30, 90),
-    ], people)).toEqual([
-      {
-        ...range(0, 90),
-        available: [
-          'A',
-          'B',
-        ],
-      },
+    expect(commonGround([range(0, 30), range(30, 90)], people)).toEqual([
+      { ...range(0, 90), available: ['A', 'B'] },
     ]);
     expect(
-      commonGround([
-        range(0, 30),
-        range(60, 90),
-      ], people).map(
+      commonGround([range(0, 30), range(60, 90)], people).map(
         /* Compare only start and end values of the calculated shared ranges. */
-        (c) => ({
-          start: c.start,
-          end: c.end,
-        }),
+        (c) => ({ start: c.start, end: c.end }),
       ),
-    ).toEqual([
-      range(0, 30),
-      range(60, 90),
-    ]);
+    ).toEqual([range(0, 30), range(60, 90)]);
   });
   /**
    * Does not offer secondary matches when one of three respondents is
@@ -96,11 +67,7 @@ describe('everyone-free common ground', () => {
     expect(
       commonGround(
         [range(0, 60)],
-        [
-          person('A', [range(0, 60)]),
-          person('B', [range(0, 30)]),
-          person('C', [range(30, 60)]),
-        ],
+        [person('A', [range(0, 60)]), person('B', [range(0, 30)]), person('C', [range(30, 60)])],
       ),
     ).toEqual([]);
   });
@@ -112,19 +79,8 @@ describe('everyone-free common ground', () => {
     'returns only the full-group intersection, without extending into ' + 'partial availability',
     () => {
       expect(
-        commonGround([range(0, 90)], [
-          person('A', [range(0, 90)]),
-          person('B', [range(30, 60)]),
-        ]),
-      ).toEqual([
-        {
-          ...range(30, 60),
-          available: [
-            'A',
-            'B',
-          ],
-        },
-      ]);
+        commonGround([range(0, 90)], [person('A', [range(0, 90)]), person('B', [range(30, 60)])]),
+      ).toEqual([{ ...range(30, 60), available: ['A', 'B'] }]);
     },
   );
   /** Supports zero, one, empty, and more than 1,000 respondents. */
@@ -132,15 +88,9 @@ describe('everyone-free common ground', () => {
     expect(commonGround([range(0, 60)], [])).toEqual([]);
     expect(commonGround([range(0, 60)], [person('A', [])])).toEqual([]);
     expect(commonGround([range(0, 60)], [person('A', [range(15, 30)])])).toEqual([
-      {
-        ...range(15, 30),
-        available: ['A'],
-      },
+      { ...range(15, 30), available: ['A'] },
     ]);
-    expect(commonGround([range(0, 60)], [
-      person('A', [range(0, 60)]),
-      person('B', []),
-    ])).toEqual(
+    expect(commonGround([range(0, 60)], [person('A', [range(0, 60)]), person('B', [])])).toEqual(
       [],
     );
     const result = commonGround(
@@ -162,15 +112,9 @@ describe('everyone-free common ground', () => {
       (_, n) => range(n * 30, n * 30 + 15),
     );
     expect(
-      commonGround([range(0, 240)], [
-        person('A', [range(0, 240)]),
-        person('B', ranges),
-      ]).map(
+      commonGround([range(0, 240)], [person('A', [range(0, 240)]), person('B', ranges)]).map(
         /* Compare range boundaries independently of available-person metadata. */
-        (c) => ({
-          start: c.start,
-          end: c.end,
-        }),
+        (c) => ({ start: c.start, end: c.end }),
       ),
     ).toEqual(ranges);
   });
@@ -231,10 +175,7 @@ describe('everyone-free common ground', () => {
 
 /** Group the shared result and editing UI checks. */
 describe('shared result and editing UI', () => {
-  const responses = [
-    person('A', [range(0, 90)]),
-    person('B', [range(30, 60)]),
-  ];
+  const responses = [person('A', [range(0, 90)]), person('B', [range(30, 60)])];
   const event: MeetingEvent = {
     id: 'shared',
     title: 'Event',
@@ -251,11 +192,8 @@ describe('shared result and editing UI', () => {
   it(
     'shows only everyone-available cards and makes every member ' + 'selectable in all languages',
     () => {
-      for (const language of [
-        'en',
-        'zh',
-      ] as const) {
-        langService.setLanguage(language);
+      for (const language of ['en', 'zh'] as const) {
+        languageFixture.setLanguage(language);
         const html = renderToStaticMarkup(
           <EventResults
             onDeleteResponse={
@@ -276,20 +214,20 @@ describe('shared result and editing UI', () => {
             }
           />,
         );
-        expect(html).toContain(langService.t('When Everyone Is Free'));
-        expect(html).toContain(langService.t('Responders'));
-        expect(html).not.toContain(langService.t('Primary Selection'));
+        expect(html).toContain(languageFixture.t('When Everyone Is Free'));
+        expect(html).toContain(languageFixture.t('Responders'));
+        expect(html).not.toContain(languageFixture.t('Primary Selection'));
         expect(html).not.toMatch(/Secondary Selection|备选时间|Selección secundaria/);
         expect(html).toContain('suggestions-card');
         expect(html).toContain('people-card');
         expect(html).not.toContain('best-badge');
         expect(html).not.toContain('attendance-dots');
-        expect(html).toContain(langService.t('Edit {name}', { name: 'A' }));
-        expect(html).toContain(langService.t('Edit {name}', { name: 'B' }));
+        expect(html).toContain(languageFixture.t('Edit {name}', { name: 'A' }));
+        expect(html).toContain(languageFixture.t('Edit {name}', { name: 'B' }));
         expect(html).toMatch(/<button[^>]*class="person"[^>]*aria-pressed="true"/);
         expect(html).not.toContain('Add Response');
-        expect(html).toContain(langService.t('Delete {name}', { name: 'A' }));
-        expect(html).toContain(langService.t('Delete {name}', { name: 'B' }));
+        expect(html).toContain(languageFixture.t('Delete {name}', { name: 'A' }));
+        expect(html).toContain(languageFixture.t('Delete {name}', { name: 'B' }));
         expect(html).not.toContain('(you)');
       }
     },
@@ -300,30 +238,9 @@ describe('shared result and editing UI', () => {
    */
   it('offers one toggle for all disjoint periods and no individual date cards', () => {
     const suggestions = [
-      {
-        start: '2027-01-15T19:00:00Z',
-        end: '2027-01-15T21:00:00Z',
-        available: [
-          'A',
-          'B',
-        ],
-      },
-      {
-        start: '2027-01-15T22:00:00Z',
-        end: '2027-01-15T23:00:00Z',
-        available: [
-          'A',
-          'B',
-        ],
-      },
-      {
-        start: '2027-01-16T19:00:00Z',
-        end: '2027-01-16T20:00:00Z',
-        available: [
-          'A',
-          'B',
-        ],
-      },
+      { start: '2027-01-15T19:00:00Z', end: '2027-01-15T21:00:00Z', available: ['A', 'B'] },
+      { start: '2027-01-15T22:00:00Z', end: '2027-01-15T23:00:00Z', available: ['A', 'B'] },
+      { start: '2027-01-16T19:00:00Z', end: '2027-01-16T20:00:00Z', available: ['A', 'B'] },
     ];
     const html = renderToStaticMarkup(
       <EventResults

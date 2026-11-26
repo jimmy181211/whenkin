@@ -2,10 +2,7 @@
 import assert from 'node:assert/strict';
 const base = new URL(process.argv[2] || 'http://127.0.0.1:3000');
 assert(
-  [
-    '127.0.0.1',
-    'localhost',
-  ].includes(base.hostname),
+  ['127.0.0.1', 'localhost'].includes(base.hostname),
   'Use a local test server. This check creates a test event.',
 );
 
@@ -16,16 +13,10 @@ assert(
 const request = async (path, method = 'GET', data) => {
   const response = await fetch(new URL('/api' + path, base), {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      Origin: base.origin,
-    },
+    headers: { 'Content-Type': 'application/json', Origin: base.origin },
     body: data === undefined ? undefined : JSON.stringify(data),
   });
-  return {
-    status: response.status,
-    body: await response.json(),
-  };
+  return { status: response.status, body: await response.json() };
 };
 
 let ready = false;
@@ -82,20 +73,14 @@ assert.equal(event.candidates.length, 1);
 assert.equal(event.candidates[0].available.length, 2);
 assert.equal((await request(path + '/responses/' + bob.body.id, 'PUT', update)).status, 409);
 assert.equal(
-  (
-    await request(path + '/responses/' + bob.body.id, 'DELETE', {
-      revision: saved.body.revision,
-    })
-  ).status,
+  (await request(path + '/responses/' + bob.body.id, 'DELETE', { revision: saved.body.revision }))
+    .status,
   200,
 );
 assert.equal((await request(path)).body.responses.length, 1);
 assert.equal(
-  (
-    await request(path + '/responses/' + alice.body.id, 'DELETE', {
-      revision: alice.body.revision,
-    })
-  ).status,
+  (await request(path + '/responses/' + alice.body.id, 'DELETE', { revision: alice.body.revision }))
+    .status,
   200,
 );
 assert.equal((await request(path)).body.candidates.length, 0);

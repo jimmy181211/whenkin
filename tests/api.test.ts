@@ -1,21 +1,8 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { Temporal } from '@js-temporal/polyfill';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from '../App/shared/types';
+import type { MeetingEvent, TimeRange } from '../App/shared/types';
 import { createApp as createServerApp } from '../App/backend/app';
 import type { Database } from '../App/backend/db/types';
 import { testClient } from './test-client';
@@ -77,10 +64,7 @@ async function request(path: string, method = 'GET', data?: unknown, token?: str
  * @returns The created event id after checking that creation succeeded.
  */
 async function create(extra: Record<string, unknown> = {}) {
-  const result = await request('/events', 'POST', {
-    ...input,
-    ...extra,
-  });
+  const result = await request('/events', 'POST', { ...input, ...extra });
   expect(result.status).toBe(201);
   const value = (await result.json()) as { id: string };
   expect(Object.keys(value)).toEqual(['id']);
@@ -106,10 +90,7 @@ async function respond(id: string, ranges: TimeRange[], name = 'Sam') {
     ranges,
   });
   expect(result.status).toBe(201);
-  return (await result.json()) as {
-    id: string;
-    revision: number;
-  };
+  return (await result.json()) as { id: string; revision: number };
 }
 
 beforeAll(
@@ -148,10 +129,7 @@ describe('shared events and common ground', () => {
    * window.
    */
   it('creates without a meeting length, including a single 30-minute event window', async () => {
-    const created = await create({
-      endTime: '09:30',
-      organizer_name: '',
-    });
+    const created = await create({ endTime: '09:30', organizer_name: '' });
     const event = await get(created.id);
     expect(event.organizer_name).toBe('');
     expect(Date.parse(event.windows[0].end) - Date.parse(event.windows[0].start)).toBe(30 * 60000);
@@ -160,45 +138,20 @@ describe('shared events and common ground', () => {
     expect(event).not.toHaveProperty('is_organizer');
     expect(event).not.toHaveProperty('admin_hash');
     expect(event).not.toHaveProperty('final_start');
-    expect(
-      (
-        await request('/events', 'POST', {
-          ...input,
-          title: '',
-        })
-      ).status,
-    ).toBe(400);
+    expect((await request('/events', 'POST', { ...input, title: '' })).status).toBe(400);
   });
   /** Store and reload future dates through 9999; reject dates outside the supported range. */
   it(
     'stores future dates through 9999 and rejects unsupported dates and ' + 'UTC overflow',
     async () => {
-      for (const value of [
-        '2028-02-29',
-        '2070-12-31',
-        '9999-12-31',
-      ]) {
-        const created = await request('/events', 'POST', {
-          ...input,
-          dates: [value],
-        });
+      for (const value of ['2028-02-29', '2070-12-31', '9999-12-31']) {
+        const created = await request('/events', 'POST', { ...input, dates: [value] });
         expect(created.status).toBe(201);
         const event = await get((await created.json()).id);
         expect(event.windows[0].start.slice(0, 4)).toBe(value.slice(0, 4));
       }
-      for (const date of [
-        '2025-12-31',
-        '10000-01-01',
-        '2070.5-01-01',
-      ]) {
-        expect(
-          (
-            await request('/events', 'POST', {
-              ...input,
-              dates: [date],
-            })
-          ).status,
-        ).toBe(400);
+      for (const date of ['2025-12-31', '10000-01-01', '2070.5-01-01']) {
+        expect((await request('/events', 'POST', { ...input, dates: [date] })).status).toBe(400);
       }
       const overflow = await request('/events', 'POST', {
         ...input,
@@ -233,10 +186,7 @@ describe('shared events and common ground', () => {
           /* Compare saved responder names without depending on other response fields. */
           (r) => r.name,
         ),
-      ).toEqual([
-        'Alice',
-        'Bob',
-      ]);
+      ).toEqual(['Alice', 'Bob']);
       expect(shared.candidates).toHaveLength(1);
       expect(shared.candidates![0]).toMatchObject({
         start: new Date(event.windows[0].start).toISOString(),
@@ -318,26 +268,13 @@ describe('shared events and common ground', () => {
   });
   /** Keeps date and weekday modes, time zones, and shared results. */
   it('keeps date and weekday modes, time zones, and shared results', async () => {
-    const created = await create({
-      schedule_mode: 'weekdays',
-      weekdays: [
-        1,
-        3,
-        7,
-      ],
-      dates: [],
-    });
+    const created = await create({ schedule_mode: 'weekdays', weekdays: [1, 3, 7], dates: [] });
     const event = await get(created.id);
     expect(event.schedule_mode).toBe('weekdays');
     expect(new Date(event.windows[0].start).toISOString()).toBe('2000-01-03T09:00:00.000Z');
     const person = await respond(created.id, event.windows);
     expect((await get(created.id)).candidates![0].available).toEqual([person.id]);
-    for (const path of [
-      '/schedule',
-      '/settings',
-      '/finalize',
-      '/calendar',
-    ]) {
+    for (const path of ['/schedule', '/settings', '/finalize', '/calendar']) {
       expect(
         (
           await request(
@@ -365,21 +302,9 @@ describe('response editing and validation', () => {
       const person = await respond(created.id, event.windows);
       await query("UPDATE responses SET edit_hash='legacy-unused-hash' WHERE id=$1", [person.id]);
       const path = `/events/${created.id}/responses/${person.id}`;
-      const payload = {
-        name: 'Updated Sam',
-        timezone: 'Europe/London',
-        ranges: [],
-        revision: 1,
-      };
+      const payload = { name: 'Updated Sam', timezone: 'Europe/London', ranges: [], revision: 1 };
       expect((await request(path, 'PUT', payload)).status).toBe(200);
-      expect(
-        (
-          await request(path, 'PUT', {
-            ...payload,
-            ranges: event.windows,
-          })
-        ).status,
-      ).toBe(409);
+      expect((await request(path, 'PUT', { ...payload, ranges: event.windows })).status).toBe(409);
       expect((await get(created.id)).responses[0]).toMatchObject({
         name: 'Updated Sam',
         revision: 2,
@@ -409,12 +334,7 @@ describe('response editing and validation', () => {
       const first = await create();
       const second = await create();
       const person = await respond(first.id, []);
-      const payload = {
-        name: 'Wrong event',
-        timezone: 'UTC',
-        ranges: [],
-        revision: 1,
-      };
+      const payload = { name: 'Wrong event', timezone: 'UTC', ranges: [], revision: 1 };
       expect(
         (await request(`/events/${second.id}/responses/${person.id}`, 'PUT', payload)).status,
       ).toBe(404);
@@ -422,10 +342,7 @@ describe('response editing and validation', () => {
         (await request(`/events/${second.id}/responses/${crypto.randomUUID()}`, 'PUT', payload))
           .status,
       ).toBe(404);
-      expect((await get(first.id)).responses[0]).toMatchObject({
-        name: 'Sam',
-        revision: 1,
-      });
+      expect((await get(first.id)).responses[0]).toMatchObject({ name: 'Sam', revision: 1 });
       expect((await get(second.id)).responses).toEqual([]);
     },
   );
@@ -453,12 +370,7 @@ describe('response editing and validation', () => {
           await request(`/events/${created.id}/responses`, 'POST', {
             name: 'Sam',
             timezone: 'UTC',
-            ranges: [
-              {
-                start: '2000-01-01T00:00Z',
-                end: '2000-01-01T00:15Z',
-              },
-            ],
+            ranges: [{ start: '2000-01-01T00:00Z', end: '2000-01-01T00:15Z' }],
           })
         ).status,
       ).toBe(400);
@@ -487,16 +399,8 @@ describe('response editing and validation', () => {
         ).status,
       ).toBe(403);
       expect(
-        (
-          await app.request(
-            'http://localhost/api/events',
-            {
-              method: 'POST',
-              body: '{',
-            },
-            {},
-          )
-        ).status,
+        (await app.request('http://localhost/api/events', { method: 'POST', body: '{' }, {}))
+          .status,
       ).toBe(400);
       for (const extra of [
         { timezone: 'not-a-zone' },
@@ -504,14 +408,7 @@ describe('response editing and validation', () => {
         { dates: ['2026-02-31'] },
         { schedule_mode: 'monthly' },
       ]) {
-        expect(
-          (
-            await request('/events', 'POST', {
-              ...input,
-              ...extra,
-            })
-          ).status,
-        ).toBe(400);
+        expect((await request('/events', 'POST', { ...input, ...extra })).status).toBe(400);
       }
       expect((await request('/events/not-an-id')).status).toBe(404);
     },
@@ -573,37 +470,18 @@ describe('one-year expiry and manual cleanup', () => {
     const person = await respond(created.id, []);
     await expire(created.id);
     for (const [path, method, data, token] of [
-      [
-        `/events/${created.id}`,
-        'GET',
-        undefined,
-        undefined,
-      ],
-      [
-        `/events/${created.id}?response_id=${person.id}`,
-        'GET',
-        undefined,
-        undefined,
-      ],
+      [`/events/${created.id}`, 'GET', undefined, undefined],
+      [`/events/${created.id}?response_id=${person.id}`, 'GET', undefined, undefined],
       [
         `/events/${created.id}/responses`,
         'POST',
-        {
-          name: 'New',
-          timezone: 'UTC',
-          ranges: [],
-        },
+        { name: 'New', timezone: 'UTC', ranges: [] },
         undefined,
       ],
       [
         `/events/${created.id}/responses/${person.id}`,
         'PUT',
-        {
-          name: 'Sam',
-          timezone: 'UTC',
-          revision: 1,
-          ranges: [],
-        },
+        { name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] },
         undefined,
       ],
     ] as const) {
@@ -642,12 +520,7 @@ describe('one-year expiry and manual cleanup', () => {
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Sam',
-          timezone: 'UTC',
-          revision: 1,
-          ranges: [],
-        }),
+        body: JSON.stringify({ name: 'Sam', timezone: 'UTC', revision: 1, ranges: [] }),
       },
       {},
     );
@@ -670,14 +543,8 @@ describe('one-year expiry and manual cleanup', () => {
     await respond(young.id, (await get(young.id)).windows);
     await age(old.id);
     await expire(misconfigured.id);
-    expect(await (await EventCleanup.load(query)).run()).toEqual({
-      deletedEvents: 1,
-    });
-    for (const table of [
-      'events',
-      'event_windows',
-      'responses',
-    ]) {
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 1 });
+    for (const table of ['events', 'event_windows', 'responses']) {
       expect(
         await query(`SELECT id FROM ${table} WHERE ${table === 'events' ? 'id' : 'event_id'}=$1`, [
           old.id,
@@ -689,9 +556,7 @@ describe('one-year expiry and manual cleanup', () => {
     );
     expect((await get(young.id)).response_count).toBe(1);
     expect(await query('SELECT id FROM events WHERE id=$1', [misconfigured.id])).toHaveLength(1);
-    expect(await (await EventCleanup.load(query)).run()).toEqual({
-      deletedEvents: 0,
-    });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 0 });
     expect((await request('/events/' + old.id)).status).toBe(404);
   });
   /** Uses creation age even with an incorrect future expiry. */
@@ -702,9 +567,7 @@ describe('one-year expiry and manual cleanup', () => {
   expires_at=now()+interval '1 year' WHERE id=$1`,
       [old.id],
     );
-    expect(await (await EventCleanup.load(query)).run()).toEqual({
-      deletedEvents: 1,
-    });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 1 });
   });
   /** Cleans the complete backlog across multiple bounded batches. */
   it('cleans the complete backlog across multiple bounded batches', async () => {
@@ -713,9 +576,7 @@ describe('one-year expiry and manual cleanup', () => {
   SELECT gen_random_uuid() , 'Old' , '' , 'UTC' , now()-interval '1 year' -interval
   '1 second' , now()-interval '1 second' FROM generate_series(1 , 205)`,
     );
-    expect(await (await EventCleanup.load(query)).run()).toEqual({
-      deletedEvents: 205,
-    });
+    expect(await (await EventCleanup.load(query)).run()).toEqual({ deletedEvents: 205 });
   });
 });
 /** Group the deleting a shared response checks. */
@@ -791,23 +652,12 @@ describe('deleting a shared response', () => {
         .status,
     ).toBe(404);
     expect((await request(path, 'DELETE', { revision: 0 })).status).toBe(400);
+    expect((await request(path, 'DELETE', { revision: 1, schedule_revision: 99 })).status).toBe(
+      409,
+    );
     expect(
-      (
-        await request(path, 'DELETE', {
-          revision: 1,
-          schedule_revision: 99,
-        })
-      ).status,
-    ).toBe(409);
-    expect(
-      (
-        await request(path, 'PUT', {
-          name: 'Changed',
-          timezone: 'UTC',
-          revision: 1,
-          ranges: [],
-        })
-      ).status,
+      (await request(path, 'PUT', { name: 'Changed', timezone: 'UTC', revision: 1, ranges: [] }))
+        .status,
     ).toBe(200);
     expect((await request(path, 'DELETE', { revision: 1 })).status).toBe(409);
     expect((await get(first.id)).responses[0].revision).toBe(2);
@@ -827,10 +677,7 @@ describe('deleting a shared response', () => {
           'http://localhost/api' + path,
           {
             method: 'DELETE',
-            headers: {
-              Origin: 'https://elsewhere.example',
-              'Content-Type': 'application/json',
-            },
+            headers: { Origin: 'https://elsewhere.example', 'Content-Type': 'application/json' },
             body: JSON.stringify({ revision: 1 }),
           },
           {},

@@ -1,13 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
-import {
-  allSlots,
-  slotsToRanges,
-  slotDuration,
-} from './time.js';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from './types.js';
+import { allSlots, slotsToRanges, slotDuration } from './time.js';
+import type { MeetingEvent, TimeRange } from './types.js';
 
 // A weekday poll represents a typical week, not dated appointments. Its shared
 // wall-clock slots use a fixed Monday–Sunday coordinate system in PostgreSQL.

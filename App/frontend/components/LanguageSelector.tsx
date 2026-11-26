@@ -1,9 +1,5 @@
+import { useLanguage, type Language } from '../i18n/LanguageProvider';
 import { Languages } from 'lucide-react';
-import {
-  langService,
-  useLanguage,
-  type Language,
-} from '../i18n/language';
 
 /**
  * Language-menu component connected to the shared interface language.
@@ -11,16 +7,17 @@ import {
  * names.
  */
 export default function LanguageSelector() {
-  const language = useLanguage();
+  const { t, setLanguage, language } = useLanguage();
+
   return (
     <label className="language-selector header-control">
       <Languages size={16} aria-hidden="true" />
-      <span className="sr-only">{langService.t('Language')}</span>
+      <span className="sr-only">{t('Language')}</span>
       <select
         value={language}
         onChange={
           /* Apply the language selected in the menu. */
-          (event) => langService.setLanguage(event.target.value as Language)
+          (event) => setLanguage(event.target.value as Language)
         }
       >
         <option value="en">English</option>

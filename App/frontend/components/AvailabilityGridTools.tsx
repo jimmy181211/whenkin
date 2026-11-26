@@ -1,10 +1,6 @@
 /** Presents grid view, zoom, undo, day navigation, and heatmap controls. */
-import {
-  ChevronLeft,
-  ChevronRight,
-  Undo2,
-} from 'lucide-react';
-import { langService } from '../i18n/language';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { ChevronLeft, ChevronRight, Undo2 } from 'lucide-react';
 import GridDisplayOptions from './GridDisplayOptions';
 import './availability-grid-tools.css';
 
@@ -46,6 +42,7 @@ export default function AvailabilityGridTools({
   paging,
   responderCount,
 }: AvailabilityGridToolsProps) {
+  const { t } = useLanguage();
   const group = view === 'group';
   return (
     <>
@@ -54,7 +51,7 @@ export default function AvailabilityGridTools({
           <div
             className="segmented small availability-view-switch"
             role="group"
-            aria-label={langService.t('Availability View')}
+            aria-label={t('Availability View')}
           >
             <button
               type="button"
@@ -64,7 +61,7 @@ export default function AvailabilityGridTools({
                 () => onViewChange?.('personal')
               }
             >
-              {langService.t('Your Availability')}
+              {t('Your Availability')}
             </button>
             <button
               type="button"
@@ -74,7 +71,7 @@ export default function AvailabilityGridTools({
                 () => onViewChange?.('group')
               }
             >
-              {langService.t('Group Availability')}
+              {t('Group Availability')}
             </button>
           </div>
         </div>
@@ -82,7 +79,7 @@ export default function AvailabilityGridTools({
           <button
             type="button"
             className="icon-button"
-            aria-label={langService.t('Undo selection')}
+            aria-label={t('Undo selection')}
             disabled={!editing || !undos}
             onClick={onUndo}
           >
@@ -96,7 +93,7 @@ export default function AvailabilityGridTools({
               <button
                 className="icon-button"
                 type="button"
-                aria-label={langService.t('Previous days')}
+                aria-label={t('Previous days')}
                 disabled={paging.page === 0}
                 onClick={
                   /* Show the previous group of dates without moving before the first page. */
@@ -108,7 +105,7 @@ export default function AvailabilityGridTools({
               <button
                 className="icon-button"
                 type="button"
-                aria-label={langService.t('Next days')}
+                aria-label={t('Next days')}
                 disabled={paging.firstColumn + paging.daysPerPage >= paging.totalDays}
                 onClick={
                   /* Show the next group of calendar dates. */
@@ -122,11 +119,11 @@ export default function AvailabilityGridTools({
         )}
       </div>
       {group && (
-        <div className="group-legend" aria-label={langService.t('People Available')}>
+        <div className="group-legend" aria-label={t('People Available')}>
           <span>0</span>
           <span className="group-legend-scale" aria-hidden="true" />
           <span>
-            {responderCount} {langService.t('Available')}
+            {responderCount} {t('Available')}
           </span>
         </div>
       )}

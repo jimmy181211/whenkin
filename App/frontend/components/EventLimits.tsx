@@ -1,8 +1,5 @@
+import { useLanguage } from '../i18n/LanguageProvider';
 import { CalendarClock } from 'lucide-react';
-import {
-  langService,
-  useLanguage,
-} from '../i18n/language';
 import { useRetentionPolicy } from './RetentionPolicyProvider';
 import { retentionDuration } from '../utils/retention-label';
 import type { RetentionPolicy } from '../../shared/retention.js';
@@ -25,23 +22,24 @@ export default function EventLimits({
   variant?: 'notice' | 'duration' | 'validity';
   className?: string;
 }) {
-  useLanguage();
+  const { t, language } = useLanguage();
+
   const stored = useRetentionPolicy();
   const policy = supplied ?? stored;
   const duration = policy
-    ? retentionDuration(policy)
-    : langService.t('the configured retention period');
+    ? retentionDuration(policy, language)
+    : t('the configured retention period');
   if (variant === 'duration') {
     return <span>{duration}</span>;
   }
   const message = policy
-    ? langService.t(
+    ? t(
       variant === 'validity'
         ? 'Event links are valid for {duration}.'
         : 'Links expire in {duration}',
       { duration },
     )
-    : langService.t('Link expiry follows the retention policy.');
+    : t('Link expiry follows the retention policy.');
   return (
     <p className={`event-limits ${className}`.trim()}>
       {variant === 'notice' && <CalendarClock size={13} aria-hidden="true" />}

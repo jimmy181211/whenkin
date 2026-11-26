@@ -1,7 +1,4 @@
-import {
-  forwardRef,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, type HTMLAttributes } from 'react';
 import './popup-surface.css';
 
 /**
@@ -18,10 +15,7 @@ const PopupSurface = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
    * reference.
    * @returns A styled div containing the supplied content and HTML attributes.
    */
-  function PopupSurface({
-    className = '',
-    ...props
-  }, ref) {
+  function PopupSurface({ className = '', ...props }, ref) {
     return <div {...props} ref={ref} className={`popup-surface ${className}`.trim()} />;
   },
 );

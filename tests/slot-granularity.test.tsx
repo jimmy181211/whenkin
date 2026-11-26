@@ -1,40 +1,24 @@
-import {
-  afterAll,
-  beforeAll,
-  expect,
-  it,
-  vi,
-} from 'vitest';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { renderToStaticMarkup } from 'react-dom/server';
+
 import { createApp } from '../App/backend/app';
 import { testClient } from './test-client';
-import {
-  allSlots,
-  slotDuration,
-  slotsToRanges,
-} from '../App/shared/time';
+import { allSlots, slotDuration, slotsToRanges } from '../App/shared/time';
 import { gridModel } from '../App/frontend/utils/time';
 import { projectWeekly } from '../App/shared/weekly';
-import {
-  groupAvailability,
-  inspectAvailability,
-} from '../App/frontend/utils/group-availability';
+import { groupAvailability, inspectAvailability } from '../App/frontend/utils/group-availability';
 import TimeRangePicker from '../App/frontend/components/TimeRangePicker';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 const pg = new PGlite();
 const legacyEventId = crypto.randomUUID();
 const legacyResponseId = crypto.randomUUID();
-const legacyRange = {
-  start: '2030-01-15T09:15:00.000Z',
-  end: '2030-01-15T09:30:00.000Z',
-};
+const legacyRange = { start: '2030-01-15T09:15:00.000Z', end: '2030-01-15T09:30:00.000Z' };
 const app = testClient(
   createApp(
     {
@@ -66,10 +50,7 @@ beforeAll(async () => {
   await pg.query(
     `INSERT INTO responses(id , event_id , name , timezone , edit_hash) VALUES($1 , $2 ,
   'Legacy person' , 'UTC' , '' )`,
-    [
-      legacyResponseId,
-      legacyEventId,
-    ],
+    [legacyResponseId, legacyEventId],
   );
   await pg.query('INSERT INTO availability(response_id,starts_at,ends_at) VALUES($1,$2,$3)', [
     legacyResponseId,
@@ -136,10 +117,7 @@ it(
 /** The server, not a client field, selects the granularity of newly created events. */
 it('creates only half-hour events and rejects quarter-hour clock choices', async () => {
   expect((await create({ slot_minutes: 15 })).slot_minutes).toBe(30);
-  for (const clock of [
-    { startTime: '09:15' },
-    { endTime: '09:45' },
-  ]) {
+  for (const clock of [{ startTime: '09:15' }, { endTime: '09:45' }]) {
     const response = await request('/events', 'POST', {
       title: 'Invalid clock',
       timezone: 'UTC',
@@ -156,50 +134,16 @@ it('creates only half-hour events and rejects quarter-hour clock choices', async
 it('enforces half-hour boundaries on both response creation and editing', async () => {
   const event = await create();
   const base = `/events/${event.id}/responses`;
-  const reply = {
-    name: 'New person',
-    timezone: 'UTC',
-  };
-  const partial = [
-    {
-      start: '2030-01-15T09:00Z',
-      end: '2030-01-15T09:15Z',
-    },
-  ];
-  const shifted = [
-    {
-      start: '2030-01-15T09:15Z',
-      end: '2030-01-15T09:45Z',
-    },
-  ];
-  const complete = [
-    {
-      start: '2030-01-15T09:00Z',
-      end: '2030-01-15T09:30Z',
-    },
-  ];
-  for (const ranges of [
-    partial,
-    shifted,
-  ]) {
-    expect(
-      (
-        await request(base, 'POST', {
-          ...reply,
-          ranges,
-        })
-      ).status,
-    ).toBe(400);
+  const reply = { name: 'New person', timezone: 'UTC' };
+  const partial = [{ start: '2030-01-15T09:00Z', end: '2030-01-15T09:15Z' }];
+  const shifted = [{ start: '2030-01-15T09:15Z', end: '2030-01-15T09:45Z' }];
+  const complete = [{ start: '2030-01-15T09:00Z', end: '2030-01-15T09:30Z' }];
+  for (const ranges of [partial, shifted]) {
+    expect((await request(base, 'POST', { ...reply, ranges })).status).toBe(400);
   }
-  const response = await request(base, 'POST', {
-    ...reply,
-    ranges: complete,
-  });
+  const response = await request(base, 'POST', { ...reply, ranges: complete });
   expect(response.status).toBe(201);
-  const saved = (await response.json()) as {
-    id: string;
-    revision: number;
-  };
+  const saved = (await response.json()) as { id: string; revision: number };
   expect(
     (
       await request(base + '/' + saved.id, 'PUT', {
@@ -227,36 +171,19 @@ it('keeps new weekly half-hour selections intact across quarter-hour-offset zone
     slot_minutes: 30 as const,
     timezone: 'UTC',
     created_at: '2026-11-20T12:00Z',
-    windows: [
-      {
-        start: '2000-01-03T09:00Z',
-        end: '2000-01-03T10:00Z',
-      },
-    ],
+    windows: [{ start: '2000-01-03T09:00Z', end: '2000-01-03T10:00Z' }],
   };
   const duration = slotDuration(event);
   const projection = projectWeekly(event, 'Asia/Kathmandu');
-  const grid = gridModel(
-    {
-      ...event,
-      windows: projection.windows,
-    },
-    'UTC',
-  );
+  const grid = gridModel({ ...event, windows: projection.windows }, 'UTC');
   const cells = grid.days[0][1];
   expect(cells).toHaveLength(2);
-  expect(cells.map((cell) => cell.minute)).toEqual([
-    885,
-    915,
-  ]);
+  expect(cells.map((cell) => cell.minute)).toEqual([885, 915]);
   expect(grid.rows.some((row) => row.minute === 885)).toBe(true);
   const stored = cells.map((cell) => projection.toCanonical(cell.stamp));
   expect(stored).toEqual(allSlots(event.windows, duration));
   expect(slotsToRanges(stored, duration)).toEqual([
-    {
-      start: '2000-01-03T09:00:00.000Z',
-      end: '2000-01-03T10:00:00.000Z',
-    },
+    { start: '2000-01-03T09:00:00.000Z', end: '2000-01-03T10:00:00.000Z' },
   ]);
 });
 
@@ -276,12 +203,7 @@ it('renders whole new-event blocks with matching group counts and range labels',
   const response = await request(`/events/${event.id}/responses`, 'POST', {
     name: 'Whole block',
     timezone: 'UTC',
-    ranges: [
-      {
-        start: '2030-01-15T09:00Z',
-        end: '2030-01-15T09:30Z',
-      },
-    ],
+    ranges: [{ start: '2030-01-15T09:00Z', end: '2030-01-15T09:30Z' }],
   });
   expect(response.status).toBe(201);
   const saved = (await (await request('/events/' + event.id)).json()) as MeetingEvent;

@@ -1,8 +1,5 @@
 /** Shared link field and copy feedback; clipboard work remains with the caller. */
-import {
-  Check,
-  Copy,
-} from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 /** A labeled URL field and the copy action/state owned by its parent. */
 type Props = {

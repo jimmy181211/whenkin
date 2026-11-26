@@ -1,6 +1,6 @@
+import { useLanguage } from '../i18n/LanguageProvider';
 import { useState } from 'react';
 import AnchoredPanel from './AnchoredPanel';
-import { langService } from '../i18n/language';
 
 /**
  * Anchored confirmation component for deleting a saved response.
@@ -18,6 +18,7 @@ export default function DeleteResponsePopover({
   onConfirm: () => Promise<boolean>;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
 
   /** Dismiss the confirmation only when deletion is not running. */
@@ -48,13 +49,13 @@ export default function DeleteResponsePopover({
   return (
     <AnchoredPanel
       anchor={anchor}
-      label={langService.t('Delete response?')}
+      label={t('Delete response?')}
       onClose={dismiss}
       focusOnOpen
       className="delete-response-popover"
     >
-      <h2>{langService.t('Delete response?')}</h2>
-      <p>{langService.t('Delete {name} and their availability?', { name })}</p>
+      <h2>{t('Delete response?')}</h2>
+      <p>{t('Delete {name} and their availability?', { name })}</p>
       <div className="confirm-actions">
         <button
           type="button"
@@ -63,7 +64,7 @@ export default function DeleteResponsePopover({
           disabled={busy}
           onClick={dismiss}
         >
-          {langService.t('Cancel')}
+          {t('Cancel')}
         </button>
         <button
           type="button"
@@ -74,7 +75,7 @@ export default function DeleteResponsePopover({
             () => void confirm()
           }
         >
-          {langService.t(busy ? 'Deleting…' : 'Delete')}
+          {t(busy ? 'Deleting…' : 'Delete')}
         </button>
       </div>
     </AnchoredPanel>

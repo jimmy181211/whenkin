@@ -114,8 +114,8 @@ return <GuideView step={step} position={position} onNext={next} onBack={back} />
 排版应让人容易看清结构，并与语言、框架及项目惯例一致。
 
 - 缩进统一，优先使用项目已有的格式化配置。新项目应明确缩进和行宽约定。
-- 对象属性和多元素数组通常按项分行，尤其是请求数据、配置和较长列表。
-- 较长的参数列表、导入列表和表达式适当换行。
+- 数组、对象、导入列表及函数参数等，合并后整行（含缩进和所在语句）不超过 100 字符时，放在一行；超过 100 字符时，在逗号处分行，按项排列。刚好 100 字符保留一行。
+- 注释、函数体和嵌套结构需要独立行时保留其结构，不为合并列表压缩代码块或删除注释。
 - 函数之间、不同逻辑段之间留合理空行，包括命名的箭头函数。
 - 避免把多个不同操作挤在一行，也不为增加空白而把相关内容分散得难以阅读。
 - 简单且清楚的惯用表达可以保留，例如 React 的 state 和 setter 成对解构。
@@ -123,13 +123,7 @@ return <GuideView step={step} position={position} onNext={next} onBack={back} />
 具体换行以项目已明确的格式配置为准。不要为一次局部修改顺便重排大量无关文件；需要统一格式时，应作为清楚的整理范围执行。
 
 ```ts
-const payload = {
-  title,
-  timezone,
-  dates,
-  startTime,
-  endTime,
-};
+const payload = { title, timezone, dates, startTime, endTime };
 
 const options = [firstOption, secondOption, thirdOption];
 ```

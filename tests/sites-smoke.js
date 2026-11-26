@@ -1,18 +1,12 @@
 // Exercise the built current-host artifact in workerd. No live database or network access.
 import { Miniflare } from 'miniflare';
 import { PGlite } from '@electric-sql/pglite';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const configuration = JSON.parse(await readFile('wrangler.json', 'utf8'));
 // Sites can apply canonical HTML redirects even when local Wrangler disables them.
-for (const mode of new Set([
-  configuration.assets.html_handling,
-  'auto-trailing-slash',
-])) {
+for (const mode of new Set([configuration.assets.html_handling, 'auto-trailing-slash'])) {
   await checkRuntime(mode);
 }
 
@@ -31,9 +25,7 @@ async function checkRuntime(htmlHandling) {
     scriptPath: 'dist/server/index.js',
     compatibilityDate: configuration.compatibility_date,
     compatibilityFlags: configuration.compatibility_flags,
-    bindings: {
-      DATABASE_URL: 'postgresql://test:test@database.neon.test/whenkin',
-    },
+    bindings: { DATABASE_URL: 'postgresql://test:test@database.neon.test/whenkin' },
     assets: {
       directory: configuration.assets.directory,
       binding: configuration.assets.binding,
@@ -53,10 +45,7 @@ async function checkRuntime(htmlHandling) {
      */
     outboundService: async (request) => {
       assert.equal(new URL(request.url).hostname, 'api.neon.test');
-      const {
-        query,
-        params,
-      } = await request.json();
+      const { query, params } = await request.json();
       try {
         const result = await pg.query(query, params);
         const fields = result.fields;
@@ -94,13 +83,7 @@ async function checkRuntime(htmlHandling) {
           rowAsArray: true,
         });
       } catch (error) {
-        return Response.json(
-          {
-            message: error.message,
-            code: error.code,
-          },
-          { status: 400 },
-        );
+        return Response.json({ message: error.message, code: error.code }, { status: 400 });
       }
     },
   });
@@ -129,19 +112,8 @@ async function checkRuntime(htmlHandling) {
     };
 
     assert.equal((await request('/api/health')).data.ready, true);
-    assert.deepEqual((await request('/api/retention')).data, {
-      value: 12,
-      unit: 'month',
-    });
-    assert.equal(
-      (
-        await request('/api/retention', 'PUT', {
-          value: 2,
-          unit: 'month',
-        })
-      ).status,
-      404,
-    );
+    assert.deepEqual((await request('/api/retention')).data, { value: 12, unit: 'month' });
+    assert.equal((await request('/api/retention', 'PUT', { value: 2, unit: 'month' })).status, 404);
     const date = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10);
     const created = await request('/api/events', 'POST', {
       title: 'Sites compatibility test',
@@ -197,28 +169,19 @@ async function checkRuntime(htmlHandling) {
     assert.equal((await request(path)).data.candidates.length, 0);
     const crossOrigin = await mf.dispatchFetch('https://whenkin.test' + path + '/responses', {
       method: 'POST',
-      headers: {
-        Origin: 'https://other.test',
-        'Content-Type': 'application/json',
-      },
+      headers: { Origin: 'https://other.test', 'Content-Type': 'application/json' },
       body: '{}',
     });
     assert.equal(crossOrigin.status, 403);
     const malformed = await mf.dispatchFetch('https://whenkin.test/api/events', {
       method: 'POST',
-      headers: {
-        Origin: 'https://whenkin.test',
-        'Content-Type': 'application/json',
-      },
+      headers: { Origin: 'https://whenkin.test', 'Content-Type': 'application/json' },
       body: '{',
     });
     assert.equal(malformed.status, 400);
     const oversized = await mf.dispatchFetch('https://whenkin.test/api/events', {
       method: 'POST',
-      headers: {
-        Origin: 'https://whenkin.test',
-        'Content-Type': 'application/json',
-      },
+      headers: { Origin: 'https://whenkin.test', 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: 'x'.repeat(131073) }),
     });
     assert.equal(oversized.status, 413);
@@ -260,29 +223,15 @@ async function checkRuntime(htmlHandling) {
       '/',
     );
     for (const [asset, size] of [
-      [
-        '/icon-192.png',
-        192,
-      ],
-      [
-        '/icon-512.png',
-        512,
-      ],
-      [
-        '/apple-touch-icon.png',
-        180,
-      ],
+      ['/icon-192.png', 192],
+      ['/icon-512.png', 512],
+      ['/apple-touch-icon.png', 180],
     ]) {
       const icon = await mf.dispatchFetch('https://whenkin.test' + asset);
       assert.equal(icon.status, 200);
       assert.match(icon.headers.get('content-type'), /^image\/png/);
       const bytes = Buffer.from(await icon.arrayBuffer());
-      assert.deepEqual([...bytes.subarray(0, 4)], [
-        137,
-        80,
-        78,
-        71,
-      ]);
+      assert.deepEqual([...bytes.subarray(0, 4)], [137, 80, 78, 71]);
       assert.equal(bytes.readUInt32BE(16), size);
       assert.equal(bytes.readUInt32BE(20), size);
     }

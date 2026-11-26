@@ -1,20 +1,16 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import SchedulePicker from '../App/frontend/components/SchedulePicker';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import { langService } from '../App/frontend/i18n/language';
+
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 afterEach(
   /* Restore English and browser globals after schedule-picker tests. */
   () => {
-    langService.setLanguage('en');
+    languageFixture.setLanguage('en');
     vi.unstubAllGlobals();
   },
 );
@@ -34,10 +30,7 @@ describe('date and weekday scheduling modes', () => {
           /* Keep selected dates unchanged in this static schedule fixture. */
           () => {}
         }
-        weekdays={[
-          1,
-          7,
-        ]}
+        weekdays={[1, 7]}
         onWeekdaysChange={
           /* Keep selected weekdays unchanged in the dated-mode fixture. */
           () => {}
@@ -53,18 +46,10 @@ describe('date and weekday scheduling modes', () => {
   /** Shows seven localized weekday choices with no month or calendar dates. */
   it('shows seven localized weekday choices with no month or calendar dates', () => {
     for (const [language, monday, sunday] of [
-      [
-        'en',
-        'Monday',
-        'Sunday',
-      ],
-      [
-        'zh',
-        '星期一',
-        '星期日',
-      ],
+      ['en', 'Monday', 'Sunday'],
+      ['zh', '星期一', '星期日'],
     ] as const) {
-      langService.setLanguage(language);
+      languageFixture.setLanguage(language);
       const html = renderToStaticMarkup(
         <SchedulePicker
           mode="weekdays"
@@ -77,10 +62,7 @@ describe('date and weekday scheduling modes', () => {
             /* Keep the weekly fixture's inactive date selection unchanged. */
             () => {}
           }
-          weekdays={[
-            1,
-            7,
-          ]}
+          weekdays={[1, 7]}
           onWeekdaysChange={
             /* Keep the weekly fixture's active weekdays unchanged. */
             () => {}
@@ -109,12 +91,7 @@ describe('date and weekday scheduling modes', () => {
       organizer_name: '',
       timezone: 'America/Los_Angeles',
       schedule_mode: 'weekdays',
-      windows: [
-        {
-          start: '2000-01-03T09:00:00Z',
-          end: '2000-01-03T11:00:00Z',
-        },
-      ],
+      windows: [{ start: '2000-01-03T09:00:00Z', end: '2000-01-03T11:00:00Z' }],
       responses: [],
     };
     const html = renderToStaticMarkup(

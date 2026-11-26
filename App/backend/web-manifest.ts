@@ -1,7 +1,4 @@
-import {
-  shortcutManifestHref,
-  shortcutPath,
-} from '../shared/shortcut-path.js';
+import { shortcutManifestHref, shortcutPath } from '../shared/shortcut-path.js';
 
 /**
  * Build install metadata so a shortcut opens its event page with Whenkin's icons.
@@ -21,18 +18,8 @@ export function webManifest(page: unknown) {
     theme_color: '#18574e',
     background_color: '#f8f9f4',
     icons: [
-      {
-        src: '/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any',
-      },
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
   };
 }

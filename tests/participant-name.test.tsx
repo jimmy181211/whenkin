@@ -1,20 +1,16 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ParticipantName from '../App/frontend/components/ParticipantName';
 import AvailabilityGrid from '../App/frontend/components/AvailabilityGrid';
-import { langService } from '../App/frontend/i18n/language';
+
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 afterEach(
   /* Restore the language and browser globals after name-field tests. */
   () => {
-    langService.setLanguage('en');
+    languageFixture.setLanguage('en');
     vi.unstubAllGlobals();
   },
 );
@@ -25,11 +21,8 @@ describe('name before availability editing', () => {
    * notice.
    */
   it('keeps the name field quiet until an edit attempt needs an accessible notice', () => {
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      langService.setLanguage(language);
+    for (const language of ['en', 'zh'] as const) {
+      languageFixture.setLanguage(language);
       const html = renderToStaticMarkup(
         <ParticipantName
           name=""
@@ -53,7 +46,9 @@ describe('name before availability editing', () => {
         />,
       );
       expect(noticed).toContain('aria-invalid="true"');
-      expect(noticed).not.toContain(langService.t('Enter your name before editing availability.'));
+      expect(noticed).not.toContain(
+        languageFixture.t('Enter your name before editing availability.'),
+      );
     }
   });
   /** Does not show the blank-name hint once a name is supplied. */
@@ -84,18 +79,10 @@ describe('name before availability editing', () => {
         description: '',
         organizer_name: '',
         timezone: 'UTC',
-        windows: [
-          {
-            start: '2027-01-15T09:00:00Z',
-            end: '2027-01-15T10:00:00Z',
-          },
-        ],
+        windows: [{ start: '2027-01-15T09:00:00Z', end: '2027-01-15T10:00:00Z' }],
         responses: [],
       };
-      for (const width of [
-        390,
-        1280,
-      ]) {
+      for (const width of [390, 1280]) {
         vi.stubGlobal('window', { innerWidth: width });
         const html = renderToStaticMarkup(
           <AvailabilityGrid

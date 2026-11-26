@@ -1,28 +1,15 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  EventCleanup,
-  cleanupOptions,
-} from '../App/backend/tools/cleanup.js';
+import { readFile, readdir } from 'node:fs/promises';
+
+import { EventCleanup, cleanupOptions } from '../App/backend/tools/cleanup.js';
 import { parseRetentionPolicy } from '../App/shared/retention.js';
 import { createApp } from '../App/backend/app';
 import { testClient } from './test-client';
 import EventLimits from '../App/frontend/components/EventLimits';
-import { langService } from '../App/frontend/i18n/language';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 const pg = new PGlite();
 
@@ -52,7 +39,7 @@ beforeEach(
 );
 afterEach(
   /* Restore English after localized retention-policy checks. */
-  () => langService.setLanguage('en'),
+  () => languageFixture.setLanguage('en'),
 );
 afterAll(
   /* Close the fixture database after this suite finishes. */
@@ -74,36 +61,15 @@ describe('administrator-controlled retention in calendar months', () => {
     'parses maintenance options without mistaking a misspelled dry run ' +
       'for permission to delete',
     () => {
-      expect(cleanupOptions([])).toEqual({
-        months: undefined,
-        dryRun: false,
-      });
-      expect(cleanupOptions([
-        '--months',
-        '2',
-        '--dry-run',
-      ])).toEqual({
-        months: 2,
-        dryRun: true,
-      });
+      expect(cleanupOptions([])).toEqual({ months: undefined, dryRun: false });
+      expect(cleanupOptions(['--months', '2', '--dry-run'])).toEqual({ months: 2, dryRun: true });
       for (const args of [
         ['--dry-run=true'],
         ['--dryrun'],
         ['--months'],
-        [
-          '--months',
-          '2.5',
-        ],
-        [
-          '--months',
-          '0',
-        ],
-        [
-          '--months',
-          '2',
-          '--months',
-          '3',
-        ],
+        ['--months', '2.5'],
+        ['--months', '0'],
+        ['--months', '2', '--months', '3'],
       ]) {
         expect(
           /* Parse invalid cleanup arguments so their errors can be asserted. */
@@ -118,16 +84,7 @@ describe('administrator-controlled retention in calendar months', () => {
     expect(new EventCleanup(execute).getTime()).toBe(12);
     expect(new EventCleanup(execute, 2).getTime()).toBe(2);
     expect(execute).not.toHaveBeenCalled();
-    for (const value of [
-      0,
-      -1,
-      1.5,
-      NaN,
-      Infinity,
-      1201,
-      '2',
-      null,
-    ]) {
+    for (const value of [0, -1, 1.5, NaN, Infinity, 1201, '2', null]) {
       expect(
         /* Construct cleanup with an invalid duration to verify validation happens early. */
         () => new EventCleanup(execute, value as number),
@@ -171,10 +128,7 @@ describe('administrator-controlled retention in calendar months', () => {
       await expect(cleaner.setTime(0)).rejects.toThrow();
       expect(cleaner.getTime()).toBe(2);
       expect(await query('SELECT * FROM get_event_retention_policy()')).toEqual([
-        {
-          value: 2,
-          unit: 'month',
-        },
+        { value: 2, unit: 'month' },
       ]);
       await expect(query('SELECT * FROM set_event_retention_months(-1)')).rejects.toMatchObject({
         code: '22023',
@@ -195,10 +149,7 @@ describe('administrator-controlled retention in calendar months', () => {
   (gen_random_uuid() , 'Young' , '' , 'UTC' , now()-interval '1 month' )`,
       );
       const cleaner = new EventCleanup(query, 2);
-      expect(await cleaner.dryRun()).toEqual({
-        months: 2,
-        eligibleEvents: 1,
-      });
+      expect(await cleaner.dryRun()).toEqual({ months: 2, eligibleEvents: 1 });
       expect((await EventCleanup.load(query)).getTime()).toBe(12);
       expect(await cleaner.run()).toEqual({ deletedEvents: 1 });
       expect(await query('SELECT title FROM events')).toEqual([{ title: 'Young' }]);
@@ -208,10 +159,7 @@ describe('administrator-controlled retention in calendar months', () => {
   );
   /** Uses calendar month-end and leap-year arithmetic in UTC. */
   it('uses calendar month-end and leap-year arithmetic in UTC', async () => {
-    const rows = await query<{
-      month_end: string;
-      leap: string;
-    }>(
+    const rows = await query<{ month_end: string; leap: string }>(
       `SELECT (event_retention_deadline( '2027-01-31T12:00Z' , 1) AT TIME ZONE 'UTC' )::text AS
   month_end , (event_retention_deadline( '2028-02-29T12:00Z' , 12) AT TIME ZONE 'UTC'
   )::text AS leap`,
@@ -223,18 +171,10 @@ describe('administrator-controlled retention in calendar months', () => {
   it('exposes read-only public metadata and restricts the database setter', async () => {
     const response = await app.request('http://localhost/api/retention');
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      value: 12,
-      unit: 'month',
-    });
+    expect(await response.json()).toEqual({ value: 12, unit: 'month' });
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(
-      (
-        await app.request('http://localhost/api/retention', {
-          method: 'PUT',
-          body: '{}',
-        })
-      ).status,
+      (await app.request('http://localhost/api/retention', { method: 'PUT', body: '{}' })).status,
     ).toBe(404);
     const rights = await query<{ count: number }>(
       `SELECT count(*)::integer AS count FROM pg_proc p CROSS JOIN LATERAL aclexplode(p.proacl)
@@ -245,29 +185,14 @@ describe('administrator-controlled retention in calendar months', () => {
   });
   /** Returns immutable month metadata and rejects invalid units. */
   it('returns immutable month metadata and rejects invalid units', () => {
-    expect(
-      Object.isFrozen(
-        parseRetentionPolicy({
-          value: 2,
-          unit: 'month',
-        }),
-      ),
-    ).toBe(true);
+    expect(Object.isFrozen(parseRetentionPolicy({ value: 2, unit: 'month' }))).toBe(true);
     expect(
       /* Reject a policy using a year unit instead of the required month unit. */
-      () =>
-        parseRetentionPolicy({
-          value: 1,
-          unit: 'year',
-        }),
+      () => parseRetentionPolicy({ value: 1, unit: 'year' }),
     ).toThrow();
     expect(
       /* Reject a string month count instead of a validated number. */
-      () =>
-        parseRetentionPolicy({
-          value: '2',
-          unit: 'month',
-        }),
+      () => parseRetentionPolicy({ value: '2', unit: 'month' }),
     ).toThrow();
   });
   /**
@@ -276,42 +201,17 @@ describe('administrator-controlled retention in calendar months', () => {
    */
   it('uses the same component for localized months, years, and singular/plural units', () => {
     const labels = {
-      en: [
-        '1 month',
-        '2 months',
-        '1 year',
-        '2 years',
-      ],
-      zh: [
-        '1 个月',
-        '2 个月',
-        '1 年',
-        '2 年',
-      ],
+      en: ['1 month', '2 months', '1 year', '2 years'],
+      zh: ['1 个月', '2 个月', '1 年', '2 年'],
     };
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      langService.setLanguage(language);
-      [
-        1,
-        2,
-        12,
-        24,
-      ].forEach(
+    for (const language of ['en', 'zh'] as const) {
+      languageFixture.setLanguage(language);
+      [1, 2, 12, 24].forEach(
         /* Check each month count against its expected localized expiry wording. */
         (value, index) =>
-          expect(
-            renderToStaticMarkup(
-              <EventLimits
-                policy={{
-                  value,
-                  unit: 'month',
-                }}
-              />,
-            ),
-          ).toContain(labels[language][index]),
+          expect(renderToStaticMarkup(<EventLimits policy={{ value, unit: 'month' }} />)).toContain(
+            labels[language][index],
+          ),
       );
     }
     expect(renderToStaticMarkup(<EventLimits />)).not.toContain('1 year');

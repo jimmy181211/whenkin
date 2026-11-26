@@ -32,16 +32,8 @@ export function visibleViewport() {
  */
 export function anchoredPanelPosition(
   anchor: PanelRect,
-  box: {
-    width: number;
-    height: number;
-  },
-  viewport: {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  },
+  box: { width: number; height: number },
+  viewport: { left: number; top: number; width: number; height: number },
 ) {
   // Leave space at viewport edges (pad) and between the trigger and panel (gap).
   const pad = 12;
@@ -62,15 +54,12 @@ export function anchoredPanelPosition(
   if (top > maxY) {
     top = anchor.top - box.height - gap;
   }
-  return {
-    left: Math.max(minX, Math.min(maxX, left)),
-    top: Math.max(minY, Math.min(maxY, top)),
-  };
+  return { left: Math.max(minX, Math.min(maxX, left)), top: Math.max(minY, Math.min(maxY, top)) };
 }
 
 /**
- * Center a field reminder above its target, keeping the card and arrow inside the viewport.
- * @returns Fixed-position coordinates and an arrow offset measured from the card's left edge.
+ * Center a field reminder above its target, keeping the card inside the viewport.
+ * @returns Fixed-position coordinates clamped to the visible viewport.
  */
 export function noticePosition(
   target: Pick<PanelRect, 'left' | 'width' | 'top'>,
@@ -86,9 +75,5 @@ export function noticePosition(
     viewport.top + 8,
     Math.min(target.top - box.height - 10, viewport.top + viewport.height - box.height - 8),
   );
-  return {
-    top,
-    left,
-    '--notice-arrow': Math.max(16, Math.min(center - left, box.width - 16)) + 'px',
-  };
+  return { top, left };
 }

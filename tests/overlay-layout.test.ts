@@ -1,10 +1,5 @@
 /** Verifies shared layout tracking reacts to changes and cleans up independently. */
-import {
-  afterEach,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { observeOverlayLayout } from '../App/frontend/utils/observe-overlay-layout';
 
 /** Restore browser globals replaced by the layout fixtures. */
@@ -40,13 +35,7 @@ function layoutBrowser() {
       }
     },
   );
-  return {
-    viewport,
-    target,
-    observed,
-    disconnected,
-    callbacks,
-  };
+  return { viewport, target, observed, disconnected, callbacks };
 }
 
 /** All layout sources remeasure; cleanup uses the originally subscribed viewport. */
@@ -55,16 +44,9 @@ it('tracks elements and viewport events and removes every listener on cleanup', 
   const panel = {} as Element;
   const anchor = {} as Element;
   const measure = vi.fn();
-  const cleanup = observeOverlayLayout(measure, [
-    panel,
-    null,
-    anchor,
-  ]);
+  const cleanup = observeOverlayLayout(measure, [panel, null, anchor]);
   expect(measure).toHaveBeenCalledOnce();
-  expect(browser.observed.mock.calls).toEqual([
-    [panel],
-    [anchor],
-  ]);
+  expect(browser.observed.mock.calls).toEqual([[panel], [anchor]]);
   browser.target.dispatchEvent(new Event('scroll'));
   browser.target.dispatchEvent(new Event('resize'));
   browser.viewport.dispatchEvent(new Event('scroll'));

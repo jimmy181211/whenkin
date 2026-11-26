@@ -37,10 +37,7 @@ const nodeHandler = httpServerHandler({ port: 3000 });
 async function appDocument(request: Request): Promise<Response> {
   // The hosted asset service canonicalizes index.html to /; local assets can
   // instead require index.html. Accept only a real HTML response, never a redirect.
-  for (const path of [
-    '/',
-    '/index.html',
-  ]) {
+  for (const path of ['/', '/index.html']) {
     const document = await env.ASSETS.fetch(new Request(new URL(path, request.url), request));
     if (document.ok && document.headers.get('Content-Type')?.includes('text/html')) {
       const headers = new Headers(document.headers);
@@ -49,10 +46,7 @@ async function appDocument(request: Request): Promise<Response> {
       headers.delete('ETag');
       return new Response(
         documentWithManifest(await document.text(), new URL(request.url).pathname),
-        {
-          status: document.status,
-          headers,
-        },
+        { status: document.status, headers },
       );
     }
   }

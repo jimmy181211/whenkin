@@ -1,9 +1,6 @@
 import type { Database } from '../db/types.js';
 import type { MeetingEvent } from '../../shared/types.js';
-import {
-  Problem,
-  checkId,
-} from './validation.js';
+import { Problem, checkId } from './validation.js';
 import { commonGround } from './common-ground.js';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits.js';
 
@@ -67,18 +64,12 @@ export async function readEvent(database: Database, id: string, includeResponses
   ) AS responses
 FROM events e
 WHERE e.id = $1`,
-    [
-      id,
-      includeResponses,
-    ],
+    [id, includeResponses],
   );
   if (!rows.length) {
     throw new Problem(404, 'This event could not be found. It may have expired.');
   }
-  const {
-    expired,
-    ...event
-  } = rows[0] as MeetingEvent & { expired: boolean };
+  const { expired, ...event } = rows[0] as MeetingEvent & { expired: boolean };
   if (expired) {
     throw new Problem(410, EVENT_EXPIRED_MESSAGE);
   }
@@ -86,10 +77,7 @@ WHERE e.id = $1`,
   event.candidates = includeResponses
     ? commonGround(event.windows, event.responses).map(
       /* Keep the legacy missing-person field empty for everyone-free results. */
-      (candidate) => ({
-        ...candidate,
-        missing: [],
-      }),
+      (candidate) => ({ ...candidate, missing: [] }),
     )
     : [];
   return event;

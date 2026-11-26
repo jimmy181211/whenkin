@@ -1,4 +1,5 @@
-import { langService } from '../i18n/language';
+import { useLanguage } from '../i18n/LanguageProvider';
+
 const steps = [
   {
     title: 'The Organizer Creates an Event',
@@ -19,9 +20,10 @@ const steps = [
  * @returns A translated, numbered list of the three introductory steps.
  */
 export default function Steps() {
+  const { t } = useLanguage();
   return (
     <div className="how-it-works">
-      <p className="eyebrow">{langService.t('THREE SMALL STEPS')}</p>
+      <p className="eyebrow">{t('THREE SMALL STEPS')}</p>
       <ol>
         {steps.map(
           /**
@@ -32,8 +34,8 @@ export default function Steps() {
             <li key={step.title}>
               <span>0{i + 1}</span>
               <div>
-                <strong>{langService.t(step.title)}</strong>
-                <p>{langService.t(step.short)}</p>
+                <strong>{t(step.title)}</strong>
+                <p>{t(step.short)}</p>
               </div>
             </li>
           ),

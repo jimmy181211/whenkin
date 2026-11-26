@@ -1,10 +1,4 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 beforeEach(
   /* Reset module state so guide-dismissal tests do not affect one another. */
@@ -41,10 +35,7 @@ describe('first-visit event guide', () => {
 
   /** Offers the guide without recording completion just for opening a page. */
   it('offers the guide without recording completion just for opening a page', async () => {
-    const {
-      tourService,
-      EVENT_TOUR_KEY,
-    } = await import('../App/frontend/utils/event-tour');
+    const { tourService, EVENT_TOUR_KEY } = await import('../App/frontend/utils/event-tour');
     const saved = storage();
     expect(tourService.shouldOffer(saved)).toBe(true);
     expect(saved.getItem(EVENT_TOUR_KEY)).toBeNull();
@@ -54,10 +45,7 @@ describe('first-visit event guide', () => {
    * Check that either recorded guide outcome suppresses the next welcome
    * prompt.
    */
-  it.each([
-    'skipped',
-    'completed',
-  ] as const)(
+  it.each(['skipped', 'completed'] as const)(
     'remembers %s across event visits and page reloads',
 
     async (outcome) => {
@@ -104,23 +92,13 @@ describe('first-visit event guide', () => {
    * introduction.
    */
   it('provides six concise localized steps while retaining the personal introduction', async () => {
-    const {
-      tourCopy,
-      tourSteps,
-    } = await import('../App/frontend/utils/event-tour');
+    const { tourCopy, tourSteps } = await import('../App/frontend/utils/event-tour');
     expect(
       tourSteps.map(
         /* Compare the guide's ordered step keys. */
         (step) => step.key,
       ),
-    ).toEqual([
-      'personal',
-      'group',
-      'responders',
-      'sharedTimes',
-      'share',
-      'shortcut',
-    ]);
+    ).toEqual(['personal', 'group', 'responders', 'sharedTimes', 'share', 'shortcut']);
     for (const copy of Object.values(tourCopy)) {
       expect(copy.start).toBeTruthy();
       expect(copy.skip).toBeTruthy();
@@ -130,7 +108,9 @@ describe('first-visit event guide', () => {
         expect(copy[step.key][1].length).toBeLessThan(200);
       }
     }
-    expect(tourCopy.en.personal[1]).toBe('View or edit your current response.');
-    expect(tourCopy.zh.personal[1]).toBe('查看或修改你正在填写的空闲时间。');
+    expect(tourCopy.en.personal[1]).toBe(
+      'View or edit your response, then click Save Availability.',
+    );
+    expect(tourCopy.zh.personal[1]).toBe('查看或修改空闲时间，然后点击“保存空闲时间”。');
   });
 });

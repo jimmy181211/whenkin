@@ -1,18 +1,9 @@
 /** Renders one time block, including selection, shared highlights, and inspection. */
-import { langService } from '../i18n/language';
-import {
-  slotDuration,
-  formatDay,
-  formatTime,
-  zoneLabel,
-  type GridCell,
-} from '../utils/time';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { slotDuration, formatDay, formatTime, zoneLabel, type GridCell } from '../utils/time';
 import { availabilityColor } from '../utils/group-availability';
 import { paintSelection } from '../utils/selection';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from '../../shared/types';
+import type { MeetingEvent, TimeRange } from '../../shared/types';
 import type { SlotInspection } from './SlotDetails';
 
 /**
@@ -64,6 +55,7 @@ export default function AvailabilityCell({
   columnIndex,
   context,
 }: Props) {
+  const { t, locale, language } = useLanguage();
   const {
     event,
     zone,
@@ -128,19 +120,20 @@ export default function AvailabilityCell({
   // A block may contain different counts, so its label can show a range (e.g. 1–2).
   const minimum = Math.min(...cellCounts);
   const maximum = Math.max(...cellCounts);
-  const groupLabel = langService.t('{count} of {total} available', {
+  const groupLabel = t('{count} of {total} available', {
     count: minimum === maximum ? minimum : `${minimum}–${maximum}`,
     total: event.responses.length,
   });
-  const dateLabel = formatDay(cell.stamp, clockZone, false, weekly);
-  const timeLabel = formatTime(cell.stamp, clockZone) + '–' + formatTime(blockEnd, clockZone);
-  const timezoneLabel = weekly ? zoneLabel(zone) : 'UTC' + cell.offset;
+  const dateLabel = formatDay(cell.stamp, clockZone, false, weekly, locale);
+  const timeLabel =
+    formatTime(cell.stamp, clockZone, locale) + '–' + formatTime(blockEnd, clockZone, locale);
+  const timezoneLabel = weekly ? zoneLabel(zone, language) : 'UTC' + cell.offset;
   let availabilityLabel = groupLabel;
   if (!group) {
     if (partial) {
-      availabilityLabel = langService.t('Partly available');
+      availabilityLabel = t('Partly available');
     } else {
-      availabilityLabel = langService.t(active ? 'Available' : 'not selected');
+      availabilityLabel = t(active ? 'Available' : 'not selected');
     }
   }
   // Screen readers receive the same date, time, zone, and state as before.
@@ -166,10 +159,7 @@ export default function AvailabilityCell({
         /* Use stored slot coordinates when requesting responder details. */
         (c) => canonicalStamp(c.stamp),
       ),
-      range: {
-        start: new Date(cell.stamp).toISOString(),
-        end: new Date(blockEnd).toISOString(),
-      },
+      range: { start: new Date(cell.stamp).toISOString(), end: new Date(blockEnd).toISOString() },
     });
   }
 
@@ -278,9 +268,7 @@ export default function AvailabilityCell({
             />
           ) : null,
       )}
-      {!group && partial ? (
-        <span className="sr-only">{langService.t('Partly available')}</span>
-      ) : null}
+      {!group && partial ? <span className="sr-only">{t('Partly available')}</span> : null}
     </button>
   );
 }

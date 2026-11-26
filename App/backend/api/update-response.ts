@@ -1,22 +1,11 @@
 /** Updates a response and its ranges while checking the expected revision. */
-import {
-  isTimezone,
-  slotDuration,
-} from '../../shared/time.js';
-import {
-  Problem,
-  checkId,
-  text,
-  validateRanges,
-} from '../shared/validation.js';
+import { isTimezone, slotDuration } from '../../shared/time.js';
+import { Problem, checkId, text, validateRanges } from '../shared/validation.js';
 import { readEvent } from '../shared/event-queries.js';
 import { body } from '../shared/request.js';
-import type {
-  RequestHandler,
-  Request,
-  Response,
-} from 'express';
+import type { RequestHandler, Request, Response } from 'express';
 import type { Database } from '../db/types.js';
+import { EVENT_INPUT_LIMITS } from '../../shared/event-input.js';
 
 /**
  * Build the handler that replaces an existing reply's name, zone, and availability.
@@ -30,10 +19,7 @@ export default function updateResponse(database: Database): RequestHandler<Route
 }
 
 /** URL identifiers accepted by this endpoint. */
-type RouteParams = {
-  id: string;
-  responseId: string;
-};
+type RouteParams = { id: string; responseId: string };
 
 /**
  * Replace the reply and its ranges after checking both revision numbers.
@@ -52,7 +38,7 @@ async function handleUpdateResponse(database: Database, req: Request<RouteParams
     throw new Problem(404, 'This response could not be found. Refresh the group and try again.');
   }
   const input = await body(req);
-  const name = text(input.name, 'your name', 60);
+  const name = text(input.name, 'your name', EVENT_INPUT_LIMITS.name);
   if (
     typeof input.timezone !== 'string' ||
     !isTimezone(input.timezone) ||
@@ -69,10 +55,7 @@ async function handleUpdateResponse(database: Database, req: Request<RouteParams
   const ranges = validateRanges(input.ranges, event.windows, slotDuration(event));
   // One statement checks revisions, removes old ranges, and inserts replacements.
   // The new ranges are inserted only for the reply accepted by "target".
-  const updated = await database.query<{
-    id: string;
-    revision: number;
-  }>(
+  const updated = await database.query<{ id: string; revision: number }>(
     `WITH gate AS (
   UPDATE events
   SET write_revision = write_revision + 1
@@ -97,15 +80,7 @@ async function handleUpdateResponse(database: Database, req: Request<RouteParams
   RETURNING id
 )
 SELECT id, revision FROM target`,
-    [
-      name,
-      input.timezone,
-      id,
-      input.revision,
-      JSON.stringify(ranges),
-      event.id,
-      expectedSchedule,
-    ],
+    [name, input.timezone, id, input.revision, JSON.stringify(ranges), event.id, expectedSchedule],
   );
   if (!updated.length) {
     await readEvent(database, event.id);

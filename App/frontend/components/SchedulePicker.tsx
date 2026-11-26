@@ -1,9 +1,6 @@
-import {
-  CalendarDays,
-  Repeat2,
-} from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { CalendarDays, Repeat2 } from 'lucide-react';
 import Calendar from './Calendar';
-import { langService } from '../i18n/language';
 
 /**
  * Selections and callbacks for switching between dated and weekly
@@ -39,10 +36,7 @@ function toggleWeekday(selectedDays: number[], day: number): number[] {
     );
   }
 
-  const nextDays = [
-    ...selectedDays,
-    day,
-  ];
+  const nextDays = [...selectedDays, day];
 
   // Keep newly selected days in Monday-to-Sunday order.
   nextDays.sort(
@@ -58,17 +52,11 @@ function toggleWeekday(selectedDays: number[], day: number): number[] {
  * @returns Localized weekday buttons that toggle each day's selected state.
  */
 export function WeekdayPicker(props: WeekdayPickerProps) {
-  const {
-    value,
-    onChange,
-  } = props;
+  const { t, locale } = useLanguage();
+  const { value, onChange } = props;
 
   return (
-    <div
-      className="weekly-picker"
-      role="group"
-      aria-label={langService.t('Choose days of the week')}
-    >
+    <div className="weekly-picker" role="group" aria-label={t('Choose days of the week')}>
       <div className="weekday-options">
         {Array.from(
           { length: 7 },
@@ -79,11 +67,11 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
           (_, i) => {
             const day = i + 1;
             const date = new Date(Date.UTC(2024, 0, day)); // Jan 1 was Monday.
-            const full = new Intl.DateTimeFormat(langService.getLocale(), {
+            const full = new Intl.DateTimeFormat(locale, {
               weekday: 'long',
               timeZone: 'UTC',
             }).format(date);
-            const short = new Intl.DateTimeFormat(langService.getLocale(), {
+            const short = new Intl.DateTimeFormat(locale, {
               weekday: 'short',
               timeZone: 'UTC',
             }).format(date);
@@ -122,23 +110,12 @@ export function WeekdayPicker(props: WeekdayPickerProps) {
  * @returns Mode controls and the date or weekday picker for the current mode.
  */
 export default function SchedulePicker(props: Props) {
-  const {
-    mode,
-    onModeChange,
-    dates,
-    onDatesChange,
-    weekdays,
-    onWeekdaysChange,
-    timezone,
-  } = props;
+  const { t } = useLanguage();
+  const { mode, onModeChange, dates, onDatesChange, weekdays, onWeekdaysChange, timezone } = props;
 
   return (
     <section className="schedule-picker">
-      <div
-        className="schedule-mode-switch"
-        role="group"
-        aria-label={langService.t('Calendar mode')}
-      >
+      <div className="schedule-mode-switch" role="group" aria-label={t('Calendar mode')}>
         <button
           type="button"
           aria-pressed={mode === 'dates'}
@@ -148,7 +125,7 @@ export default function SchedulePicker(props: Props) {
           }
         >
           <CalendarDays size={16} />
-          {langService.t('Specific Dates')}
+          {t('Specific Dates')}
         </button>
         <button
           type="button"
@@ -159,7 +136,7 @@ export default function SchedulePicker(props: Props) {
           }
         >
           <Repeat2 size={16} />
-          {langService.t('Days of the Week')}
+          {t('Days of the Week')}
         </button>
       </div>
       {mode === 'dates' ? (

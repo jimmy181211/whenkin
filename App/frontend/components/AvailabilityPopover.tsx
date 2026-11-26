@@ -1,10 +1,7 @@
-import {
-  useEffect,
-  useRef,
-} from 'react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useEffect, useRef } from 'react';
 import AnchoredPanel from './AnchoredPanel';
 import SlotDetails, { type SlotInspection } from './SlotDetails';
-import { langService } from '../i18n/language';
 import type { MeetingEvent } from '../../shared/types';
 
 /**
@@ -23,6 +20,7 @@ export default function AvailabilityPopover({
   inspection: SlotInspection;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const close = useRef(onClose);
   close.current = onClose;
   /**
@@ -78,7 +76,7 @@ export default function AvailabilityPopover({
   return (
     <AnchoredPanel
       anchor={inspection.anchor}
-      label={langService.t('Availability at This Time')}
+      label={t('Availability at This Time')}
       onClose={onClose}
       className="availability-popover"
     >

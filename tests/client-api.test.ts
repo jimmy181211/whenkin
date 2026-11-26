@@ -1,10 +1,4 @@
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../App/frontend/api/client';
 
 afterEach(
@@ -28,12 +22,14 @@ describe('connection failures explain the next step', () => {
   it('rejects a static HTML fallback instead of treating it as a saved event', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        new Response('<html>Website only</html>', {
-          status: 200,
-          headers: { 'Content-Type': 'text/html' },
-        }),
-      ),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response('<html>Website only</html>', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          }),
+        ),
     );
     await expect(api('/events', { method: 'POST' })).rejects.toThrow(
       'Event saving is not available at this address yet.',

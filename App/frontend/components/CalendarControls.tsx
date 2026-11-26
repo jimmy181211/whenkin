@@ -1,14 +1,8 @@
 /** Renders native month selection, numeric year input, and calendar navigation. */
+import { useLanguage } from '../i18n/LanguageProvider';
 import { Temporal } from '@js-temporal/polyfill';
-import {
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
-import { langService } from '../i18n/language';
-import {
-  FIRST_EVENT_DATE,
-  LAST_EVENT_DATE,
-} from '../../shared/date-limits';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { FIRST_EVENT_DATE, LAST_EVENT_DATE } from '../../shared/date-limits';
 import CalendarYearInput from './CalendarYearInput';
 import { useMediaQuery } from '../utils/use-media-query';
 import './calendar-controls.css';
@@ -25,24 +19,19 @@ type CalendarControlsProps = {
  * The parent clamps requested months to the same supported date range.
  * @returns A month selector, year field, and bounded navigation buttons.
  */
-export default function CalendarControls({
-  month,
-  setMonth,
-}: CalendarControlsProps) {
+export default function CalendarControls({ month, setMonth }: CalendarControlsProps) {
+  const { t, locale } = useLanguage();
   const first = FIRST_EVENT_DATE;
   const last = LAST_EVENT_DATE.with({ day: 1 });
   const narrow = useMediaQuery('(max-width: 699px)');
-  const monthFormat = {
-    month: narrow ? 'short' : 'long',
-    timeZone: 'UTC',
-  } as const;
-  const localMonths = new Intl.DateTimeFormat(langService.getLocale(), monthFormat);
+  const monthFormat = { month: narrow ? 'short' : 'long', timeZone: 'UTC' } as const;
+  const localMonths = new Intl.DateTimeFormat(locale, monthFormat);
   return (
     <div className="calendar-heading">
       <div className="calendar-selects">
         <select
           className="calendar-month"
-          aria-label={langService.t('Month')}
+          aria-label={t('Month')}
           value={String(month.month)}
           onChange={
             /** Apply the month number selected with the browser's native controls. */
@@ -71,7 +60,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={langService.t('Previous month')}
+          aria-label={t('Previous month')}
           disabled={month.equals(first)}
           onClick={
             /* Move the visible calendar back one month. */
@@ -83,7 +72,7 @@ export default function CalendarControls({
         <button
           className="icon-button"
           type="button"
-          aria-label={langService.t('Next month')}
+          aria-label={t('Next month')}
           disabled={month.equals(last)}
           onClick={
             /* Move the visible calendar forward one month. */

@@ -1,21 +1,11 @@
 /** Validates and inserts a response with its availability in one SQL statement. */
-import {
-  isTimezone,
-  slotDuration,
-} from '../../shared/time.js';
-import {
-  Problem,
-  text,
-  validateRanges,
-} from '../shared/validation.js';
+import { isTimezone, slotDuration } from '../../shared/time.js';
+import { Problem, text, validateRanges } from '../shared/validation.js';
 import { readEvent } from '../shared/event-queries.js';
 import { body } from '../shared/request.js';
-import type {
-  RequestHandler,
-  Request,
-  Response,
-} from 'express';
+import type { RequestHandler, Request, Response } from 'express';
 import type { Database } from '../db/types.js';
+import { EVENT_INPUT_LIMITS } from '../../shared/event-input.js';
 
 /**
  * Build the handler that creates a saved reply and its availability rows.
@@ -39,7 +29,7 @@ type RouteParams = { id: string };
 async function handleCreateResponse(database: Database, req: Request<RouteParams>, res: Response) {
   const event = await readEvent(database, req.params.id);
   const input = await body(req);
-  const name = text(input.name, 'your name', 60);
+  const name = text(input.name, 'your name', EVENT_INPUT_LIMITS.name);
   if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
     throw new Problem(400, 'Please choose a valid time zone.');
   }
@@ -69,21 +59,11 @@ async function handleCreateResponse(database: Database, req: Request<RouteParams
   RETURNING id
 )
 SELECT id FROM response`,
-    [
-      id,
-      event.id,
-      name,
-      input.timezone,
-      JSON.stringify(ranges),
-      expectedSchedule,
-    ],
+    [id, event.id, name, input.timezone, JSON.stringify(ranges), expectedSchedule],
   );
   if (!created.length) {
     await readEvent(database, event.id);
     throw new Problem(409, 'The event schedule changed. Reload before saving your changes.');
   }
-  return res.status(201).json({
-    id,
-    revision: 1,
-  });
+  return res.status(201).json({ id, revision: 1 });
 }

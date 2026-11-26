@@ -22,9 +22,10 @@ and PostgreSQL. Production serves the frontend and API from one origin. Developm
 
 ## Popup components
 
-The event page composes display controls. `useEventResponse` keeps drafts, autosave, revision
+The event page composes display controls. `useEventResponse` keeps drafts, explicit saving, revision
 checks, responder switching and deletion coordinated; `useEventSync` handles loading, refresh and
-expiry. `AvailabilityGrid` manages layout/gestures and delegates single-block rendering to
+expiry. Edits stay local until Save Availability is clicked; switching responders does not save them
+implicitly. `AvailabilityGrid` manages layout/gestures and delegates single-block rendering to
 `AvailabilityCell`. These hooks remain in the existing frontend `utils` directory. See
 [code readability](code-style.md) for the full directory conventions.
 

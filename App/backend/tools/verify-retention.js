@@ -1,10 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
-import {
-  readFile,
-  readdir,
-  mkdir,
-  writeFile,
-} from 'node:fs/promises';
+import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { EventCleanup } from './cleanup.js';
 
@@ -49,11 +44,7 @@ try {
     await query("SELECT pg_get_functiondef('purge_expired_events(integer)'::regprocedure) AS sql")
   )[0].sql;
   await pg.exec(definition.replaceAll('statement_timestamp()', `'${clock}'::timestamptz`));
-  for (const months of [
-    1,
-    2,
-    12,
-  ]) {
+  for (const months of [1, 2, 12]) {
     await pg.exec('TRUNCATE events CASCADE');
     const cleanup = new EventCleanup(query);
     check(cleanup.getTime() === 12, 'Constructor default changed');
@@ -130,17 +121,9 @@ SET created_at='${clock}'::timestamptz-make_interval(months=>$1)-interval '1 sec
     const snapshot = async () =>
       Object.fromEntries(
         await Promise.all(
-          [
-            'events',
-            'event_windows',
-            'responses',
-            'availability',
-          ].map(
+          ['events', 'event_windows', 'responses', 'availability'].map(
             /** Read a fixture table in stable id order for the before/after comparison. */
-            async (table) => [
-              table,
-              await query(`SELECT * FROM ${table} ORDER BY id`),
-            ],
+            async (table) => [table, await query(`SELECT * FROM ${table} ORDER BY id`)],
           ),
         ),
       );
@@ -246,19 +229,13 @@ SET created_at='${clock}'::timestamptz-make_interval(months=>$1)-interval '1 sec
       before: Object.fromEntries(
         Object.entries(before).map(
           /* Record each fixture table's row count before cleanup. */
-          ([key, rows]) => [
-            key,
-            rows.length,
-          ],
+          ([key, rows]) => [key, rows.length],
         ),
       ),
       after: Object.fromEntries(
         Object.entries(after).map(
           /* Record the corresponding row counts after cleanup. */
-          ([key, rows]) => [
-            key,
-            rows.length,
-          ],
+          ([key, rows]) => [key, rows.length],
         ),
       ),
     });

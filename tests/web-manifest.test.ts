@@ -1,12 +1,5 @@
-import {
-  describe,
-  expect,
-  it,
-} from 'vitest';
-import {
-  documentWithManifest,
-  webManifest,
-} from '../App/backend/web-manifest';
+import { describe, expect, it } from 'vitest';
+import { documentWithManifest, webManifest } from '../App/backend/web-manifest';
 import { shortcutManifestHref } from '../App/shared/shortcut-path';
 
 const event = '/e/855e5518-3b5a-49cb-b906-69bbd7bac603';
@@ -22,18 +15,8 @@ describe('installable website metadata', () => {
     expect(manifest.start_url).toBe('/');
     expect(manifest.display).toBe('standalone');
     expect(manifest.icons).toEqual([
-      {
-        src: '/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any',
-      },
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     ]);
   });
   /**
@@ -59,10 +42,7 @@ describe('installable website metadata', () => {
     event + '?token=secret',
     event + '#response',
     '<script>',
-    [
-      '/',
-      event,
-    ],
+    ['/', event],
     { page: event },
   ])(
     'rejects unrecognized launch targets: %s',

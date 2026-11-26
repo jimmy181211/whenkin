@@ -1,22 +1,8 @@
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  it,
-} from 'vitest';
-import {
-  mkdtemp,
-  mkdir,
-  writeFile,
-  rm,
-} from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  createApp as apiApp,
-  type AppOptions,
-} from '../App/backend/app';
+import { createApp as apiApp, type AppOptions } from '../App/backend/app';
 import { testClient } from './test-client';
 
 /**
@@ -83,10 +69,7 @@ describe('Node server and browser routes', () => {
       expect(response.status).toBe(200);
       expect(await response.text()).toContain('id="root"');
     }
-    for (const path of [
-      '/demo',
-      '/e/not-an-id',
-    ]) {
+    for (const path of ['/demo', '/e/not-an-id']) {
       expect((await app.request('http://localhost' + path)).status).toBe(404);
       expect(pageRoute(path).kind).toBe('not-found');
     }
@@ -132,11 +115,52 @@ describe('Node server and browser routes', () => {
       display: 'standalone',
     });
   });
+  /** Only GET and HEAD may omit Origin or supply a different one. */
+  it.each(['GET', 'HEAD'])('allows %s without a matching Origin', async (method) => {
+    const app = createApp(database);
+    for (const origin of [undefined, 'https://elsewhere.example']) {
+      const headers = new Headers();
+      if (origin !== undefined) {
+        headers.set('Origin', origin);
+      }
+      const response = await app.request('http://localhost/api/health', { method, headers });
+      expect(response.status).toBe(200);
+    }
+  });
+
+  /** Missing, null, and foreign Origins must fail before reaching a write handler. */
+  it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])(
+    'requires a matching Origin for %s',
+    async (method) => {
+      const app = createApp(database, { rateLimit: false });
+      for (const origin of [undefined, 'null', 'https://elsewhere.example']) {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (origin !== undefined) {
+          headers.Origin = origin;
+        }
+        const response = await app.request(
+          'http://localhost/api/events',
+          { method, headers, body: '{}' },
+          { omitOrigin: true },
+        );
+        expect(response.status).toBe(403);
+        expect(await response.json()).toEqual({
+          error: 'Please make changes from the Whenkin website.',
+        });
+      }
+      // A valid Origin reaches validation or routing, rather than failing the origin gate.
+      const allowed = await app.request('http://localhost/api/events', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      expect(allowed.status).toBe(method === 'POST' ? 400 : 404);
+    },
+  );
+
   /** Checks the public HTTPS origin behind a reverse proxy. */
   it('checks the public HTTPS origin behind a reverse proxy', async () => {
-    const app = createApp(database, {
-      publicOrigin: 'https://whenkin.example',
-    });
+    const app = createApp(database, { publicOrigin: 'https://whenkin.example' });
 
     /**
      * Send a creation request with the origin being checked.
@@ -146,10 +170,7 @@ describe('Node server and browser routes', () => {
     const request = (origin: string) =>
       app.request('http://app:3000/api/events', {
         method: 'POST',
-        headers: {
-          Origin: origin,
-          'Content-Type': 'application/json',
-        },
+        headers: { Origin: origin, 'Content-Type': 'application/json' },
         body: '{}',
       });
 
@@ -164,10 +185,7 @@ describe('Node server and browser routes', () => {
         (
           await app.request(
             'http://localhost/api/events',
-            {
-              method: 'POST',
-              body: '{}',
-            },
+            { method: 'POST', body: '{}' },
             { clientIp: 'client-one' },
           )
         ).status,
@@ -177,10 +195,7 @@ describe('Node server and browser routes', () => {
       (
         await app.request(
           'http://localhost/api/events',
-          {
-            method: 'POST',
-            body: '{}',
-          },
+          { method: 'POST', body: '{}' },
           { clientIp: 'client-one' },
         )
       ).status,
@@ -189,10 +204,7 @@ describe('Node server and browser routes', () => {
       (
         await app.request(
           'http://localhost/api/events',
-          {
-            method: 'POST',
-            body: '{}',
-          },
+          { method: 'POST', body: '{}' },
           { clientIp: 'client-two' },
         )
       ).status,

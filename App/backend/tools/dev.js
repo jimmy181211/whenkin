@@ -4,12 +4,7 @@ import { fileURLToPath } from 'node:url';
 // Run both development tools without requiring globally installed Node packages.
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const children = [
-  spawn(process.execPath, [
-    '--import',
-    'tsx',
-    '--watch',
-    'App/backend/server.ts',
-  ], {
+  spawn(process.execPath, ['--import', 'tsx', '--watch', 'App/backend/server.ts'], {
     cwd: root,
     env: process.env,
     stdio: 'inherit',

@@ -1,5 +1,7 @@
+import { getLocale, translate, type Language, useLanguage } from '../i18n/LanguageProvider';
+
 /** Selects local start/end clock values without converting them to instants. */
-import { langService } from '../i18n/language';
+
 import { NEW_EVENT_SLOT_MINUTES } from '../../shared/time';
 
 // Half-hour choices include next-day midnight, which is only offered as an end.
@@ -17,11 +19,11 @@ const times = Array.from(
  * @returns A localized clock label, including explicit next-day midnight for
  * 24:00.
  */
-function labelTime(value: string) {
+function labelTime(value: string, language: Language) {
   if (value === '24:00') {
-    return langService.t('Midnight (next day)');
+    return translate(language, 'Midnight (next day)');
   }
-  return new Intl.DateTimeFormat(langService.getLocale(), {
+  return new Intl.DateTimeFormat(getLocale(language), {
     timeZone: 'UTC',
     hour: 'numeric',
     minute: '2-digit',
@@ -47,10 +49,11 @@ export default function TimeRangePicker({
   onStartChange,
   onEndChange,
 }: TimeRangePickerProps) {
+  const { t, language } = useLanguage();
   return (
     <div className="fields-row two-fields">
       <label className="field">
-        {langService.t('From')}
+        {t('From')}
         <select
           value={start}
           onChange={
@@ -65,14 +68,14 @@ export default function TimeRangePicker({
              */
             (t) => (
               <option key={t} value={t}>
-                {labelTime(t)}
+                {labelTime(t, language)}
               </option>
             ),
           )}
         </select>
       </label>
       <label className="field">
-        {langService.t('Until')}
+        {t('Until')}
         <select
           value={end}
           onChange={
@@ -87,7 +90,7 @@ export default function TimeRangePicker({
              */
             (t) => (
               <option key={t} value={t}>
-                {labelTime(t)}
+                {labelTime(t, language)}
               </option>
             ),
           )}

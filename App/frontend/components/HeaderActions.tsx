@@ -1,10 +1,5 @@
 /** Places page-owned actions in the shared header without duplicating state. */
-import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useDisclosure } from '../utils/use-disclosure';
 
@@ -31,15 +26,7 @@ export function HeaderActionsProvider({ children }: { children: ReactNode }) {
   const [guide, setGuide] = useState<HTMLDivElement | null>(null);
   const menu = useDisclosure();
   return (
-    <Context.Provider
-      value={{
-        share,
-        guide,
-        setShare,
-        setGuide,
-        menu,
-      }}
-    >
+    <Context.Provider value={{ share, guide, setShare, setGuide, menu }}>
       {children}
     </Context.Provider>
   );
@@ -75,13 +62,7 @@ export function HeaderActionSlot({ name }: { name: ActionName }) {
  * Render a page control into the shared header while retaining page ownership.
  * @returns The control portal, or nothing until its header target is mounted.
  */
-export function HeaderAction({
-  name,
-  children,
-}: {
-  name: ActionName;
-  children: ReactNode;
-}) {
+export function HeaderAction({ name, children }: { name: ActionName; children: ReactNode }) {
   const target = useHeaderActions()[name];
   return target ? createPortal(children, target) : null;
 }

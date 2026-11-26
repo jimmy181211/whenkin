@@ -1,23 +1,16 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import Calendar, { clampCalendarMonth } from '../App/frontend/components/Calendar';
-import { langService } from '../App/frontend/i18n/language';
-import {
-  isEventDateAllowed,
-  parseEventYear,
-} from '../App/shared/date-limits';
+
+import { isEventDateAllowed, parseEventYear } from '../App/shared/date-limits';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 afterEach(
   /* Restore English and real timers after each calendar test. */
   () => {
-    langService.setLanguage('en');
+    languageFixture.setLanguage('en');
     vi.useRealTimers();
   },
 );
@@ -42,19 +35,10 @@ describe('calendar month and year navigation', () => {
    */
   it('permits future dates through 9999 while blocking past dates and later years', () => {
     const today = Temporal.PlainDate.from('2026-10-23');
-    for (const date of [
-      '2026-10-23',
-      '2028-02-29',
-      '2070-12-31',
-      '9999-12-31',
-    ]) {
+    for (const date of ['2026-10-23', '2028-02-29', '2070-12-31', '9999-12-31']) {
       expect(isEventDateAllowed(Temporal.PlainDate.from(date), today)).toBe(true);
     }
-    for (const date of [
-      '2026-10-22',
-      '2025-12-31',
-      '+010000-01-01',
-    ]) {
+    for (const date of ['2026-10-22', '2025-12-31', '+010000-01-01']) {
       expect(isEventDateAllowed(Temporal.PlainDate.from(date), today)).toBe(false);
     }
   });
@@ -69,16 +53,10 @@ describe('calendar month and year navigation', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
       for (const [language, october] of [
-        [
-          'en',
-          'October',
-        ],
-        [
-          'zh',
-          '十月',
-        ],
+        ['en', 'October'],
+        ['zh', '十月'],
       ] as const) {
-        langService.setLanguage(language);
+        languageFixture.setLanguage(language);
         const html = renderToStaticMarkup(
           <Calendar
             timezone="UTC"
@@ -89,8 +67,8 @@ describe('calendar month and year navigation', () => {
             }
           />,
         );
-        expect(html).toContain(`aria-label="${langService.t('Month')}"`);
-        expect(html).toContain(`aria-label="${langService.t('Year')}"`);
+        expect(html).toContain(`aria-label="${languageFixture.t('Month')}"`);
+        expect(html).toContain(`aria-label="${languageFixture.t('Year')}"`);
         expect(html).toContain('<select class="calendar-month"');
         expect(html.match(/<option /g)).toHaveLength(12);
         expect(html).not.toContain('aria-haspopup="listbox"');
@@ -108,22 +86,10 @@ describe('calendar month and year navigation', () => {
 
   /** Accept free whole years while rejecting partial, nonnumeric, and out-of-range edits. */
   it('validates numeric years without requiring matching options', () => {
-    for (const value of [
-      '2026',
-      '2070',
-      '9999',
-    ]) {
+    for (const value of ['2026', '2070', '9999']) {
       expect(parseEventYear(value)).toBe(Number(value));
     }
-    for (const value of [
-      '',
-      '202',
-      '2025',
-      '10000',
-      '2070.5',
-      '2e3',
-      'text',
-    ]) {
+    for (const value of ['', '202', '2025', '10000', '2070.5', '2e3', 'text']) {
       expect(parseEventYear(value)).toBeNull();
     }
   });

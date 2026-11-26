@@ -1,15 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api } from '../api/client';
-import {
-  parseRetentionPolicy,
-  type RetentionPolicy,
-} from '../../shared/retention.js';
+import { parseRetentionPolicy, type RetentionPolicy } from '../../shared/retention.js';
 
 const RetentionContext = createContext<Readonly<RetentionPolicy> | null>(null);
 
@@ -47,10 +38,7 @@ export default function RetentionPolicyProvider({ children }: { children: ReactN
       const controller = new AbortController();
       pending = controller;
       void api('/retention', {
-        signal: AbortSignal.any([
-          controller.signal,
-          AbortSignal.timeout(12000),
-        ]),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]),
       })
         .then(
           /* Accept a valid policy only while this request and provider are still active. */

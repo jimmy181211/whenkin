@@ -1,15 +1,8 @@
 /** Deletes a shared response after validating its event and revision. */
-import {
-  Problem,
-  checkId,
-} from '../shared/validation.js';
+import { Problem, checkId } from '../shared/validation.js';
 import { readEvent } from '../shared/event-queries.js';
 import { body } from '../shared/request.js';
-import type {
-  RequestHandler,
-  Request,
-  Response,
-} from 'express';
+import type { RequestHandler, Request, Response } from 'express';
 import type { Database } from '../db/types.js';
 
 /**
@@ -24,10 +17,7 @@ export default function deleteResponse(database: Database): RequestHandler<Route
 }
 
 /** URL identifiers accepted by this endpoint. */
-type RouteParams = {
-  id: string;
-  responseId: string;
-};
+type RouteParams = { id: string; responseId: string };
 
 /**
  * Delete only the reviewed reply revision and its availability rows.
@@ -64,12 +54,7 @@ async function handleDeleteResponse(database: Database, req: Request<RouteParams
       WHERE id=$2 AND schedule_revision=$4 AND expires_at>clock_timestamp() RETURNING id
     ) DELETE FROM responses WHERE id=$1 AND event_id=$2 AND revision=$3
       AND EXISTS (SELECT 1 FROM gate) RETURNING id`,
-    [
-      id,
-      event.id,
-      input.revision,
-      expectedSchedule,
-    ],
+    [id, event.id, input.revision, expectedSchedule],
   );
   if (!removed.length) {
     await readEvent(database, event.id);

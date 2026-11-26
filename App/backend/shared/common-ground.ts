@@ -1,17 +1,10 @@
-import type {
-  Candidate,
-  ResponseData,
-  TimeRange,
-} from '../../shared/types.js';
+import type { Candidate, ResponseData, TimeRange } from '../../shared/types.js';
 
 /**
  * Changes in open event windows and responder ranges at one sweep
  * boundary.
  */
-type Edge = {
-  windows: number;
-  people: Map<string, number>;
-};
+type Edge = { windows: number; people: Map<string, number> };
 
 /**
  * Sweep time boundaries to find when all respondents are free within the event.
@@ -33,10 +26,7 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
   const edge = (at: string) => {
     const stamp = Date.parse(at);
     if (!edges.has(stamp)) {
-      edges.set(stamp, {
-        windows: 0,
-        people: new Map(),
-      });
+      edges.set(stamp, { windows: 0, people: new Map() });
     }
     return edges.get(stamp)!;
   };
@@ -48,14 +38,8 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
   for (const person of responses) {
     for (const range of person.ranges) {
       for (const [at, delta] of [
-        [
-          range.start,
-          1,
-        ],
-        [
-          range.end,
-          -1,
-        ],
+        [range.start, 1],
+        [range.end, -1],
       ] as const) {
         const change = edge(at).people;
         change.set(person.id, (change.get(person.id) ?? 0) + delta);
@@ -69,10 +53,7 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
     /* Visit time boundaries from earliest to latest. */
     (a, b) => a - b,
   );
-  const matches: {
-    start: number;
-    end: number;
-  }[] = [];
+  const matches: { start: number; end: number }[] = [];
   // Number of event windows covering the interval between this boundary and the next.
   let inside = 0;
   // Number of distinct people whose open range count is positive.
@@ -100,10 +81,7 @@ export function commonGround(windows: TimeRange[], responses: ResponseData[]): C
     if (previous?.end === start) {
       previous.end = end;
     } else {
-      matches.push({
-        start,
-        end,
-      });
+      matches.push({ start, end });
     }
   }
   const ids = responses.map(

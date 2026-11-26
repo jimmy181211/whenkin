@@ -4,14 +4,8 @@
  * and zero means enough of the target is already visible or no space is available.
  */
 export function tourScrollDelta(
-  target: {
-    top: number;
-    bottom: number;
-  },
-  bounds: {
-    top: number;
-    bottom: number;
-  },
+  target: { top: number; bottom: number },
+  bounds: { top: number; bottom: number },
 ) {
   const room = bounds.bottom - bounds.top;
   if (room <= 0) {
@@ -52,15 +46,7 @@ type GuideLayout = {
  * Fit the guide and its highlight inside the visible viewport.
  * @returns Card/highlight coordinates; a missing target gives a centered card and no highlight.
  */
-export function guidePosition({
-  vw,
-  vh,
-  top,
-  left,
-  width,
-  height,
-  rect,
-}: GuideLayout) {
+export function guidePosition({ vw, vh, top, left, width, height, rect }: GuideLayout) {
   let cardX = left + (vw - width) / 2;
   let cardY = top + (vh - height) / 2;
   let x = 0;
@@ -89,12 +75,5 @@ export function guidePosition({
     w = Math.max(0, Math.min(rect.right + 6, left + vw - 8) - x);
     h = Math.max(0, bottom - y);
   }
-  return {
-    x,
-    y,
-    width: w,
-    height: h,
-    cardX,
-    cardY,
-  };
+  return { x, y, width: w, height: h, cardX, cardY };
 }

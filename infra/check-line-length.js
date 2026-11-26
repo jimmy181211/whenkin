@@ -31,22 +31,13 @@ function isAuthoredSource(file) {
   return SOURCE_EXTENSIONS.test(file) || /(?:^|\/)(?:Dockerfile|Caddyfile)$/.test(file);
 }
 
-const files = execFileSync('git', [
-  'ls-files',
-  '--cached',
-  '--others',
-  '--exclude-standard',
-  '-z',
-])
+const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'])
   .toString()
   .split('\0')
   .filter(isAuthoredSource);
 let checked = 0;
 let violations = 0;
-for (const file of new Set([
-  ...files,
-  ...process.argv.slice(2),
-])) {
+for (const file of new Set([...files, ...process.argv.slice(2)])) {
   let source;
   try {
     source = readFileSync(file, 'utf8');

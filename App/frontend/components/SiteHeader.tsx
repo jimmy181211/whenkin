@@ -1,21 +1,10 @@
 /** Shared navigation with visible event sharing and responsive secondary actions. */
-import {
-  useEffect,
-  useId,
-} from 'react';
-import {
-  CircleHelp,
-  Menu,
-  Plus,
-  X,
-} from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useEffect, useId } from 'react';
+import { CircleHelp, Menu, Plus, X } from 'lucide-react';
 import { BRAND } from '../brand';
-import { langService } from '../i18n/language';
 import LanguageSelector from './LanguageSelector';
-import {
-  HeaderActionSlot,
-  useHeaderActions,
-} from './HeaderActions';
+import { HeaderActionSlot, useHeaderActions } from './HeaderActions';
 import './site-header.css';
 
 /**
@@ -24,6 +13,7 @@ import './site-header.css';
  * @returns The brand and navigation, with an optional mobile disclosure.
  */
 export default function SiteHeader({ showNewEvent }: { showNewEvent: boolean }) {
+  const { t } = useLanguage();
   const { menu } = useHeaderActions();
   const id = useId();
 
@@ -48,11 +38,11 @@ export default function SiteHeader({ showNewEvent }: { showNewEvent: boolean }) 
 
   return (
     <header className="site-header" data-event={showNewEvent}>
-      <a className="brand" href="/" aria-label={langService.t('Whenkin home')}>
+      <a className="brand" href="/" aria-label={t('Whenkin home')}>
         <img src="/favicon.svg" alt="" width={40} height={40} />
         <span>{BRAND.name.toLowerCase()}</span>
       </a>
-      <nav className="header-navigation" aria-label={langService.t('Main navigation')}>
+      <nav className="header-navigation" aria-label={t('Main navigation')}>
         {showNewEvent && <HeaderActionSlot name="share" />}
         <div className="header-secondary" ref={menu.container}>
           {showNewEvent && (
@@ -60,7 +50,7 @@ export default function SiteHeader({ showNewEvent }: { showNewEvent: boolean }) 
               type="button"
               className="icon-button header-menu-toggle"
               ref={menu.trigger}
-              aria-label={langService.t('Menu')}
+              aria-label={t('Menu')}
               aria-expanded={menu.open}
               aria-controls={id}
               onClick={menu.toggle}
@@ -73,18 +63,18 @@ export default function SiteHeader({ showNewEvent }: { showNewEvent: boolean }) 
               <>
                 <HeaderActionSlot name="guide" />
                 <a className="header-control" href="/">
-                  <Plus size={16} /> {langService.t('New Event')}
+                  <Plus size={16} /> {t('New Event')}
                 </a>
               </>
             ) : (
               <a
                 className="header-help"
                 href="/how-it-works"
-                aria-label={langService.t('How It Works')}
-                title={langService.t('How It Works')}
+                aria-label={t('How It Works')}
+                title={t('How It Works')}
               >
                 <CircleHelp size={18} aria-hidden="true" />
-                <span>{langService.t('How It Works')}</span>
+                <span>{t('How It Works')}</span>
               </a>
             )}
             <LanguageSelector />

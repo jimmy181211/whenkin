@@ -27,8 +27,5 @@ export function parseRetentionPolicy(input) {
   ) {
     throw new Error('Invalid retention policy.');
   }
-  return Object.freeze({
-    value: validateRetentionMonths(input.value),
-    unit: 'month',
-  });
+  return Object.freeze({ value: validateRetentionMonths(input.value), unit: 'month' });
 }

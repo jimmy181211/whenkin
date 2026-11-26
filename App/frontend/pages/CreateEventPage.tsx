@@ -1,24 +1,15 @@
 /** Collects an event schedule and requests its shareable link. */
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import {
-  ArrowRight,
-  Info,
-  LoaderCircle,
-  Plus,
-  RefreshCw,
-} from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Info, LoaderCircle, Plus, RefreshCw } from 'lucide-react';
 import SchedulePicker from '../components/SchedulePicker';
 import TimezonePicker from '../components/TimezonePicker';
 import { api } from '../api/client';
 import { deviceTimezone } from '../utils/time';
-import { langService } from '../i18n/language';
 import TimeRangePicker from '../components/TimeRangePicker';
 import Toast from '../components/Toast';
 import { useNotice } from '../utils/use-notice';
+import { EVENT_INPUT_LIMITS, isTimeRangeOrdered } from '../../shared/event-input';
 
 const scheduleErrors = {
   dates: 'Choose at least one date on the calendar.',
@@ -32,9 +23,7 @@ const scheduleErrors = {
  */
 async function connectionStatus(): Promise<'ready' | 'setup' | 'unreachable'> {
   try {
-    const result = await api<{
-      ready: boolean;
-    }>('/health');
+    const result = await api<{ ready: boolean }>('/health');
     return result.ready === true ? 'ready' : 'setup';
   } catch {
     return 'unreachable';
@@ -47,6 +36,7 @@ async function connectionStatus(): Promise<'ready' | 'setup' | 'unreachable'> {
  * @returns The event form, connection feedback, and required-field reminders.
  */
 export default function CreateEventPage() {
+  const { t } = useLanguage();
   const [scheduleMode, setScheduleMode] = useState<'dates' | 'weekdays'>('dates');
   // Weekday mode uses Monday=1 through Sunday=7; date mode uses YYYY-MM-DD strings.
   const [weekdays, setWeekdays] = useState<number[]>([]);
@@ -54,11 +44,7 @@ export default function CreateEventPage() {
   const [dates, setDates] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const titleInput = useRef<HTMLInputElement>(null);
-  const {
-    notice,
-    notifyRequired,
-    dismissNotice,
-  } = useNotice();
+  const { notice, notifyRequired, dismissNotice } = useNotice();
   const [description, setDescription] = useState('');
   // Whether the optional notes field is visible; description holds its text.
   const [notes, setNotes] = useState(false);
@@ -140,7 +126,7 @@ export default function CreateEventPage() {
       setError(scheduleErrors[scheduleMode]);
       return;
     }
-    if (start >= end) {
+    if (!isTimeRangeOrdered(start, end)) {
       setError('Choose an end time after the start time.');
       return;
     }
@@ -156,10 +142,7 @@ export default function CreateEventPage() {
         startTime: start,
         endTime: end,
       });
-      const payload = {
-        method: 'POST',
-        body: body,
-      };
+      const payload = { method: 'POST', body: body };
       const result = await api<{ id: string }>('/events', payload);
       window.location.assign(new URL(`/e/${result.id}`, location.href).href);
     } catch (e) {
@@ -181,18 +164,18 @@ export default function CreateEventPage() {
       <section className="create-card">
         <div className="form-heading">
           <div>
-            <h2>{langService.t('Create Your Event')}</h2>
+            <h2>{t('Create Your Event')}</h2>
           </div>
         </div>
         <form noValidate onSubmit={create}>
           <label className="field">
-            {langService.t('Event Name')}
+            {t('Event Name')}
             <input
               ref={titleInput}
               autoComplete="off"
               required
               aria-invalid={!title.trim() && !!notice}
-              maxLength={100}
+              maxLength={EVENT_INPUT_LIMITS.title}
               value={title}
               onChange={
                 /* Update the event name and dismiss its required-field reminder. */
@@ -206,11 +189,10 @@ export default function CreateEventPage() {
           {notes ? (
             <label className="field">
               <span>
-                {langService.t('Note')}{' '}
-                <span className="optional">{langService.t('optional')}</span>
+                {t('Note')} <span className="optional">{t('optional')}</span>
               </span>
               <textarea
-                maxLength={1000}
+                maxLength={EVENT_INPUT_LIMITS.description}
                 rows={2}
                 value={description}
                 onChange={
@@ -228,7 +210,7 @@ export default function CreateEventPage() {
                 () => setNotes(true)
               }
             >
-              <Plus size={14} /> {langService.t('Add a Note')}
+              <Plus size={14} /> {t('Add a Note')}
             </button>
           )}
           <div className="form-divider" />
@@ -254,14 +236,14 @@ export default function CreateEventPage() {
               <Info size={17} />
               <div>
                 <strong>
-                  {langService.t(
+                  {t(
                     connection === 'setup'
                       ? 'Event creation is still being set up.'
                       : 'We can’t reach event saving right now.',
                   )}
                 </strong>
                 <p>
-                  {langService.t(
+                  {t(
                     connection === 'setup'
                       ? 'Shareable links will be available when setup is complete.'
                       : 'Your form is still here. Please retry the connection.',
@@ -276,7 +258,7 @@ export default function CreateEventPage() {
                       () => void checkConnection()
                     }
                   >
-                    <RefreshCw size={12} /> {langService.t('Retry Connection')}
+                    <RefreshCw size={12} /> {t('Retry Connection')}
                   </button>
                 </div>
               </div>
@@ -284,7 +266,7 @@ export default function CreateEventPage() {
           )}
           {error && (
             <p className="error-message" role="alert">
-              {langService.t(error)}
+              {t(error)}
             </p>
           )}
           <button
@@ -294,15 +276,15 @@ export default function CreateEventPage() {
           >
             {busy ? (
               <>
-                <LoaderCircle className="spin" size={18} /> {langService.t('Creating your event…')}
+                <LoaderCircle className="spin" size={18} /> {t('Creating your event…')}
               </>
             ) : connection === 'checking' ? (
               <>
-                <LoaderCircle className="spin" size={18} /> {langService.t('Checking connection…')}
+                <LoaderCircle className="spin" size={18} /> {t('Checking connection…')}
               </>
             ) : (
               <>
-                {langService.t('Create Event & Get a Link')} <ArrowRight size={18} />
+                {t('Create Event & Get a Link')} <ArrowRight size={18} />
               </>
             )}
           </button>

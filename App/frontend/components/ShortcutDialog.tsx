@@ -1,11 +1,8 @@
-import {
-  useId,
-  useState,
-} from 'react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useId, useState } from 'react';
 import { X } from 'lucide-react';
 import ModalSurface from './ModalSurface';
 import CopyLinkControl from './CopyLinkControl';
-import { useLanguage } from '../i18n/language';
 import {
   detectShortcutDevice,
   shortcutCopy,
@@ -23,7 +20,8 @@ import './shortcut-dialog.css';
  * and copy feedback.
  */
 export default function ShortcutDialog({ onClose }: { onClose: () => void }) {
-  const copy = shortcutCopy[useLanguage()];
+  const { language } = useLanguage();
+  const copy = shortcutCopy[language];
   const id = useId();
   /** Choose initial instructions from browser and touchscreen information. */
   const [device, setDevice] = useState(() =>

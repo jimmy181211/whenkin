@@ -1,14 +1,7 @@
-import { langService } from '../i18n/language';
+import { translate, type Language } from '../i18n/LanguageProvider';
 import { Temporal } from '@js-temporal/polyfill';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from '../../shared/types';
-import {
-  allSlots,
-  localDate,
-  slotDuration,
-} from '../../shared/time';
+import type { MeetingEvent, TimeRange } from '../../shared/types';
+import { allSlots, localDate, slotDuration } from '../../shared/time';
 export {
   SLOT,
   NEW_EVENT_SLOT_MINUTES,
@@ -30,11 +23,12 @@ export function deviceTimezone() {
 }
 
 /**
- * Format an instant's clock time using the selected language and timezone.
+ * Format an instant's clock time using the supplied UI locale and timezone.
+ * @param locale - Browser formatting code from context, such as en-US or zh-CN.
  * @returns Localized hour/minute text, including the locale's AM/PM convention.
  */
-export function formatTime(value: string | number, zone: string) {
-  return new Intl.DateTimeFormat(langService.getLocale(), {
+export function formatTime(value: string | number, zone: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: zone,
     hour: 'numeric',
     minute: '2-digit',
@@ -42,19 +36,25 @@ export function formatTime(value: string | number, zone: string) {
 }
 
 /**
- * Format a local date, or only a weekday for the undated weekly schedule.
+ * Format a local date in the supplied locale, or just a weekday for weekly schedules.
  * @param long - Use full weekday/month names instead of abbreviated labels.
  * @param weekly - Read the encoded weekday in UTC, without shifting it again.
  * @returns A localized weekday/date label, or weekday alone for a weekly schedule.
  */
-export function formatDay(value: string | number, zone: string, long = false, weekly = false) {
+export function formatDay(
+  value: string | number,
+  zone: string,
+  long: boolean,
+  weekly: boolean,
+  locale: string,
+) {
   if (weekly) {
-    return new Intl.DateTimeFormat(langService.getLocale(), {
+    return new Intl.DateTimeFormat(locale, {
       timeZone: 'UTC',
       weekday: long ? 'long' : 'short',
     }).format(new Date(value));
   }
-  return new Intl.DateTimeFormat(langService.getLocale(), {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: zone,
     weekday: long ? 'long' : 'short',
     month: long ? 'long' : 'short',
@@ -66,8 +66,9 @@ export function formatDay(value: string | number, zone: string, long = false, we
  * Turn an IANA id into a readable city label.
  * @returns A translated city label where available, otherwise readable id text.
  */
-export function zoneLabel(zone: string) {
-  return langService.t(
+export function zoneLabel(zone: string, language: Language) {
+  return translate(
+    language,
     zone === 'UTC' ? 'UTC' : zone.split('/').slice(1).join(' / ').replaceAll('_', ' ') || zone,
   );
 }
@@ -76,12 +77,9 @@ export function zoneLabel(zone: string) {
  * Read the zone's offset at a specific instant, including daylight saving.
  * @returns The localized short offset label, or an empty string if none is provided.
  */
-export function zoneOffset(zone: string, at = Date.now()) {
+export function zoneOffset(zone: string, at = Date.now(), locale: string) {
   return (
-    new Intl.DateTimeFormat(langService.getLocale(), {
-      timeZone: zone,
-      timeZoneName: 'shortOffset',
-    })
+    new Intl.DateTimeFormat(locale, { timeZone: zone, timeZoneName: 'shortOffset' })
       .formatToParts(at)
       .find(
         /* Extract the formatted timezone offset rather than a clock or date part. */
@@ -94,12 +92,13 @@ export function zoneOffset(zone: string, at = Date.now()) {
  * Format a range, repeating the end date only when it crosses a local day.
  * @returns A localized date and start/end clock-time label for display.
  */
-export function displayRange(range: TimeRange, zone: string, weekly = false) {
+export function displayRange(range: TimeRange, zone: string, weekly: boolean, locale: string) {
   const same = localDate(range.start, zone) === localDate(range.end, zone);
-  return `${formatDay(range.start, zone, false, weekly)} · ${formatTime(
-    range.start,
-    zone,
-  )}–${same ? '' : formatDay(range.end, zone, false, weekly) + ' '}${formatTime(range.end, zone)}`;
+  const startDate = formatDay(range.start, zone, false, weekly, locale);
+  const startTime = formatTime(range.start, zone, locale);
+  const endDate = same ? '' : formatDay(range.end, zone, false, weekly, locale) + ' ';
+  const endTime = formatTime(range.end, zone, locale);
+  return `${startDate} · ${startTime}–${endDate}${endTime}`;
 }
 
 /** Display rows span 30 minutes for both new and legacy events. */
@@ -135,12 +134,7 @@ export function gridModel(
   schedule: Pick<MeetingEvent, 'windows' | 'slot_minutes'> | TimeRange[],
   zone: string,
 ) {
-  const event = Array.isArray(schedule)
-    ? {
-      windows: schedule,
-      slot_minutes: undefined,
-    }
-    : schedule;
+  const event = Array.isArray(schedule) ? { windows: schedule, slot_minutes: undefined } : schedule;
   const days = new Map<string, GridCell[]>();
   // Counts are per date: the same clock minute tomorrow is not a DST repeat.
   const occurrences = new Map<string, number>();
@@ -174,14 +168,7 @@ export function gridModel(
       col = [];
       days.set(date, col);
     }
-    col.push({
-      stamp,
-      date,
-      minute,
-      occurrence,
-      offset: t.offset,
-      key: `${minute}:${occurrence}`,
-    });
+    col.push({ stamp, date, minute, occurrence, offset: t.offset, key: `${minute}:${occurrence}` });
   }
   return {
     days: [...days.entries()].sort(
@@ -201,19 +188,11 @@ export function gridModel(
  * @returns Ordered clock rows; inverted bounds produce an empty array.
  */
 function gridRows(firstHour: number, lastHour: number, repeated: Set<number>, offset: number) {
-  const rows: {
-    key: string;
-    minute: number;
-    occurrence: number;
-  }[] = [];
+  const rows: { key: string; minute: number; occurrence: number }[] = [];
   for (let h = firstHour; h <= lastHour; h++) {
     for (let n = 0; n < (repeated.has(h) ? 2 : 1); n++) {
       for (let m = offset; m < 60; m += GRID_ROW_MINUTES) {
-        rows.push({
-          key: `${h * 60 + m}:${n}`,
-          minute: h * 60 + m,
-          occurrence: n,
-        });
+        rows.push({ key: `${h * 60 + m}:${n}`, minute: h * 60 + m, occurrence: n });
       }
     }
   }

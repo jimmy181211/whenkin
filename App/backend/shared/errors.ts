@@ -25,7 +25,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _req, res, nex
   if (type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'The information could not be read. Please try again.' });
   }
-  return res.status(503).json({
-    error: 'Your change could not be saved. Please try again in a moment.',
-  });
+  return res
+    .status(503)
+    .json({ error: 'Your change could not be saved. Please try again in a moment.' });
 };

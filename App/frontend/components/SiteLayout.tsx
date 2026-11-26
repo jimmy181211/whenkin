@@ -1,16 +1,9 @@
-import {
-  useCallback,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useCallback, useState, type ReactNode } from 'react';
 import SiteHeader from './SiteHeader';
 import { HeaderActionsProvider } from './HeaderActions';
 import ShortcutDialog from './ShortcutDialog';
 import { BRAND } from '../brand';
-import {
-  langService,
-  useLanguage,
-} from '../i18n/language';
 import { LEGAL } from '../content/legal';
 import { shortcutCopy } from '../utils/shortcut-instructions';
 import { browserInstall } from '../utils/browser-install';
@@ -59,7 +52,8 @@ function Footer({
   showEventExpiry: boolean;
   showTagline: boolean;
 }) {
-  const copy = shortcutCopy[useLanguage()];
+  const { t, language } = useLanguage();
+  const copy = shortcutCopy[language];
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [installing, setInstalling] = useState(false);
 
@@ -85,7 +79,7 @@ function Footer({
         {showEventExpiry ? (
           <EventLimits className="footer-expiry" />
         ) : showTagline ? (
-          <span className="footer-tagline">{langService.t(BRAND.tagline)}</span>
+          <span className="footer-tagline">{t(BRAND.tagline)}</span>
         ) : null}
         <nav aria-label={copy.footer}>
           <button
@@ -104,8 +98,8 @@ function Footer({
             {copy.title}
           </button>
           <span className="footer-policy-links">
-            <a href="/terms">{langService.t('Terms of Use')}</a>
-            <a href="/privacy">{langService.t('Privacy Policy')}</a>
+            <a href="/terms">{t('Terms of Use')}</a>
+            <a href="/privacy">{t('Privacy Policy')}</a>
           </span>
         </nav>
         <span className="footer-copyright">

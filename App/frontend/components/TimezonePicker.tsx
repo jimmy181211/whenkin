@@ -1,23 +1,7 @@
-import { langService } from '../i18n/language';
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Check,
-  ChevronDown,
-  Globe2,
-  LocateFixed,
-  Search,
-  X,
-} from 'lucide-react';
-import {
-  deviceTimezone,
-  zoneLabel,
-  zoneOffset,
-} from '../utils/time';
+import { useLanguage } from '../i18n/LanguageProvider';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Check, ChevronDown, Globe2, LocateFixed, Search, X } from 'lucide-react';
+import { deviceTimezone, zoneLabel, zoneOffset } from '../utils/time';
 import PopupSurface from './PopupSurface';
 import { useDisclosure } from '../utils/use-disclosure';
 
@@ -68,13 +52,8 @@ export default function TimezonePicker({
   onChange: (zone: string) => void;
   at?: number;
 }) {
-  const {
-    open,
-    container: root,
-    trigger,
-    toggle,
-    close,
-  } = useDisclosure();
+  const { t, locale, language } = useLanguage();
+  const { open, container: root, trigger, toggle, close } = useDisclosure();
   const [query, setQuery] = useState('');
   const search = useRef<HTMLInputElement>(null);
   const menuId = useId();
@@ -85,11 +64,7 @@ export default function TimezonePicker({
       search.current?.focus();
     }
   }, [open]);
-  const zones = [...new Set([
-    value,
-    ...popular,
-    ...Intl.supportedValuesOf('timeZone'),
-  ])];
+  const zones = [...new Set([value, ...popular, ...Intl.supportedValuesOf('timeZone')])];
 
   /**
    * Ignore accents, case, and underscores during timezone search.
@@ -108,13 +83,12 @@ export default function TimezonePicker({
       .filter(
         /* Match the timezone id, city label, and aliases against the search text. */
         (z) =>
-          normalize(z + ' ' + zoneLabel(z) + ' ' + (aliases[z] || '')).includes(normalizedQuery),
+          normalize(z + ' ' + zoneLabel(z, language) + ' ' + (aliases[z] || '')).includes(
+            normalizedQuery,
+          ),
       )
       .slice(0, 70)
-    : [...new Set([
-      value,
-      ...popular,
-    ])];
+    : [...new Set([value, ...popular])];
 
   /** Emit the IANA zone unchanged, clear the search, and restore trigger focus. */
   const choose = (zone: string) => {
@@ -130,9 +104,9 @@ export default function TimezonePicker({
         ref={trigger}
         className="zone-trigger"
         aria-label={[
-          `${langService.t('Choose your time zone')}:`,
-          zoneLabel(value),
-          zoneOffset(value, at),
+          `${t('Choose your time zone')}:`,
+          zoneLabel(value, language),
+          zoneOffset(value, at, locale),
         ].join(' ')}
         aria-expanded={open}
         aria-controls={menuId}
@@ -145,7 +119,8 @@ export default function TimezonePicker({
         <Globe2 size={17} />
         <span>
           <strong>
-            {zoneLabel(value)} <span className="zone-offset">{zoneOffset(value, at)}</span>
+            {zoneLabel(value, language)}{' '}
+            <span className="zone-offset">{zoneOffset(value, at, locale)}</span>
           </strong>
         </span>
         <ChevronDown size={16} />
@@ -155,7 +130,7 @@ export default function TimezonePicker({
           id={menuId}
           className="zone-menu"
           role="dialog"
-          aria-label={langService.t('Choose your time zone')}
+          aria-label={t('Choose your time zone')}
         >
           <div className="zone-search">
             <Search size={17} />
@@ -166,8 +141,8 @@ export default function TimezonePicker({
               autoComplete="off"
               spellCheck={false}
               type="search"
-              aria-label={langService.t('Search time zones')}
-              placeholder={langService.t('Search a city or time zone')}
+              aria-label={t('Search time zones')}
+              placeholder={t('Search a city or time zone')}
               value={query}
               onChange={
                 /* Update the timezone search text. */
@@ -190,7 +165,7 @@ export default function TimezonePicker({
             <button
               type="button"
               className="icon-button"
-              aria-label={langService.t('Close time zones')}
+              aria-label={t('Close time zones')}
               onClick={
                 /* Close the timezone menu and restore focus to its trigger. */
                 () => {
@@ -210,8 +185,8 @@ export default function TimezonePicker({
               () => choose(detectedZone)
             }
           >
-            <LocateFixed size={16} /> {langService.t('Use Device Time Zone')}{' '}
-            <small>{zoneLabel(detectedZone)}</small>
+            <LocateFixed size={16} /> {t('Use Device Time Zone')}{' '}
+            <small>{zoneLabel(detectedZone, language)}</small>
           </button>
           <div className="zone-options">
             {shown.map(
@@ -230,17 +205,15 @@ export default function TimezonePicker({
                   }
                 >
                   <span>
-                    <strong>{zoneLabel(z)}</strong>
+                    <strong>{zoneLabel(z, language)}</strong>
                   </span>
-                  <small>{zoneOffset(z, at)}</small>
+                  <small>{zoneOffset(z, at, locale)}</small>
                   {value === z && <Check size={16} />}
                 </button>
               ),
             )}
             {!shown.length && (
-              <p className="empty">
-                {langService.t('No time zones found. Try a nearby major city.')}
-              </p>
+              <p className="empty">{t('No time zones found. Try a nearby major city.')}</p>
             )}
           </div>
         </PopupSurface>

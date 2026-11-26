@@ -1,35 +1,17 @@
-/** Owns response drafts, autosave, and coordinated responder changes. */
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+/** Owns response drafts, explicit saving, and coordinated responder changes. */
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadEvent } from '../api/load-event';
 import { ApiError } from '../api/client';
-import {
-  saveEventResponse,
-  removeEventResponse,
-} from '../api/responses';
-import {
-  allSlots,
-  deviceTimezone,
-  slotsToRanges,
-  slotDuration,
-} from './time';
-import type {
-  MeetingEvent,
-  ResponseData,
-} from '../../shared/types';
+import { saveEventResponse, removeEventResponse } from '../api/responses';
+import { allSlots, deviceTimezone, slotsToRanges, slotDuration } from './time';
+import type { MeetingEvent, ResponseData } from '../../shared/types';
 import type { SlotInspection } from '../components/SlotDetails';
 import { EVENT_EXPIRED_MESSAGE } from '../../shared/event-limits';
 import { useNotice } from './use-notice';
 import { useEventSync } from './use-event-sync';
 
-const AUTOSAVE_DELAY_MS = 1000;
-
 /**
- * React Hook for one event's reply editor, autosave, switching, and deletion.
+ * React Hook for one event's reply editor, manual saving, switching, and deletion.
  * These actions share a draft so switching people cannot save to the wrong reply.
  * @param id - Event id from the page URL.
  * @returns Page state and the actions used by EventPage and its child controls.
@@ -51,12 +33,7 @@ export function useEventResponse(id: string) {
   const [isSaving, setIsSaving] = useState(false);
   // Highlights the missing name when an availability edit was blocked.
   const [editNotice, setEditNotice] = useState(false);
-  const {
-    notice,
-    notify,
-    notifyRequired,
-    dismissNotice,
-  } = useNotice();
+  const { notice, notify, notifyRequired, dismissNotice } = useNotice();
   const nameInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [unavailableReason, setUnavailableReason] = useState<'expired' | 'missing' | null>(null);
@@ -75,36 +52,21 @@ export function useEventResponse(id: string) {
   // Local edit counter, separate from the server's response revision below.
   const draftVersion = useRef(0);
   const editingIdRef = useRef<string | null>(null);
-  // Shared promise: autosave, switching, and deletion can await the same write.
+  // Repeated save clicks, switching, and deletion can await the same explicit write.
   const savingTask = useRef<Promise<boolean> | null>(null);
-  // A 409 conflict requires reloading the saved reply before further autosaves.
+  // A 409 conflict requires reloading the saved reply before another save.
   const conflictRef = useRef(false);
-  // Prevents autosave from sending another write for the reply being removed.
-  const deletingResponse = useRef<string | null>(null);
   // Server version last read or saved; sent back to prevent overwriting newer edits.
   const responseRevisionRef = useRef(0);
   // A display-zone change must not change the timezone recorded on an existing reply.
   const responseZoneRef = useRef<string | null>(null);
   // Updated immediately by handlers so saving need not wait for React to render.
-  const latestDraft = useRef({
-    name,
-    zone,
-    selected,
-  });
+  const latestDraft = useRef({ name, zone, selected });
   /** Keep async readers aligned with the latest rendered draft and event. */
   useEffect(() => {
-    latestDraft.current = {
-      name,
-      zone,
-      selected,
-    };
+    latestDraft.current = { name, zone, selected };
     eventRef.current = event;
-  }, [
-    name,
-    zone,
-    selected,
-    event,
-  ]);
+  }, [name, zone, selected, event]);
 
   /**
    * Merge refreshed server data into the editor.
@@ -130,10 +92,7 @@ export function useEventResponse(id: string) {
         )
         : new Set(allSlots(person?.ranges || [], slotDuration(result)));
       setSelected(next);
-      latestDraft.current = {
-        ...value,
-        selected: next,
-      };
+      latestDraft.current = { ...value, selected: next };
       responseRevisionRef.current = person?.revision ?? 0;
       draftVersion.current++;
       setHighlightShared(false);
@@ -152,11 +111,7 @@ export function useEventResponse(id: string) {
       const next = new Set(allSlots(current.ranges, slotDuration(result)));
       responseRevisionRef.current = current.revision;
       responseZoneRef.current = current.timezone;
-      latestDraft.current = {
-        ...latestDraft.current,
-        name: current.name,
-        selected: next,
-      };
+      latestDraft.current = { ...latestDraft.current, name: current.name, selected: next };
       setName(current.name);
       setSelected(next);
       setResponseSession(
@@ -176,7 +131,7 @@ export function useEventResponse(id: string) {
 
   const hasEvent = event !== null && !unavailable;
 
-  /** Stop pending autosaves when the event is expired or missing. */
+  /** Stop editing when the event is expired or missing. */
   const expire = useCallback((reason: 'expired' | 'missing' = 'expired') => {
     setUnavailableReason(reason);
     eventRef.current = null;
@@ -185,16 +140,7 @@ export function useEventResponse(id: string) {
     setError(EVENT_EXPIRED_MESSAGE);
   }, []);
 
-  useEventSync({
-    id,
-    event,
-    hasEvent,
-    load,
-    applyEvent,
-    expire,
-    setError,
-    setUnavailableReason,
-  });
+  useEventSync({ id, event, hasEvent, load, applyEvent, expire, setError, setUnavailableReason });
 
   /** Reveal the name field before showing the editing reminder. */
   function requestEditing() {
@@ -203,7 +149,7 @@ export function useEventResponse(id: string) {
   }
 
   /**
-   * Update the selected times and mark the draft for autosave.
+   * Update the selected times and leave the changes pending until Save is clicked.
    * @param next - Selected slot start timestamps in milliseconds.
    */
   function updateSelection(next: Set<number>) {
@@ -219,7 +165,7 @@ export function useEventResponse(id: string) {
   }
 
   /**
-   * Merge the edited fields and mark this draft for autosave.
+   * Merge edited fields without sending a request.
    * Advancing draftVersion lets a running save detect edits made after it started.
    * @param change - Only the fields that changed; other draft fields are retained.
    */
@@ -227,14 +173,14 @@ export function useEventResponse(id: string) {
     dirtyRef.current = true;
     draftVersion.current++;
     setSaveState('dirty');
-    latestDraft.current = {
-      ...latestDraft.current,
-      ...change,
-    };
+    latestDraft.current = { ...latestDraft.current, ...change };
   }
 
-  /** Update the name, clear its reminder, and queue the changed draft for autosave. */
+  /** Update the local name and clear its reminder; saving remains an explicit action. */
   function changeName(value: string) {
+    if (switchingRef.current) {
+      return;
+    }
     setName(value);
     setEditNotice(false);
     dismissNotice();
@@ -254,10 +200,7 @@ export function useEventResponse(id: string) {
     }
     setInspection(null);
     setZone(next);
-    latestDraft.current = {
-      ...latestDraft.current,
-      zone: next,
-    };
+    latestDraft.current = { ...latestDraft.current, zone: next };
     if (!editingIdRef.current && latestDraft.current.name.trim()) {
       updateDraft({ zone: next });
     }
@@ -271,12 +214,8 @@ export function useEventResponse(id: string) {
    * when saving is blocked, a write/reload fails, or newer edits still need saving;
    * false alone does not mean that the server rejected the write.
    */
-  const persist = useCallback(async (): Promise<boolean> => {
-    if (
-      !eventRef.current ||
-      unavailable ||
-      (deletingResponse.current !== null && deletingResponse.current === editingIdRef.current)
-    ) {
+  async function persist(): Promise<boolean> {
+    if (!eventRef.current || unavailable || switchingRef.current || conflictRef.current) {
       return false;
     }
     const value = latestDraft.current;
@@ -337,40 +276,28 @@ export function useEventResponse(id: string) {
       savingRef.current = false;
       setIsSaving(false);
     }
-  }, [
-    id,
-    load,
-    applyEvent,
-    unavailable,
-    expire,
-    notifyRequired,
-  ]);
+  }
 
   /**
    * Reuse a running save instead of sending a duplicate request.
    * @returns A promise that resolves true only when the draft is fully saved.
    * False also covers blocked saves, reload failures, and newer edits left pending.
    */
-  const save = useCallback(() => {
-    if (savingTask.current) {
-      return savingTask.current;
-    }
-    const task = persist();
-    savingTask.current = task;
-    void task.then(
-      /* Release the completed save promise only if it is still the active task. */
-      () => {
-        if (savingTask.current === task) {
+  function save(): Promise<boolean> {
+    if (!savingTask.current) {
+      savingTask.current = persist().finally(
+        /* Release this explicit write before another save can start. */
+        () => {
           savingTask.current = null;
-        }
-      },
-    );
-    return task;
-  }, [persist]);
+        },
+      );
+    }
+    return savingTask.current;
+  }
 
   /**
-   * Save local edits before loading the chosen reply into the editor.
-   * Stay on the current draft while any edits remain unsaved. Reselecting the same
+   * Load the chosen reply only after local edits have been saved with the button.
+   * Wait for an already-sent save without starting one. Reselecting the same
    * conflicted reply skips saving and replaces its local draft with the server copy.
    * @param responseId - Saved reply to view or edit.
    */
@@ -383,13 +310,14 @@ export function useEventResponse(id: string) {
     try {
       // Reselecting the same person is the explicit way to resolve a stale revision.
       const reloadConflict = conflictRef.current && responseId === editingIdRef.current;
-      if (!reloadConflict && (dirtyRef.current || savingTask.current) && !(await save())) {
+      if (savingTask.current) {
+        await savingTask.current;
+      }
+      if (dirtyRef.current && !reloadConflict) {
+        notify('Save your changes before switching responses.', nameInput.current);
         return;
       }
       const result = await load();
-      if (dirtyRef.current && !reloadConflict) {
-        return;
-      }
       const person = result.responses.find(
         /** Find the saved reply the user selected for editing. */
         (response) => response.id === responseId,
@@ -423,10 +351,7 @@ export function useEventResponse(id: string) {
         /* Start a fresh grid session for the newly loaded reply. */
         (value) => value + 1,
       );
-      nameInput.current?.scrollIntoView({
-        block: 'center',
-        behavior: 'smooth',
-      });
+      nameInput.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     } catch (error) {
       if (error instanceof ApiError && (error.status === 410 || error.status === 404)) {
         expire(error.status === 404 ? 'missing' : 'expired');
@@ -439,32 +364,6 @@ export function useEventResponse(id: string) {
     }
   }
 
-  // Save after one second without edits. Cleanup cancels the previous timer
-  // when another edit arrives, so dragging does not send a request per cell.
-  useEffect(() => {
-    if (saveState !== 'dirty' || !name.trim() || isSaving || unavailable || switching) {
-      return;
-    }
-    const timer = setTimeout(
-      /* Save the current draft after the edit debounce expires. */
-      () => {
-        void save();
-      },
-      AUTOSAVE_DELAY_MS,
-    );
-    // Cancel an older autosave timer when the draft or save conditions change.
-    return () => clearTimeout(timer);
-  }, [
-    saveState,
-    name,
-    selected,
-    zone,
-    save,
-    isSaving,
-    unavailable,
-    switching,
-  ]);
-
   /** Reset the editor only when the deleted reply is the one being edited. */
   function clearDeletedDraft(responseId: string) {
     if (editingIdRef.current !== responseId) {
@@ -473,11 +372,7 @@ export function useEventResponse(id: string) {
     editingIdRef.current = null;
     responseRevisionRef.current = 0;
     responseZoneRef.current = null;
-    latestDraft.current = {
-      name: '',
-      zone: latestDraft.current.zone,
-      selected: new Set<number>(),
-    };
+    latestDraft.current = { name: '', zone: latestDraft.current.zone, selected: new Set<number>() };
     draftVersion.current++;
     dirtyRef.current = false;
     conflictRef.current = false;
@@ -501,31 +396,25 @@ export function useEventResponse(id: string) {
       (person) => person.id !== responseId,
     );
     applyEvent(
-      fresh ?? {
-        ...previous,
-        responses,
-        response_count: responses.length,
-        candidates: [],
-      },
+      fresh ?? { ...previous, responses, response_count: responses.length, candidates: [] },
     );
     setHighlightShared(false);
     setError('');
   }
 
   /**
-   * Wait for a running write when deleting the open reply, but do not save its
-   * pending draft. Finish the current draft first when deleting a different reply.
+   * Wait for an already-sent save, then delete only the confirmed reply.
+   * Never submit pending edits; drafts for other replies remain in the editor.
    * A missing reply counts as removed only after fresh event data confirms it.
    * @returns True when removal or prior absence is confirmed, even if refreshing
    * the results later fails. False when deletion is blocked or not confirmed,
-   * including when a different draft cannot finish saving.
+   * including version conflicts or an unavailable event.
    */
   async function deleteResponse(response: ResponseData): Promise<boolean> {
     if (switchingRef.current || !eventRef.current) {
       return false;
     }
     switchingRef.current = true;
-    deletingResponse.current = response.id;
     setSwitching(true);
     // "own" means open in this editor, not authenticated ownership of the reply.
     const own = editingIdRef.current === response.id;
@@ -534,22 +423,14 @@ export function useEventResponse(id: string) {
     // Distinguish a failed delete from a successful delete followed by a failed refresh.
     let removed = false;
     try {
-      if (own) {
-        // Finish an already-sent write, but do not save a draft that is being deleted.
-        if (pending) {
-          await pending;
-        }
-      } else if ((dirtyRef.current || savingTask.current) && !(await save())) {
-        return false;
+      if (pending) {
+        await pending;
       }
       // An awaited save may have advanced the reply beyond the revision in the popup.
       const revision = own && pending ? responseRevisionRef.current : response.revision;
       const fresh = await removeEventResponse(
         id,
-        {
-          id: response.id,
-          revision,
-        },
+        { id: response.id, revision },
         eventRef.current!.schedule_revision,
         load,
       );
@@ -583,7 +464,6 @@ export function useEventResponse(id: string) {
       }
       return false;
     } finally {
-      deletingResponse.current = null;
       switchingRef.current = false;
       setSwitching(false);
     }
@@ -608,7 +488,7 @@ export function useEventResponse(id: string) {
     view,
     inspection,
     highlightShared,
-    canRetrySave: saveState === 'error' && !conflictRef.current,
+    canSave: dirtyRef.current && !isSaving && !switching && !conflictRef.current && !!name.trim(),
     changeName,
     dismissNotice,
     changeZone,

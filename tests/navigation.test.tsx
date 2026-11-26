@@ -1,21 +1,17 @@
 /** Checks the simplified navigation and empty results without changing event data. */
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  expect,
-  it,
-} from 'vitest';
+
+import { afterEach, expect, it } from 'vitest';
 import SiteLayout from '../App/frontend/components/SiteLayout';
 import AvailabilityGridTools from '../App/frontend/components/AvailabilityGridTools';
 import EventResults from '../App/frontend/components/event/EventResults';
-import {
-  langService,
-  languageOptions,
-} from '../App/frontend/i18n/language';
+import { languageOptions } from '../App/frontend/i18n/LanguageProvider';
 import type { MeetingEvent } from '../App/shared/types';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 /** Restore the default interface language for the next test file. */
-afterEach(() => langService.setLanguage('en'));
+afterEach(() => languageFixture.setLanguage('en'));
 
 const emptyEvent: MeetingEvent = {
   id: 'empty',
@@ -50,7 +46,7 @@ it('provides a labeled event menu while retaining the visible sharing target', (
 /** Zero shared ranges use one localized status instead of an unusable action. */
 it('keeps an empty shared-time section compact in all supported languages', () => {
   for (const { value } of languageOptions) {
-    langService.setLanguage(value);
+    languageFixture.setLanguage(value);
     const html = renderToStaticMarkup(
       <EventResults
         event={emptyEvent}
@@ -70,9 +66,9 @@ it('keeps an empty shared-time section compact in all supported languages', () =
         }
       />,
     );
-    expect(html).toContain(langService.t('No shared free time yet.'));
+    expect(html).toContain(languageFixture.t('No shared free time yet.'));
     expect(html).not.toContain('highlight-shared-times');
-    expect(html).not.toContain(langService.t('{count} shared time periods', { count: 0 }));
+    expect(html).not.toContain(languageFixture.t('{count} shared time periods', { count: 0 }));
     expect(html).toContain('role="status"');
   }
 });

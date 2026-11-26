@@ -1,28 +1,13 @@
+import { useLanguage } from '../i18n/LanguageProvider';
 import { useMediaQuery } from '../utils/use-media-query';
 /** Displays personal/group time slots and handles pointer selection. */
 import type { AvailabilityCellContext } from './AvailabilityCell';
 import AvailabilityGridTools from './AvailabilityGridTools';
 import AvailabilityGridBody from './AvailabilityGridBody';
-import { langService } from '../i18n/language';
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  gridModel,
-  GRID_ROW_MINUTES,
-  slotDuration,
-} from '../utils/time';
-import type {
-  MeetingEvent,
-  TimeRange,
-} from '../../shared/types';
-import {
-  clearsSelection,
-  paintSelection,
-} from '../utils/selection';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { gridModel, GRID_ROW_MINUTES, slotDuration } from '../utils/time';
+import type { MeetingEvent, TimeRange } from '../../shared/types';
+import { clearsSelection, paintSelection } from '../utils/selection';
 import { groupAvailability } from '../utils/group-availability';
 import { scrollGrid } from '../utils/grid-scroll';
 import type { SlotInspection } from './SlotDetails';
@@ -85,6 +70,7 @@ export default function AvailabilityGrid({
   onInspect,
   inspection,
 }: Props) {
+  const { t } = useLanguage();
   const weekly = event.schedule_mode === 'weekdays';
   // Levels 1-3 increase row height; they do not change stored slot duration.
   const [zoom, setZoom] = useState(1);
@@ -106,14 +92,7 @@ export default function AvailabilityGrid({
    */
   const projection = useMemo(
     () => (weekly ? projectWeekly(event, zone) : null),
-    [
-      weekly,
-      event.windows,
-      event.timezone,
-      event.created_at,
-      event.slot_minutes,
-      zone,
-    ],
+    [weekly, event.windows, event.timezone, event.created_at, event.slot_minutes, zone],
   );
 
   /**
@@ -130,18 +109,10 @@ export default function AvailabilityGrid({
   const grid = useMemo(
     () =>
       gridModel(
-        {
-          windows: projection?.windows ?? event.windows,
-          slot_minutes: event.slot_minutes,
-        },
+        { windows: projection?.windows ?? event.windows, slot_minutes: event.slot_minutes },
         clockZone,
       ),
-    [
-      projection,
-      event.windows,
-      clockZone,
-      event.slot_minutes,
-    ],
+    [projection, event.windows, clockZone, event.slot_minutes],
   );
   const scroll = useRef<HTMLDivElement>(null);
   /**
@@ -150,10 +121,7 @@ export default function AvailabilityGrid({
    */
   const counts = useMemo(
     () => groupAvailability(event.responses, slotDuration(event)),
-    [
-      event.responses,
-      event.slot_minutes,
-    ],
+    [event.responses, event.slot_minutes],
   );
   /**
    * Attach wheel handling that lets the surrounding page scroll at grid edges.
@@ -215,20 +183,14 @@ export default function AvailabilityGrid({
   useEffect(() => {
     gesture.current = null;
     setPage(0);
-  }, [
-    zone,
-    view,
-  ]);
+  }, [zone, view]);
   const daysPerPage = isNarrowScreen ? 3 : 7;
   // Clamp the starting day when resizing changes how many columns fit on a page.
   const firstColumn = Math.min(page * daysPerPage, Math.max(0, grid.days.length - daysPerPage));
 
   /** Store a copy of the selection before an edit, keeping bounded undo history. */
   function rememberSelection() {
-    history.current = [
-      ...history.current.slice(-(MAX_UNDO_STEPS - 1)),
-      new Set(selected),
-    ];
+    history.current = [...history.current.slice(-(MAX_UNDO_STEPS - 1)), new Set(selected)];
     setUndos(history.current.length);
   }
 
@@ -318,7 +280,7 @@ export default function AvailabilityGrid({
     gesture.current = null;
   }
 
-  /** Restore the last selection through the normal change/autosave callback. */
+  /** Restore the last selection through the normal draft-change callback. */
   function undo() {
     if (!editing) {
       return;
@@ -351,7 +313,7 @@ export default function AvailabilityGrid({
   return (
     <section
       className="availability-section"
-      aria-label={langService.t(group ? 'Group Availability' : 'Your availability grid')}
+      aria-label={t(group ? 'Group Availability' : 'Your availability grid')}
     >
       <AvailabilityGridTools
         view={view}

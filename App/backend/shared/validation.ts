@@ -1,20 +1,9 @@
 import { Temporal } from '@js-temporal/polyfill';
-import {
-  allSlots,
-  isTimezone,
-  localToUTC,
-  SLOT,
-  slotsToRanges,
-} from '../../shared/time.js';
-import type {
-  CreateInput,
-  TimeRange,
-} from '../../shared/types.js';
+import { allSlots, isTimezone, localToUTC, SLOT, slotsToRanges } from '../../shared/time.js';
+import type { CreateInput, TimeRange } from '../../shared/types.js';
 import { weekdayDate } from '../../shared/weekly.js';
-import {
-  isEventDateAllowed,
-  LAST_EVENT_DATE,
-} from '../../shared/date-limits.js';
+import { isEventDateAllowed, LAST_EVENT_DATE } from '../../shared/date-limits.js';
+import { EVENT_INPUT_LIMITS, isTimeRangeOrdered } from '../../shared/event-input.js';
 /** Report a request error with an HTTP status and a message safe to display. */
 export class Problem extends Error {
   /** Keep the HTTP status alongside the safe validation message. */
@@ -42,11 +31,56 @@ export const checkId = (value: string) => {
  * @returns The trimmed field value; invalid input throws Problem.
  */
 export const text = (value: unknown, label: string, max: number, optional = false) => {
-  if (typeof value !== 'string' || value.trim().length > max || (!optional && !value.trim())) {
+  const cleaned = typeof value === 'string' ? value.trim() : null;
+  if (cleaned === null || cleaned.length > max || (!optional && !cleaned)) {
     throw new Problem(400, `Please enter ${label} (${max} characters or fewer).`);
   }
-  return value.trim();
+  return cleaned;
 };
+
+/** Reject missing, empty, oversized, or duplicate selections without changing their elements. */
+function validateSelection(
+  values: unknown,
+  maximum: number,
+  message: string,
+): asserts values is unknown[] {
+  if (
+    !Array.isArray(values) ||
+    !values.length ||
+    values.length > maximum ||
+    new Set(values).size !== values.length
+  ) {
+    throw new Problem(400, message);
+  }
+}
+
+/**
+ * Validate only the active schedule and return real dates or fixed-week encoding dates.
+ * Weekday numbers need a separate range check before conversion; inactive inputs are ignored.
+ */
+function scheduleDates(input: CreateInput, mode: 'dates' | 'weekdays'): string[] {
+  if (mode === 'weekdays') {
+    const days = input.weekdays;
+    const message = 'Choose at least one day of the week.';
+    validateSelection(days, EVENT_INPUT_LIMITS.weekdays, message);
+    if (
+      days.some(
+        /** Reject weekday values outside the integer range Monday=1 to Sunday=7. */
+        (day) => !Number.isInteger(day) || day < 1 || day > 7,
+      )
+    ) {
+      throw new Problem(400, message);
+    }
+    return days.map(weekdayDate);
+  }
+  const dates = input.dates;
+  validateSelection(
+    dates,
+    EVENT_INPUT_LIMITS.dates,
+    `Choose between 1 and ${EVENT_INPUT_LIMITS.dates} different dates.`,
+  );
+  return dates;
+}
 
 /**
  * Validate event fields and convert the selected schedule to sorted windows.
@@ -54,9 +88,14 @@ export const text = (value: unknown, label: string, max: number, optional = fals
  * @returns Cleaned fields and ISO time ranges; throws Problem for invalid input.
  */
 export function validateEvent(input: CreateInput) {
-  const title = text(input.title, 'an event name', 100);
-  const organizer = text(input.organizer_name ?? '', 'your name', 60, true);
-  const description = text(input.description ?? '', 'a description', 1000, true);
+  const title = text(input.title, 'an event name', EVENT_INPUT_LIMITS.title);
+  const organizer = text(input.organizer_name ?? '', 'your name', EVENT_INPUT_LIMITS.name, true);
+  const description = text(
+    input.description ?? '',
+    'a description',
+    EVENT_INPUT_LIMITS.description,
+    true,
+  );
   if (typeof input.timezone !== 'string' || !isTimezone(input.timezone)) {
     throw new Problem(400, 'Please choose a valid time zone.');
   }
@@ -64,38 +103,12 @@ export function validateEvent(input: CreateInput) {
   if (mode !== 'dates' && mode !== 'weekdays') {
     throw new Problem(400, 'Choose specific dates or days of the week.');
   }
-  // Real dates in date mode, or fixed-week encoding dates in weekday mode.
-  let dates: string[];
-  if (mode === 'weekdays') {
-    if (
-      !Array.isArray(input.weekdays) ||
-      !input.weekdays.length ||
-      input.weekdays.length > 7 ||
-      input.weekdays.some(
-        /** Reject weekday values outside the integer range Monday=1 to Sunday=7. */
-        (day) => !Number.isInteger(day) || day < 1 || day > 7,
-      ) ||
-      new Set(input.weekdays).size !== input.weekdays.length
-    ) {
-      throw new Problem(400, 'Choose at least one day of the week.');
-    }
-    dates = input.weekdays.map(weekdayDate);
-  } else {
-    if (
-      !Array.isArray(input.dates) ||
-      !input.dates.length ||
-      input.dates.length > 31 ||
-      new Set(input.dates).size !== input.dates.length
-    ) {
-      throw new Problem(400, 'Choose between 1 and 31 different dates.');
-    }
-    dates = input.dates;
-  }
+  const dates = scheduleDates(input, mode);
   const validTime = /^(?:[01]\d|2[0-3]):(?:00|30)$/;
   if (
     !validTime.test(input.startTime) ||
     !(validTime.test(input.endTime) || input.endTime === '24:00') ||
-    input.endTime <= input.startTime
+    !isTimeRangeOrdered(input.startTime, input.endTime)
   ) {
     throw new Problem(400, 'The end time must be after the start time on the same day.');
   }
@@ -141,10 +154,7 @@ function validateEventWindow(
     if (Temporal.Instant.from(end).toZonedDateTimeISO('UTC').year > LAST_EVENT_DATE.year) {
       throw new Problem(400, 'Choose times within the supported year range.');
     }
-    return {
-      start,
-      end,
-    };
+    return { start, end };
   } catch (error) {
     if (error instanceof Problem) {
       throw error;

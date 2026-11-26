@@ -1,257 +1,174 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   revealRequiredField,
-  REQUIRED_FIELD_SCROLL_MS,
   type RequiredField,
 } from '../App/frontend/utils/reveal-required-field';
 
-let clock = 0;
-let nextFrame = 0;
-const frames = new Map<number, FrameRequestCallback>();
+let events: EventTarget;
+let page: { onscrollend?: null };
+const viewport = {
+  scrollX: 0,
+  scrollY: 800,
+  innerHeight: 800,
+  scrollTo: vi.fn(),
+  matchMedia: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+};
 
-/**
- * Create a controllable browser viewport for required-field animation
- * tests.
- * @returns A controllable viewport with a mutable scroll position and observable browser
- * operations.
- */
-function makeViewport() {
-  const state = { y: 800 };
-  const events = new EventTarget();
-  return {
-    /** Read the viewport fixture's simulated page offset. */
-    get scrollY() {
-      return state.y;
-    },
-    innerHeight: 800,
-    scrollTo: vi.fn(
-      /* Apply a requested scroll offset to the viewport fixture. */
-      ({ top }: ScrollToOptions) => {
-        state.y = top ?? 0;
-      },
-    ),
-    matchMedia: vi.fn(
-      /* Keep reduced motion disabled for the animated-scroll scenario. */
-      () => ({
-        matches: false,
-      }),
-    ),
-    addEventListener: events.addEventListener.bind(events),
-    removeEventListener: events.removeEventListener.bind(events),
-    dispatchEvent: events.dispatchEvent.bind(events),
-  };
+/** Dispatch an observed native event with the page or a nested container as its target. */
+function emit(type: string, target: object = page) {
+  const event = new Event(type);
+  Object.defineProperty(event, 'target', { value: target });
+  events.dispatchEvent(event);
 }
 
-let viewport: ReturnType<typeof makeViewport>;
-beforeEach(
-  /* Reset the simulated clock, frame queue, viewport, and browser APIs. */
-  () => {
-    clock = 0;
-    nextFrame = 0;
-    frames.clear();
-    viewport = makeViewport();
-    vi.spyOn(performance, 'now').mockImplementation(
-      /* Return the controlled animation clock instead of real elapsed time. */
-      () => clock,
-    );
-    vi.stubGlobal('window', viewport);
-    const root = { scrollHeight: 2600 };
-    vi.stubGlobal('document', {
-      scrollingElement: root,
-      documentElement: root,
-      body: null,
-    });
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      /* Queue an animation frame and return its cancelable fixture id. */
-      (callback: FrameRequestCallback) => {
-        frames.set(++nextFrame, callback);
-        return nextFrame;
-      },
-    );
-    vi.stubGlobal(
-      'cancelAnimationFrame',
-      /* Remove a canceled animation frame from the fixture queue. */
-      (id: number) => frames.delete(id),
-    );
-  },
-);
-afterEach(
-  /* Restore mocked APIs and browser globals after each animation test. */
-  () => {
-    vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-  },
-);
+/** Reset native browser events and fake the safety timer, without simulating animation frames. */
+beforeEach(() => {
+  vi.useFakeTimers();
+  events = new EventTarget();
+  page = { onscrollend: null };
+  viewport.scrollY = 800;
+  viewport.scrollTo.mockReset();
+  viewport.matchMedia.mockReturnValue({ matches: false });
+  viewport.addEventListener = vi.fn(events.addEventListener.bind(events));
+  viewport.removeEventListener = vi.fn(events.removeEventListener.bind(events));
+  vi.stubGlobal('window', viewport);
+  vi.stubGlobal('document', page);
+});
+/** Restore globals and timers after each native-scroll test. */
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
-/**
- * Build an empty required field whose bounds reflect simulated page
- * scrolling.
- * @returns An empty input-like fixture with a focus spy and bounds affected by viewport scrolling.
- */
+/** Return an input-like fixture with browser-controlled scrolling and a focus spy. */
 function field() {
   return {
     value: '',
     isConnected: true,
-    parentElement: null,
     focus: vi.fn(),
-    /**
-     * Report the field's current viewport bounds after simulated scroll
-     * movement.
-     */
-    getBoundingClientRect: () => ({
-      top: 200 - viewport.scrollY,
-      bottom: 240 - viewport.scrollY,
-      height: 40,
+    /** Model native scrolling, leaving completion to the test's scrollend event. */
+    scrollIntoView: vi.fn(() => {
+      viewport.scrollY = 0;
+      emit('scroll');
     }),
+    /** Report the field's screen position without moving it. */
+    getBoundingClientRect: () => ({ top: 200 - viewport.scrollY, bottom: 240 - viewport.scrollY }),
   } as unknown as RequiredField;
 }
 
-/**
- * Advance queued animation callbacks in deterministic twenty-millisecond
- * steps.
- */
-function advance(count: number) {
-  for (let step = 0; step < count; step++) {
-    clock += 20;
-    const callbacks = [...frames.values()];
-    frames.clear();
-    for (const callback of callbacks) {
-      callback(clock);
-    }
-  }
-}
-
-/** Group the shared required-field reveal checks. */
-describe('shared required-field reveal', () => {
-  /**
-   * Animates through intermediate positions for 650ms before focusing
-   * without another jump.
-   */
-  it(
-    'animates through intermediate positions for 650ms before focusing ' + 'without another jump',
-    async () => {
-      const input = field();
-      const controller = new AbortController();
-      const ready = revealRequiredField(input, controller.signal);
-      advance(10);
-      expect(viewport.scrollY).toBeGreaterThan(0);
-      expect(viewport.scrollY).toBeLessThan(800);
-      expect(input.focus).not.toHaveBeenCalled();
-      advance(22);
-      expect(clock).toBeLessThan(REQUIRED_FIELD_SCROLL_MS);
-      expect(input.focus).not.toHaveBeenCalled();
-      advance(1);
-      expect(await ready).toBe(true);
-      expect(viewport.scrollY).toBe(0);
-      expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });
-    },
-  );
-  /** Keeps short desktop scrolls just as gradual as longer mobile scrolls. */
-  it('keeps short desktop scrolls just as gradual as longer mobile scrolls', async () => {
-    viewport.scrollTo({ top: 60 });
+/** Verify browser-native completion, fallbacks, and obsolete-reminder cancellation. */
+describe('native required-field reveal', () => {
+  /** Wait for the real end event before focusing; release every listener and timer afterward. */
+  it('uses smooth scrolling and waits for native scrollend', async () => {
     const input = field();
     const ready = revealRequiredField(input, new AbortController().signal);
-    advance(10);
-    expect(viewport.scrollY).toBeGreaterThan(0);
-    expect(viewport.scrollY).toBeLessThan(60);
+    expect(input.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest',
+    });
     expect(input.focus).not.toHaveBeenCalled();
-    advance(23);
+    emit('scrollend');
     expect(await ready).toBe(true);
-    expect(viewport.scrollY).toBe(0);
+    expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(vi.getTimerCount()).toBe(0);
+    const calls = viewport.scrollTo.mock.calls.length;
+    emit('wheel');
+    expect(viewport.scrollTo).toHaveBeenCalledTimes(calls);
   });
-  /** Cancels pending focus when the page or reminder is dismissed. */
-  it('cancels pending focus when the page or reminder is dismissed', async () => {
+  /** No movement means no end event, so visible fields must not wait for one. */
+  it('focuses an already visible field without scrolling', async () => {
+    viewport.scrollY = 0;
+    const input = field();
+    expect(await revealRequiredField(input, new AbortController().signal)).toBe(true);
+    expect(input.scrollIntoView).not.toHaveBeenCalled();
+  });
+  /** Use a built-in instant scroll for reduced motion or older browsers, not a custom fallback. */
+  it('uses native instant scrolling when smooth completion cannot be used', async () => {
+    for (const reducedMotion of [true, false]) {
+      viewport.scrollY = 800;
+      viewport.matchMedia.mockReturnValue({ matches: reducedMotion });
+      page = reducedMotion ? { onscrollend: null } : {};
+      vi.stubGlobal('document', page);
+      const input = field();
+      expect(await revealRequiredField(input, new AbortController().signal)).toBe(true);
+      expect(input.scrollIntoView).toHaveBeenCalledWith({
+        behavior: 'instant',
+        block: 'center',
+        inline: 'nearest',
+      });
+      expect(vi.getTimerCount()).toBe(0);
+    }
+  });
+  /** Cancelling resolves immediately without taking focus or controlling browser scrolling. */
+  it('cancels an obsolete reminder immediately', async () => {
     const input = field();
     const controller = new AbortController();
     const ready = revealRequiredField(input, controller.signal);
     controller.abort();
     expect(await ready).toBe(false);
-    expect(frames.size).toBe(0);
+    expect(input.focus).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(viewport.scrollTo).not.toHaveBeenCalled();
+    emit('scrollend');
     expect(input.focus).not.toHaveBeenCalled();
   });
-  /**
-   * Does not interrupt someone who has already filled the field during
-   * scrolling.
-   */
-  it('does not interrupt someone who has already filled the field during scrolling', async () => {
+  /** A signal canceled before the reveal must not scroll or focus the field. */
+  it('ignores an already aborted reminder', async () => {
+    const input = field();
+    const controller = new AbortController();
+    controller.abort();
+    expect(await revealRequiredField(input, controller.signal)).toBe(false);
+    expect(input.scrollIntoView).not.toHaveBeenCalled();
+    expect(input.focus).not.toHaveBeenCalled();
+  });
+  /** Track all native scroll targets so an early ancestor end cannot reveal the reminder. */
+  it('waits for both page and nested scrolling to end', async () => {
+    const input = field();
+    const ready = revealRequiredField(input, new AbortController().signal);
+    const container = {};
+    emit('scroll', container);
+    emit('scrollend');
+    expect(input.focus).not.toHaveBeenCalled();
+    emit('scrollend', container);
+    expect(await ready).toBe(true);
+  });
+  /** End events unrelated to this scroll must not complete its reminder. */
+  it('ignores unrelated scrollend events', async () => {
+    const input = field();
+    const ready = revealRequiredField(input, new AbortController().signal);
+    emit('scrollend', {});
+    expect(input.focus).not.toHaveBeenCalled();
+    emit('scrollend');
+    expect(await ready).toBe(true);
+  });
+  /** Do not interrupt someone who filled the field while the browser was scrolling. */
+  it('does not focus a field filled before scrolling ends', async () => {
     const input = field();
     const ready = revealRequiredField(input, new AbortController().signal);
     input.value = 'Already filled';
-    advance(1);
+    emit('scrollend');
     expect(await ready).toBe(false);
-    expect(input.focus).not.toHaveBeenCalled();
   });
-  /** Respects reduced motion while keeping focus from scrolling again. */
-  it('respects reduced motion while keeping focus from scrolling again', async () => {
-    viewport.matchMedia.mockReturnValue({ matches: true });
-    const input = field();
-    expect(await revealRequiredField(input, new AbortController().signal)).toBe(true);
-    expect(viewport.scrollY).toBe(0);
-    expect(frames.size).toBe(0);
-    expect(input.focus).toHaveBeenCalledWith({ preventScroll: true });
-  });
-  /** Yields control when the user scrolls manually during the animation. */
-  it('yields control when the user scrolls manually during the animation', async () => {
+  /** Manual gestures cancel the reminder without changing the browser's default input behavior. */
+  it.each(['wheel', 'touchmove', 'keydown', 'resize', 'pointerdown'])(
+    'yields to a user interruption: %s',
+    async (type) => {
+      const input = field();
+      const ready = revealRequiredField(input, new AbortController().signal);
+      emit(type);
+      expect(await ready).toBe(false);
+    },
+  );
+  /** A missing end event must not leave the promise or its listeners alive indefinitely. */
+  it('cleans up when no scrollend event arrives', async () => {
     const input = field();
     const ready = revealRequiredField(input, new AbortController().signal);
-    advance(10);
-    const stoppedAt = viewport.scrollY;
-    viewport.dispatchEvent(new Event('wheel'));
-    advance(30);
+    vi.advanceTimersByTime(5000);
     expect(await ready).toBe(false);
-    expect(viewport.scrollY).toBe(stoppedAt);
     expect(input.focus).not.toHaveBeenCalled();
-  });
-  /** Can reveal a field inside a scrollable panel without moving the page. */
-  it('can reveal a field inside a scrollable panel without moving the page', async () => {
-    viewport.scrollTo({ top: 0 });
-    viewport.scrollTo.mockClear();
-    const container = {
-      scrollTop: 0,
-      scrollHeight: 900,
-      clientHeight: 200,
-      clientTop: 0,
-      parentElement: null,
-      /** Provide the nested scroll container's fixed screen position. */
-      getBoundingClientRect: () => ({
-        top: 200,
-      }),
-      scrollTo: vi.fn(
-        /* Apply a simulated scroll to the inner container. */
-        ({ top }: ScrollToOptions) => {
-          container.scrollTop = top ?? 0;
-        },
-      ),
-    };
-    vi.stubGlobal(
-      'getComputedStyle',
-      /* Mark the fixture container as vertically scrollable. */
-      () => ({
-        overflowY: 'auto',
-      }),
-    );
-    const input = field();
-    Object.defineProperty(input, 'parentElement', { value: container });
-    input.getBoundingClientRect =
-      /* Report field bounds relative to the inner container's changing scroll offset. */
-      () =>
-        ({
-          top: 800 - container.scrollTop,
-          bottom: 840 - container.scrollTop,
-          height: 40,
-        }) as DOMRect;
-    const ready = revealRequiredField(input, new AbortController().signal);
-    advance(33);
-    expect(await ready).toBe(true);
-    expect(container.scrollTop).toBe(520);
-    expect(viewport.scrollTo).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

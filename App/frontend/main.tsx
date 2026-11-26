@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { LanguageProvider } from './i18n/LanguageProvider';
 import { browserInstall } from './utils/browser-install';
 import { shortcutManifestHref } from '../shared/shortcut-path';
 import './styles.css';
@@ -17,4 +18,4 @@ const manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
 if (manifest) {
   manifest.href = shortcutManifestHref(window.location.pathname);
 }
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(<LanguageProvider children={<App />} />);

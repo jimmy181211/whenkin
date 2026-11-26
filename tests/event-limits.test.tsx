@@ -1,43 +1,27 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import {
-  afterEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { sqlStatements } from '../App/backend/tools/sql-statements.js';
 import EventLimits from '../App/frontend/components/EventLimits';
-import { langService } from '../App/frontend/i18n/language';
+
 import { retentionDuration } from '../App/frontend/utils/retention-label';
+import { createLanguageFixture } from './helpers/language';
+const languageFixture = createLanguageFixture();
+const renderToStaticMarkup = languageFixture.render;
 
 afterEach(
   /* Restore English after event-expiry wording tests. */
-  () => langService.setLanguage('en'),
+  () => languageFixture.setLanguage('en'),
 );
 /** Group the event expiry notice checks. */
 describe('event expiry notice', () => {
   /** Shows only the one-year notice in both supported languages. */
   it('shows only the one-year notice in both supported languages', () => {
-    for (const language of [
-      'en',
-      'zh',
-    ] as const) {
-      langService.setLanguage(language);
-      const html = renderToStaticMarkup(
-        <EventLimits
-          policy={{
-            value: 12,
-            unit: 'month',
-          }}
-        />,
-      );
+    for (const language of ['en', 'zh'] as const) {
+      languageFixture.setLanguage(language);
+      const html = renderToStaticMarkup(<EventLimits policy={{ value: 12, unit: 'month' }} />);
       expect(html).toContain(
-        langService.t('Links expire in {duration}', {
-          duration: retentionDuration({
-            value: 12,
-            unit: 'month',
-          }),
+        languageFixture.t('Links expire in {duration}', {
+          duration: retentionDuration({ value: 12, unit: 'month' }, language),
         }),
       );
       expect(html).not.toMatch(/1,000|participants|1 month/);

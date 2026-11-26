@@ -1,14 +1,5 @@
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  it,
-} from 'vitest';
-import {
-  readFile,
-  readdir,
-} from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { commonGround } from '../App/backend/shared/common-ground';
 import { analyzeSnapshot } from '../App/backend/tools/analyze-events.js';
@@ -67,17 +58,11 @@ describe('read-only analytics', () => {
           `INSERT INTO events(id , title , organizer_name , timezone , created_at , schedule_mode)
   VALUES(gen_random_uuid() , 'Test' , '' , 'UTC' , '2026-11-01T00:00Z'
   ::timestamptz+$1*interval '1 day' , $2) RETURNING id`,
-          [
-            i,
-            i === 0 ? 'weekdays' : 'dates',
-          ],
+          [i, i === 0 ? 'weekdays' : 'dates'],
         );
         const id = (rows[0] as { id: string }).id;
         const windows = [
-          {
-            start: new Date(base).toISOString(),
-            end: new Date(base + 90 * 60000).toISOString(),
-          },
+          { start: new Date(base).toISOString(), end: new Date(base + 90 * 60000).toISOString() },
           {
             start: new Date(base + 60 * 60000).toISOString(),
             end: new Date(base + 120 * 60000).toISOString(),
@@ -115,26 +100,13 @@ describe('read-only analytics', () => {
               ),
           );
           // Duplicate availability must count one responder only.
-          for (const a of [
-            ...ranges,
-            ...ranges.slice(0, 1),
-          ]) {
+          for (const a of [...ranges, ...ranges.slice(0, 1)]) {
             await query(
               'INSERT INTO availability(response_id,starts_at,ends_at) VALUES($1,$2,$3)',
-              [
-                r.id,
-                a.start,
-                a.end,
-              ],
+              [r.id, a.start, a.end],
             );
           }
-          people.push({
-            id: r.id,
-            name: 'Test',
-            timezone: 'UTC',
-            revision: 1,
-            ranges,
-          });
+          people.push({ id: r.id, name: 'Test', timezone: 'UTC', revision: 1, ranges });
           availableTotal += ranges.reduce(
             /** Sum offered range lengths in minutes for the expected analytics result. */
             (sum, r) => sum + (Date.parse(r.end) - Date.parse(r.start)) / 60000,
@@ -173,10 +145,7 @@ describe('read-only analytics', () => {
       const snapshot = (await query(sql))[0] as {
         snapshot: {
           events: Record<string, unknown>[];
-          source_counts: {
-            events: number;
-            responses: number;
-          };
+          source_counts: { events: number; responses: number };
         };
       };
       expect(snapshot.snapshot.events).toHaveLength(16);
@@ -209,10 +178,7 @@ describe('read-only analytics', () => {
           }[];
         }
       ).availability_histogram;
-      for (const frame of [
-        'event_local',
-        'responder_local',
-      ]) {
+      for (const frame of ['event_local', 'responder_local']) {
         const all = hist.filter(
           /** Select the aggregate histogram for the schedule frame being checked. */
           (h) => h.topic === 'all' && h.time_frame === frame,
@@ -239,13 +205,7 @@ describe('read-only analytics', () => {
    * zero.
    */
   it('retains extreme values and distinguishes unknown results from measured zero', () => {
-    const events = [
-      0,
-      1,
-      2,
-      3,
-      10000,
-    ].map(
+    const events = [0, 1, 2, 3, 10000].map(
       /* Build fixtures with missing values and an extreme reply count for review flags. */
       (n, i) => ({
         event_code: 'E' + i,
